@@ -1,0 +1,232 @@
+<Model>
+	<Frequency>1000</Frequency>
+	<Cp Real="1500" Imag="0"></Cp>
+	<Resolution>7.5</Resolution>
+	<MaxTheata>89.5</MaxTheata>
+	<MaxOrder>0</MaxOrder>
+	<Number_of_Facets>6</Number_of_Facets>
+	<Number_of_SourcePoints>1</Number_of_SourcePoints>
+	<Number_of_FieldPoints>181</Number_of_FieldPoints>
+	<Facets>		<Facet Material="1">
+			<Point_A X="0" Y="0" Z="0"></Point_A>
+			<Point_B X="0" Y="-1.4142" Z="-0.8165"></Point_B>
+			<Point_C X="0" Y="2.2204e-16" Z="-1.633"></Point_C>
+			<Centriod X="0" Y="-0.4714" Z="-0.8165"></Centriod>
+			<Normal X="1" Y="0" Z="0"></Normal>
+			<Z_Error Z="0"></Z_Error>	</Facet>		<Facet Material="1">
+			<Point_A X="0" Y="0" Z="0"></Point_A>
+			<Point_B X="0" Y="2.2204e-16" Z="-1.633"></Point_B>
+			<Point_C X="0" Y="1.4142" Z="-0.8165"></Point_C>
+			<Centriod X="0" Y="0.4714" Z="-0.8165"></Centriod>
+			<Normal X="1" Y="0" Z="0"></Normal>
+			<Z_Error Z="0"></Z_Error>	</Facet>		<Facet Material="1">
+			<Point_A X="0" Y="0" Z="0"></Point_A>
+			<Point_B X="0" Y="1.4142" Z="-0.8165"></Point_B>
+			<Point_C X="0" Y="1.4142" Z="0.8165"></Point_C>
+			<Centriod X="0" Y="0.94281" Z="3.7007e-16"></Centriod>
+			<Normal X="1" Y="0" Z="0"></Normal>
+			<Z_Error Z="0"></Z_Error>	</Facet>		<Facet Material="1">
+			<Point_A X="0" Y="0" Z="0"></Point_A>
+			<Point_B X="0" Y="1.4142" Z="0.8165"></Point_B>
+			<Point_C X="0" Y="0" Z="1.633"></Point_C>
+			<Centriod X="0" Y="0.4714" Z="0.8165"></Centriod>
+			<Normal X="1" Y="0" Z="0"></Normal>
+			<Z_Error Z="0"></Z_Error>	</Facet>		<Facet Material="1">
+			<Point_A X="0" Y="0" Z="0"></Point_A>
+			<Point_B X="0" Y="0" Z="1.633"></Point_B>
+			<Point_C X="0" Y="-1.4142" Z="0.8165"></Point_C>
+			<Centriod X="0" Y="-0.4714" Z="0.8165"></Centriod>
+			<Normal X="1" Y="0" Z="0"></Normal>
+			<Z_Error Z="0"></Z_Error>	</Facet>		<Facet Material="1">
+			<Point_A X="0" Y="0" Z="0"></Point_A>
+			<Point_B X="0" Y="-1.4142" Z="0.8165"></Point_B>
+			<Point_C X="0" Y="-1.4142" Z="-0.8165"></Point_C>
+			<Centriod X="0" Y="-0.94281" Z="2.2204e-16"></Centriod>
+			<Normal X="1" Y="0" Z="0"></Normal>
+			<Z_Error Z="0"></Z_Error>	</Facet>	</Facets>		<SourcePoints>
+			<SrcPoint X="200" Y="0" Z="0" PressureReal="1" PressureImag="0" ></SrcPoint>
+	</SourcePoints>
+		<FieldPoints>
+			<FieldPoint X="1.2246e-14" Y="0" Z="-200" ></FieldPoint>
+			<FieldPoint X="3.4905" Y="0" Z="-199.9695" ></FieldPoint>
+			<FieldPoint X="6.9799" Y="0" Z="-199.8782" ></FieldPoint>
+			<FieldPoint X="10.4672" Y="0" Z="-199.7259" ></FieldPoint>
+			<FieldPoint X="13.9513" Y="0" Z="-199.5128" ></FieldPoint>
+			<FieldPoint X="17.4311" Y="0" Z="-199.2389" ></FieldPoint>
+			<FieldPoint X="20.9057" Y="0" Z="-198.9044" ></FieldPoint>
+			<FieldPoint X="24.3739" Y="0" Z="-198.5092" ></FieldPoint>
+			<FieldPoint X="27.8346" Y="0" Z="-198.0536" ></FieldPoint>
+			<FieldPoint X="31.2869" Y="0" Z="-197.5377" ></FieldPoint>
+			<FieldPoint X="34.7296" Y="0" Z="-196.9616" ></FieldPoint>
+			<FieldPoint X="38.1618" Y="0" Z="-196.3254" ></FieldPoint>
+			<FieldPoint X="41.5823" Y="0" Z="-195.6295" ></FieldPoint>
+			<FieldPoint X="44.9902" Y="0" Z="-194.874" ></FieldPoint>
+			<FieldPoint X="48.3844" Y="0" Z="-194.0591" ></FieldPoint>
+			<FieldPoint X="51.7638" Y="0" Z="-193.1852" ></FieldPoint>
+			<FieldPoint X="55.1275" Y="0" Z="-192.2523" ></FieldPoint>
+			<FieldPoint X="58.4743" Y="0" Z="-191.261" ></FieldPoint>
+			<FieldPoint X="61.8034" Y="0" Z="-190.2113" ></FieldPoint>
+			<FieldPoint X="65.1136" Y="0" Z="-189.1037" ></FieldPoint>
+			<FieldPoint X="68.404" Y="0" Z="-187.9385" ></FieldPoint>
+			<FieldPoint X="71.6736" Y="0" Z="-186.7161" ></FieldPoint>
+			<FieldPoint X="74.9213" Y="0" Z="-185.4368" ></FieldPoint>
+			<FieldPoint X="78.1462" Y="0" Z="-184.101" ></FieldPoint>
+			<FieldPoint X="81.3473" Y="0" Z="-182.7091" ></FieldPoint>
+			<FieldPoint X="84.5237" Y="0" Z="-181.2616" ></FieldPoint>
+			<FieldPoint X="87.6742" Y="0" Z="-179.7588" ></FieldPoint>
+			<FieldPoint X="90.7981" Y="0" Z="-178.2013" ></FieldPoint>
+			<FieldPoint X="93.8943" Y="0" Z="-176.5895" ></FieldPoint>
+			<FieldPoint X="96.9619" Y="0" Z="-174.9239" ></FieldPoint>
+			<FieldPoint X="100" Y="0" Z="-173.2051" ></FieldPoint>
+			<FieldPoint X="103.0076" Y="0" Z="-171.4335" ></FieldPoint>
+			<FieldPoint X="105.9839" Y="0" Z="-169.6096" ></FieldPoint>
+			<FieldPoint X="108.9278" Y="0" Z="-167.7341" ></FieldPoint>
+			<FieldPoint X="111.8386" Y="0" Z="-165.8075" ></FieldPoint>
+			<FieldPoint X="114.7153" Y="0" Z="-163.8304" ></FieldPoint>
+			<FieldPoint X="117.5571" Y="0" Z="-161.8034" ></FieldPoint>
+			<FieldPoint X="120.363" Y="0" Z="-159.7271" ></FieldPoint>
+			<FieldPoint X="123.1323" Y="0" Z="-157.6022" ></FieldPoint>
+			<FieldPoint X="125.8641" Y="0" Z="-155.4292" ></FieldPoint>
+			<FieldPoint X="128.5575" Y="0" Z="-153.2089" ></FieldPoint>
+			<FieldPoint X="131.2118" Y="0" Z="-150.9419" ></FieldPoint>
+			<FieldPoint X="133.8261" Y="0" Z="-148.629" ></FieldPoint>
+			<FieldPoint X="136.3997" Y="0" Z="-146.2707" ></FieldPoint>
+			<FieldPoint X="138.9317" Y="0" Z="-143.868" ></FieldPoint>
+			<FieldPoint X="141.4214" Y="0" Z="-141.4214" ></FieldPoint>
+			<FieldPoint X="143.868" Y="0" Z="-138.9317" ></FieldPoint>
+			<FieldPoint X="146.2707" Y="0" Z="-136.3997" ></FieldPoint>
+			<FieldPoint X="148.629" Y="0" Z="-133.8261" ></FieldPoint>
+			<FieldPoint X="150.9419" Y="0" Z="-131.2118" ></FieldPoint>
+			<FieldPoint X="153.2089" Y="0" Z="-128.5575" ></FieldPoint>
+			<FieldPoint X="155.4292" Y="0" Z="-125.8641" ></FieldPoint>
+			<FieldPoint X="157.6022" Y="0" Z="-123.1323" ></FieldPoint>
+			<FieldPoint X="159.7271" Y="0" Z="-120.363" ></FieldPoint>
+			<FieldPoint X="161.8034" Y="0" Z="-117.5571" ></FieldPoint>
+			<FieldPoint X="163.8304" Y="0" Z="-114.7153" ></FieldPoint>
+			<FieldPoint X="165.8075" Y="0" Z="-111.8386" ></FieldPoint>
+			<FieldPoint X="167.7341" Y="0" Z="-108.9278" ></FieldPoint>
+			<FieldPoint X="169.6096" Y="0" Z="-105.9839" ></FieldPoint>
+			<FieldPoint X="171.4335" Y="0" Z="-103.0076" ></FieldPoint>
+			<FieldPoint X="173.2051" Y="0" Z="-100" ></FieldPoint>
+			<FieldPoint X="174.9239" Y="0" Z="-96.9619" ></FieldPoint>
+			<FieldPoint X="176.5895" Y="0" Z="-93.8943" ></FieldPoint>
+			<FieldPoint X="178.2013" Y="0" Z="-90.7981" ></FieldPoint>
+			<FieldPoint X="179.7588" Y="0" Z="-87.6742" ></FieldPoint>
+			<FieldPoint X="181.2616" Y="0" Z="-84.5237" ></FieldPoint>
+			<FieldPoint X="182.7091" Y="0" Z="-81.3473" ></FieldPoint>
+			<FieldPoint X="184.101" Y="0" Z="-78.1462" ></FieldPoint>
+			<FieldPoint X="185.4368" Y="0" Z="-74.9213" ></FieldPoint>
+			<FieldPoint X="186.7161" Y="0" Z="-71.6736" ></FieldPoint>
+			<FieldPoint X="187.9385" Y="0" Z="-68.404" ></FieldPoint>
+			<FieldPoint X="189.1037" Y="0" Z="-65.1136" ></FieldPoint>
+			<FieldPoint X="190.2113" Y="0" Z="-61.8034" ></FieldPoint>
+			<FieldPoint X="191.261" Y="0" Z="-58.4743" ></FieldPoint>
+			<FieldPoint X="192.2523" Y="0" Z="-55.1275" ></FieldPoint>
+			<FieldPoint X="193.1852" Y="0" Z="-51.7638" ></FieldPoint>
+			<FieldPoint X="194.0591" Y="0" Z="-48.3844" ></FieldPoint>
+			<FieldPoint X="194.874" Y="0" Z="-44.9902" ></FieldPoint>
+			<FieldPoint X="195.6295" Y="0" Z="-41.5823" ></FieldPoint>
+			<FieldPoint X="196.3254" Y="0" Z="-38.1618" ></FieldPoint>
+			<FieldPoint X="196.9616" Y="0" Z="-34.7296" ></FieldPoint>
+			<FieldPoint X="197.5377" Y="0" Z="-31.2869" ></FieldPoint>
+			<FieldPoint X="198.0536" Y="0" Z="-27.8346" ></FieldPoint>
+			<FieldPoint X="198.5092" Y="0" Z="-24.3739" ></FieldPoint>
+			<FieldPoint X="198.9044" Y="0" Z="-20.9057" ></FieldPoint>
+			<FieldPoint X="199.2389" Y="0" Z="-17.4311" ></FieldPoint>
+			<FieldPoint X="199.5128" Y="0" Z="-13.9513" ></FieldPoint>
+			<FieldPoint X="199.7259" Y="0" Z="-10.4672" ></FieldPoint>
+			<FieldPoint X="199.8782" Y="0" Z="-6.9799" ></FieldPoint>
+			<FieldPoint X="199.9695" Y="0" Z="-3.4905" ></FieldPoint>
+			<FieldPoint X="200" Y="0" Z="0" ></FieldPoint>
+			<FieldPoint X="199.9695" Y="0" Z="3.4905" ></FieldPoint>
+			<FieldPoint X="199.8782" Y="0" Z="6.9799" ></FieldPoint>
+			<FieldPoint X="199.7259" Y="0" Z="10.4672" ></FieldPoint>
+			<FieldPoint X="199.5128" Y="0" Z="13.9513" ></FieldPoint>
+			<FieldPoint X="199.2389" Y="0" Z="17.4311" ></FieldPoint>
+			<FieldPoint X="198.9044" Y="0" Z="20.9057" ></FieldPoint>
+			<FieldPoint X="198.5092" Y="0" Z="24.3739" ></FieldPoint>
+			<FieldPoint X="198.0536" Y="0" Z="27.8346" ></FieldPoint>
+			<FieldPoint X="197.5377" Y="0" Z="31.2869" ></FieldPoint>
+			<FieldPoint X="196.9616" Y="0" Z="34.7296" ></FieldPoint>
+			<FieldPoint X="196.3254" Y="0" Z="38.1618" ></FieldPoint>
+			<FieldPoint X="195.6295" Y="0" Z="41.5823" ></FieldPoint>
+			<FieldPoint X="194.874" Y="0" Z="44.9902" ></FieldPoint>
+			<FieldPoint X="194.0591" Y="0" Z="48.3844" ></FieldPoint>
+			<FieldPoint X="193.1852" Y="0" Z="51.7638" ></FieldPoint>
+			<FieldPoint X="192.2523" Y="0" Z="55.1275" ></FieldPoint>
+			<FieldPoint X="191.261" Y="0" Z="58.4743" ></FieldPoint>
+			<FieldPoint X="190.2113" Y="0" Z="61.8034" ></FieldPoint>
+			<FieldPoint X="189.1037" Y="0" Z="65.1136" ></FieldPoint>
+			<FieldPoint X="187.9385" Y="0" Z="68.404" ></FieldPoint>
+			<FieldPoint X="186.7161" Y="0" Z="71.6736" ></FieldPoint>
+			<FieldPoint X="185.4368" Y="0" Z="74.9213" ></FieldPoint>
+			<FieldPoint X="184.101" Y="0" Z="78.1462" ></FieldPoint>
+			<FieldPoint X="182.7091" Y="0" Z="81.3473" ></FieldPoint>
+			<FieldPoint X="181.2616" Y="0" Z="84.5237" ></FieldPoint>
+			<FieldPoint X="179.7588" Y="0" Z="87.6742" ></FieldPoint>
+			<FieldPoint X="178.2013" Y="0" Z="90.7981" ></FieldPoint>
+			<FieldPoint X="176.5895" Y="0" Z="93.8943" ></FieldPoint>
+			<FieldPoint X="174.9239" Y="0" Z="96.9619" ></FieldPoint>
+			<FieldPoint X="173.2051" Y="0" Z="100" ></FieldPoint>
+			<FieldPoint X="171.4335" Y="0" Z="103.0076" ></FieldPoint>
+			<FieldPoint X="169.6096" Y="0" Z="105.9839" ></FieldPoint>
+			<FieldPoint X="167.7341" Y="0" Z="108.9278" ></FieldPoint>
+			<FieldPoint X="165.8075" Y="0" Z="111.8386" ></FieldPoint>
+			<FieldPoint X="163.8304" Y="0" Z="114.7153" ></FieldPoint>
+			<FieldPoint X="161.8034" Y="0" Z="117.5571" ></FieldPoint>
+			<FieldPoint X="159.7271" Y="0" Z="120.363" ></FieldPoint>
+			<FieldPoint X="157.6022" Y="0" Z="123.1323" ></FieldPoint>
+			<FieldPoint X="155.4292" Y="0" Z="125.8641" ></FieldPoint>
+			<FieldPoint X="153.2089" Y="0" Z="128.5575" ></FieldPoint>
+			<FieldPoint X="150.9419" Y="0" Z="131.2118" ></FieldPoint>
+			<FieldPoint X="148.629" Y="0" Z="133.8261" ></FieldPoint>
+			<FieldPoint X="146.2707" Y="0" Z="136.3997" ></FieldPoint>
+			<FieldPoint X="143.868" Y="0" Z="138.9317" ></FieldPoint>
+			<FieldPoint X="141.4214" Y="0" Z="141.4214" ></FieldPoint>
+			<FieldPoint X="138.9317" Y="0" Z="143.868" ></FieldPoint>
+			<FieldPoint X="136.3997" Y="0" Z="146.2707" ></FieldPoint>
+			<FieldPoint X="133.8261" Y="0" Z="148.629" ></FieldPoint>
+			<FieldPoint X="131.2118" Y="0" Z="150.9419" ></FieldPoint>
+			<FieldPoint X="128.5575" Y="0" Z="153.2089" ></FieldPoint>
+			<FieldPoint X="125.8641" Y="0" Z="155.4292" ></FieldPoint>
+			<FieldPoint X="123.1323" Y="0" Z="157.6022" ></FieldPoint>
+			<FieldPoint X="120.363" Y="0" Z="159.7271" ></FieldPoint>
+			<FieldPoint X="117.5571" Y="0" Z="161.8034" ></FieldPoint>
+			<FieldPoint X="114.7153" Y="0" Z="163.8304" ></FieldPoint>
+			<FieldPoint X="111.8386" Y="0" Z="165.8075" ></FieldPoint>
+			<FieldPoint X="108.9278" Y="0" Z="167.7341" ></FieldPoint>
+			<FieldPoint X="105.9839" Y="0" Z="169.6096" ></FieldPoint>
+			<FieldPoint X="103.0076" Y="0" Z="171.4335" ></FieldPoint>
+			<FieldPoint X="100" Y="0" Z="173.2051" ></FieldPoint>
+			<FieldPoint X="96.9619" Y="0" Z="174.9239" ></FieldPoint>
+			<FieldPoint X="93.8943" Y="0" Z="176.5895" ></FieldPoint>
+			<FieldPoint X="90.7981" Y="0" Z="178.2013" ></FieldPoint>
+			<FieldPoint X="87.6742" Y="0" Z="179.7588" ></FieldPoint>
+			<FieldPoint X="84.5237" Y="0" Z="181.2616" ></FieldPoint>
+			<FieldPoint X="81.3473" Y="0" Z="182.7091" ></FieldPoint>
+			<FieldPoint X="78.1462" Y="0" Z="184.101" ></FieldPoint>
+			<FieldPoint X="74.9213" Y="0" Z="185.4368" ></FieldPoint>
+			<FieldPoint X="71.6736" Y="0" Z="186.7161" ></FieldPoint>
+			<FieldPoint X="68.404" Y="0" Z="187.9385" ></FieldPoint>
+			<FieldPoint X="65.1136" Y="0" Z="189.1037" ></FieldPoint>
+			<FieldPoint X="61.8034" Y="0" Z="190.2113" ></FieldPoint>
+			<FieldPoint X="58.4743" Y="0" Z="191.261" ></FieldPoint>
+			<FieldPoint X="55.1275" Y="0" Z="192.2523" ></FieldPoint>
+			<FieldPoint X="51.7638" Y="0" Z="193.1852" ></FieldPoint>
+			<FieldPoint X="48.3844" Y="0" Z="194.0591" ></FieldPoint>
+			<FieldPoint X="44.9902" Y="0" Z="194.874" ></FieldPoint>
+			<FieldPoint X="41.5823" Y="0" Z="195.6295" ></FieldPoint>
+			<FieldPoint X="38.1618" Y="0" Z="196.3254" ></FieldPoint>
+			<FieldPoint X="34.7296" Y="0" Z="196.9616" ></FieldPoint>
+			<FieldPoint X="31.2869" Y="0" Z="197.5377" ></FieldPoint>
+			<FieldPoint X="27.8346" Y="0" Z="198.0536" ></FieldPoint>
+			<FieldPoint X="24.3739" Y="0" Z="198.5092" ></FieldPoint>
+			<FieldPoint X="20.9057" Y="0" Z="198.9044" ></FieldPoint>
+			<FieldPoint X="17.4311" Y="0" Z="199.2389" ></FieldPoint>
+			<FieldPoint X="13.9513" Y="0" Z="199.5128" ></FieldPoint>
+			<FieldPoint X="10.4672" Y="0" Z="199.7259" ></FieldPoint>
+			<FieldPoint X="6.9799" Y="0" Z="199.8782" ></FieldPoint>
+			<FieldPoint X="3.4905" Y="0" Z="199.9695" ></FieldPoint>
+			<FieldPoint X="1.2246e-14" Y="0" Z="200" ></FieldPoint>
+	</FieldPoints>
+</Model>
