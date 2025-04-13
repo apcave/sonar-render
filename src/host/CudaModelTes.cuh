@@ -37,7 +37,7 @@ public:
 
 protected:
     int SetGlobalParameters(dcomplex k_wave, float pixel_delta);
-    int MakeObjectOnGPU(vector<Facet *> facets, dcomplex k_wave, float pixel_delta);
+    int MakeObjectOnGPU(vector<Facet *> facets);
     int MakeSourcePointsOnGPU(vector<PressurePoint *> source_points);
     int MakeFieldPointsOnGPU(vector<PressurePoint *> field_points);
     int StartCuda();

@@ -78,6 +78,15 @@ public:
         feildPoints.push_back(fieldPoint);
     }
 
+    void addSourcePoint(float3 p1)
+    {
+        // Add the field point to the model
+        // This is a placeholder for the actual implementation
+        auto fieldPoint = new PressurePoint(p1);
+        fieldPoint->pressure.r = 1.0; // Set the pressure value for the source point
+        feildPoints.push_back(fieldPoint);
+    }
+
     void addTargetObject(TargetObject *object)
     {
         // Add the target object to the model
@@ -119,12 +128,17 @@ public:
     void copyToDevice()
     {
         StartCuda();
+        SetGlobalParameters(k_wave, pixel_length);
+
+        MakeSourcePointsOnGPU(sourcePoints);
+        MakeFieldPointsOnGPU(feildPoints);
+
         int objectCnt = 0;
         for (auto &targetObject : targetObjects)
         {
             auto &object = targetObjects[0];
             auto &facets = targetObject->facets;
-            MakeObjectOnGPU(facets, k_wave, pixel_length);
+            MakeObjectOnGPU(facets);
             objectCnt++;
         };
     }

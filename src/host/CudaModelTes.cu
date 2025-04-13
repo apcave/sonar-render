@@ -50,10 +50,28 @@ int CudaModelTes::MakeSourcePointsOnGPU(vector<PressurePoint *> source_points)
 int CudaModelTes::MakeFieldPointsOnGPU(vector<PressurePoint *> field_points)
 {
 
+    int numPoints = field_points.size();
+
+    auto position = new float3[numPoints];
+    auto pressure = new dcomplex[numPoints];
+    for (int i = 0; i < numPoints; i++)
+    {
+        position[i] = field_points[i]->position;
+        pressure[i] = field_points[i]->pressure;
+    }
+    // Allocate memory for the source points on the device
+    cudaMalloc(&dev_field_points_position, numPoints * sizeof(float3));
+    cudaMemcpy(dev_field_points_position, position, numPoints * sizeof(float3), cudaMemcpyHostToDevice);
+    cudaMalloc(&dev_field_points_pressure, numPoints * sizeof(dcomplex));
+    cudaMemcpy(dev_field_points_pressure, pressure, numPoints * sizeof(dcomplex), cudaMemcpyHostToDevice);
+    // Free the host memory
+    delete[] position;
+    delete[] pressure;
+
     return 0;
 }
 
-int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets, dcomplex k_wave, float pixel_delta)
+int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets)
 {
     // Copy the facet data to the GPU
     printf("MakeObjectOnGPU .......\n");

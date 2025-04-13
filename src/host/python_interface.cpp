@@ -9,6 +9,7 @@ ModelTes modelTes;
 
 extern "C" void load_geometry(float *v1, float *v2, float *v3, int num_vertices);
 extern "C" void load_feild_points(float *v1, int num_feild_points);
+extern "C" void load_source_points(float *v1, int num_source_points);
 extern "C" void set_initial_conditions(float cp, float frequency, float attenuation);
 extern "C" void pixelate_facets();
 
@@ -50,6 +51,20 @@ extern "C" void load_feild_points(float *v1, int num_feild_points)
     }
 
     cout << "Loaded field points with " << num_feild_points << " points." << endl;
+};
+
+extern "C" void load_source_points(float *v1, int num_source_points)
+{
+
+    cout << "Allocating device memory..." << endl;
+
+    for (int i = 0; i < num_source_points; ++i)
+    {
+        float3 p1 = {v1[i * 3 + 0], v1[i * 3 + 1], v1[i * 3 + 2]};
+        modelTes.addSourcePoint(p1);
+    }
+
+    cout << "Loaded source points with " << num_source_points << " points." << endl;
 };
 
 extern "C" void pixelate_facets()
