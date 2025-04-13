@@ -58,11 +58,11 @@ def pixelate_facets():
     cpp_lib.pixelate_facets()
     # Define the function signature in the shared library
 
-def generate_field_points(radius, num_points):
+def generate_field_points(radius, angles):
     """Generate field points in the x-z plane at 1-degree spacing."""
     field_points = []
-    for i in range(num_points):
-        angle = math.radians(i)  # Convert degrees to radians
+    for i in angles:
+        angle = math.radians(i+90)  # Convert degrees to radians
         x = radius * math.cos(angle)
         z = radius * math.sin(angle)
         y = 0.0  # y-coordinate is 0 in the x-z plane
@@ -105,10 +105,58 @@ def plot_geometry(stl_mesh, source_pnts, field_pnts ):
     # Show the plot
     plt.show()
 
-stl_mesh = mesh.Mesh.from_file('./testing/rectangular_plate.stl')
+def GetFieldPoints(NumFieldPnts):
+    """Get the field points from the CUDA library."""
+    # Define the function signature in the shared library
+    cpp_lib.GetFieldPointPressures.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.c_int]
+    cpp_lib.GetFieldPointPressures.restype = None
+
+    # Create an array to hold the field points
+    field_points = np.zeros((NumFieldPnts, 2), dtype=np.double)
+    field_points_ptr = field_points.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+
+    cpp_lib.GetFieldPointPressures(field_points_ptr, NumFieldPnts)
+
+    return field_points
+
+def make_rectangle(length, width):
+    # Define the vertices of the rectangular plate
+    vertices = np.array([
+        [0.0, 0.0, 0.0],  # Vertex 0
+        [1.0, 0.0, 0.0],  # Vertex 1
+        [1.0, 1.0, 0.0],  # Vertex 2
+        [0.0, 1.0, 0.0],  # Vertex 3
+    ])
+
+    vertices[:, 0] *= length
+    vertices[:, 0] -= length/2  # Scale x-coordinates by length
+    vertices[:, 1] *= width  # Scale y-coordinates by width
+    vertices[:, 1] -= width/2
+
+    # Define the two triangular facets using the vertices
+    # Each row represents a triangle (3 vertices)
+    facets = np.array([
+        [vertices[0], vertices[1], vertices[2]],  # First triangle
+        [vertices[0], vertices[2], vertices[3]],  # Second triangle
+    ])
+
+    # Create the mesh
+    plate = mesh.Mesh(np.zeros(facets.shape[0], dtype=mesh.Mesh.dtype))
+    for i, facet in enumerate(facets):
+        plate.vectors[i] = facet
+
+    # Save the mesh to an STL file
+    plate.save('rectangular_plate.stl')
+
+    print("STL file 'rectangular_plate.stl' created successfully!")
+    return plate;
+
+stl_mesh = make_rectangle(2.0,1.0)
+#stl_mesh = mesh.Mesh.from_file('./testing/rectangular_plate.stl')
 source_pnts = []
 source_pnts.append([0.0,0.0,15.0])
-field_pnts= generate_field_points(15, 180)
+angles = np.linspace(-180, 180, 360, endpoint=False)
+field_pnts= generate_field_points(15, angles)
 
 load_points_to_cuda(source_pnts, isSource=True)
 load_points_to_cuda(field_pnts, isSource=False)
@@ -116,4 +164,21 @@ set_initial_conditions(1480.0, 1.0e3, 0.0)
 load_stl_mesh_to_cuda(stl_mesh)
 pixelate_facets()
 
-# plot_geometry(stl_mesh, source_pnts, field_pnts )
+plot_geometry(stl_mesh, source_pnts, field_pnts )
+
+field_vals = GetFieldPoints(len(field_pnts))
+
+magnitudes = np.sqrt(field_vals[:, 0]**2 + field_vals[:, 1]**2)
+db_values = 20 * np.log10(magnitudes)
+
+# Plot the data
+plt.figure()
+plt.plot(angles, db_values, label="Field Values (dB)")
+plt.xlabel("Angle (degrees)")
+plt.ylabel("Field Value (dB)")
+plt.title("Field Values vs. Angle")
+plt.grid(True)
+plt.legend()
+plt.show()
+
+

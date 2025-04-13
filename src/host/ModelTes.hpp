@@ -146,6 +146,11 @@ public:
 
         DoCalculations();
     }
+    void GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints)
+    {
+        // Copy the pressure values from the device to the host
+        GetFieldPointValGPU(field_points_pressure);
+    }
 };
 
 #endif

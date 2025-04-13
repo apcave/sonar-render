@@ -12,6 +12,7 @@ extern "C" void load_field_points(float *v1, int num_feild_points);
 extern "C" void load_source_points(float *v1, int num_source_points);
 extern "C" void set_initial_conditions(float cp, float frequency, float attenuation);
 extern "C" void pixelate_facets();
+extern "C" void GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints);
 
 extern "C" void set_initial_conditions(float cp, float frequency, float attenuation)
 {
@@ -76,3 +77,10 @@ extern "C" void pixelate_facets()
     modelTes.copyToDevice();
     cout << "Copied data to device." << endl;
 };
+
+extern "C" void GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints)
+{
+    cout << "Getting field point pressures..." << endl;
+    modelTes.GetFieldPointPressures(field_points_pressure, NumPoints);
+    cout << "Got field point pressures." << endl;
+}

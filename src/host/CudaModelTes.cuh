@@ -50,6 +50,9 @@ protected:
     int TestGPU();
 
     int ProjectSourcePointsToFacet();
+    int ProjectFromFacetsToFieldPoints();
+
+    int GetFieldPointValGPU(dcomplex *field_points_pressure);
 };
 
 #endif
