@@ -14,6 +14,7 @@ protected:
     float *dev_pixel_delta;
 
     // Object based data.
+    vector<int> host_object_num_facets;
     vector<float **> dev_Object_Facets_PixelArea; // constant
     vector<dcomplex **> dev_Object_Facets_Pressure;
     vector<int3 *> dev_Object_Facets_points;    // constant
@@ -22,9 +23,11 @@ protected:
     vector<float3 *> dev_Object_Facets_xAxis;   // constant
     vector<float3 *> dev_Object_Facets_yAxis;
 
+    int host_num_source_points;
     float3 *dev_source_points_position;   // constant
     dcomplex *dev_source_points_pressure; // constant
 
+    int host_num_field_points;
     float3 *dev_field_points_position;   // constant
     dcomplex *dev_field_points_pressure; // constant
 
@@ -46,7 +49,7 @@ protected:
 
     int TestGPU();
 
-    int ProjectSourcePointToFacet(int source_point_num, int object_num, int facet_num);
+    int ProjectSourcePointsToFacet();
 };
 
 #endif

@@ -1,5 +1,6 @@
 #include "CudaModelTes.cuh"
 #include "GeoMath.h"
+#include "dcomplex.h"
 #include <stdio.h>
 
 using namespace std;
@@ -30,21 +31,21 @@ int CudaModelTes::SetGlobalParameters(dcomplex k_wave, float pixel_delta)
 
 int CudaModelTes::MakeSourcePointsOnGPU(vector<PressurePoint *> source_points)
 {
-    int numPoints = source_points.size();
-    printf("MakeSourcePointsOnGPU (num pnts %d) .......\n", numPoints);
+    host_num_source_points = source_points.size();
+    printf("MakeSourcePointsOnGPU (num pnts %d) .......\n", host_num_source_points);
 
-    auto position = new float3[numPoints];
-    auto pressure = new dcomplex[numPoints];
-    for (int i = 0; i < numPoints; i++)
+    auto position = new float3[host_num_source_points];
+    auto pressure = new dcomplex[host_num_source_points];
+    for (int i = 0; i < host_num_source_points; i++)
     {
         position[i] = source_points[i]->position;
         pressure[i] = source_points[i]->pressure;
     }
     // Allocate memory for the source points on the device
-    cudaMalloc(&dev_source_points_position, numPoints * sizeof(float3));
-    cudaMemcpy(dev_source_points_position, position, numPoints * sizeof(float3), cudaMemcpyHostToDevice);
-    cudaMalloc(&dev_source_points_pressure, numPoints * sizeof(dcomplex));
-    cudaMemcpy(dev_source_points_pressure, pressure, numPoints * sizeof(dcomplex), cudaMemcpyHostToDevice);
+    cudaMalloc(&dev_source_points_position, host_num_source_points * sizeof(float3));
+    cudaMemcpy(dev_source_points_position, position, host_num_source_points * sizeof(float3), cudaMemcpyHostToDevice);
+    cudaMalloc(&dev_source_points_pressure, host_num_source_points * sizeof(dcomplex));
+    cudaMemcpy(dev_source_points_pressure, pressure, host_num_source_points * sizeof(dcomplex), cudaMemcpyHostToDevice);
     // Free the host memory
     delete[] position;
     delete[] pressure;
@@ -54,20 +55,20 @@ int CudaModelTes::MakeSourcePointsOnGPU(vector<PressurePoint *> source_points)
 int CudaModelTes::MakeFieldPointsOnGPU(vector<PressurePoint *> field_points)
 {
 
-    int numPoints = field_points.size();
+    host_num_field_points = field_points.size();
 
-    auto position = new float3[numPoints];
-    auto pressure = new dcomplex[numPoints];
-    for (int i = 0; i < numPoints; i++)
+    auto position = new float3[host_num_field_points];
+    auto pressure = new dcomplex[host_num_field_points];
+    for (int i = 0; i < host_num_field_points; i++)
     {
         position[i] = field_points[i]->position;
         pressure[i] = field_points[i]->pressure;
     }
     // Allocate memory for the source points on the device
-    cudaMalloc(&dev_field_points_position, numPoints * sizeof(float3));
-    cudaMemcpy(dev_field_points_position, position, numPoints * sizeof(float3), cudaMemcpyHostToDevice);
-    cudaMalloc(&dev_field_points_pressure, numPoints * sizeof(dcomplex));
-    cudaMemcpy(dev_field_points_pressure, pressure, numPoints * sizeof(dcomplex), cudaMemcpyHostToDevice);
+    cudaMalloc(&dev_field_points_position, host_num_field_points * sizeof(float3));
+    cudaMemcpy(dev_field_points_position, position, host_num_field_points * sizeof(float3), cudaMemcpyHostToDevice);
+    cudaMalloc(&dev_field_points_pressure, host_num_field_points * sizeof(dcomplex));
+    cudaMemcpy(dev_field_points_pressure, pressure, host_num_field_points * sizeof(dcomplex), cudaMemcpyHostToDevice);
     // Free the host memory
     delete[] position;
     delete[] pressure;
@@ -81,6 +82,7 @@ int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets)
     printf("MakeObjectOnGPU .......\n");
 
     int number_of_facets = facets.size();
+    host_object_num_facets.push_back(number_of_facets);
 
     float **dev_Facets_PixelArea;
     cudaMalloc(&dev_Facets_PixelArea, number_of_facets * sizeof(float *));
@@ -245,9 +247,10 @@ int CudaModelTes::DoCalculations()
 {
     printf("DoCalculations .......\n");
     // TestGPU();
-    ProjectSourcePointToFacet(0, 0, 0);
+    ProjectSourcePointsToFacet();
     return 0;
 }
+
 /**
  * @brief Kernel to waves from a point source to a facet.
  *
@@ -279,9 +282,16 @@ __global__ void ProjectSourcePointToFacetKernel(
     printf("ThreadIdx.x: %d, ThreadIdx.y: %d, blockIdx.x: %d, blockDim.x: %d\n", threadIdx.x, threadIdx.y, blockIdx.x, blockDim.x);
     int xPnt = threadIdx.x;
     int yPnt = threadIdx.y;
+
     int NumXpnts = facet_Points[facet_num].x;
     int NumYpnts = facet_Points[facet_num].y;
     int NumXpntsNegative = facet_Points[facet_num].z;
+
+    if (facets_PixelArea[facet_num][yPnt * NumXpnts + xPnt] == 0)
+    {
+        printf("facets_PixelArea is zero\n");
+        return;
+    }
 
     printf("xPnt: %d, yPnt: %d\n", xPnt, yPnt);
     printf("NumXpnts: %d, NumYpnts: %d, NumXpntsNegative: %d\n", NumXpnts, NumYpnts, NumXpntsNegative);
@@ -319,41 +329,74 @@ __global__ void ProjectSourcePointToFacetKernel(
     float r_sf = sqrtf((P1g.x - P2g.x) * (P1g.x - P2g.x) + (P1g.y - P2g.y) * (P1g.y - P2g.y) + (P1g.z - P2g.z) * (P1g.z - P2g.z));
 
     printf("Distance from source to facet: %f\n", r_sf);
+
+    // P2 = P2*exp(-i*k*r_sf)
+    dcomplex i = devComplex(0, 1);
+    dcomplex var = devCmul(i, k);
+    var = devRCmul(r_sf, var);
+    var = devCexp(var);                  // This has phase and attenuation.
+    var = devCmul(var, source_pressure); // This includes the orginal pressure.
+    printf("Pressure prior to spreading at facet point: %f, %f\n", var.r, var.i);
+
+    // Area1 = Pressure the 1Pa over 1m^2
+    // Area2 = 4 * PI * r_sf * r_sf
+    // atten_spread = Area1 / Area2 <--- important for other projections.
+    float att_spread = 1 / (4 * M_PI * r_sf * r_sf);
+    var = devRCmul(att_spread, var);
+    printf("Spherical spread: %f\n", att_spread);
+
+    printf("Pressure at facet point: %f, %f\n", var.r, var.i);
+
+    // Save the pressure to the facet pressure array.
+    // Note var may be small and accumulate over may projects that why the complex numbers are doubles.
+    dcomplex orgPressure = facets_Pressure[facet_num][yPnt * NumXpnts + xPnt];
+    facets_Pressure[facet_num][yPnt * NumXpnts + xPnt] = devCadd(var, orgPressure);
 }
 
-int CudaModelTes::ProjectSourcePointToFacet(int source_point_num, int object_num, int facet_num)
+int CudaModelTes::ProjectSourcePointsToFacet()
 {
     // Every facet can have a different number of points.
     printf("Host ProjectPointToFacet....\n");
-    int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
 
-    dim3 threadsPerBlock(h_Facets_points.x, h_Facets_points.y);
-    dim3 numBlocks(1, 1);
-
-    printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
-    printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
-
-    ProjectSourcePointToFacetKernel<<<numBlocks, threadsPerBlock>>>(
-        dev_k_wave,
-        dev_pixel_delta,
-        source_point_num,
-        facet_num,
-        dev_source_points_position,
-        dev_source_points_pressure,
-        dev_Object_Facets_points[object_num],
-        dev_Object_base_points[object_num],
-        dev_Object_Facets_xAxis[object_num],
-        dev_Object_Facets_yAxis[object_num],
-        dev_Object_Facets_PixelArea[object_num],
-        dev_Object_Facets_Pressure[object_num]);
-
-    cudaError_t err = cudaGetLastError();
-    if (err != cudaSuccess)
+    for (int source_point_num = 0; source_point_num < host_num_source_points; source_point_num++)
     {
-        printf("Kernel launch failed: %s\n", cudaGetErrorString(err));
-        return 1;
+        for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
+        {
+            for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
+            {
+                int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
+
+                dim3 threadsPerBlock(h_Facets_points.x, h_Facets_points.y);
+                dim3 numBlocks(1, 1);
+
+                printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
+                printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
+
+                ProjectSourcePointToFacetKernel<<<numBlocks, threadsPerBlock>>>(
+                    dev_k_wave,
+                    dev_pixel_delta,
+                    source_point_num,
+                    facet_num,
+                    dev_source_points_position,
+                    dev_source_points_pressure,
+                    dev_Object_Facets_points[object_num],
+                    dev_Object_base_points[object_num],
+                    dev_Object_Facets_xAxis[object_num],
+                    dev_Object_Facets_yAxis[object_num],
+                    dev_Object_Facets_PixelArea[object_num],
+                    dev_Object_Facets_Pressure[object_num]);
+
+                cudaError_t err = cudaGetLastError();
+                if (err != cudaSuccess)
+                {
+                    printf("Kernel launch failed: %s\n", cudaGetErrorString(err));
+                    return 1;
+                }
+            }
+        }
+        // One source point can safely be projected to all facets at once.
+        cudaDeviceSynchronize();
     }
-    cudaDeviceSynchronize();
 
     printf("Starting CUDA kernal, ProjectPointToPointKernel...\n");
     return 0;
