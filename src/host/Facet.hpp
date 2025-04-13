@@ -30,6 +30,7 @@ public:
 	float *PixelArea;
 	int NumXpnts;
 	int NumYpnts;
+	int NumXpntsNegative;
 	float *vY;
 	float *vX;
 	float delta;

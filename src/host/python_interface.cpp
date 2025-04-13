@@ -8,7 +8,7 @@ using namespace std;
 ModelTes modelTes;
 
 extern "C" void load_geometry(float *v1, float *v2, float *v3, int num_vertices);
-extern "C" void load_feild_points(float *v1, int num_feild_points);
+extern "C" void load_field_points(float *v1, int num_feild_points);
 extern "C" void load_source_points(float *v1, int num_source_points);
 extern "C" void set_initial_conditions(float cp, float frequency, float attenuation);
 extern "C" void pixelate_facets();
@@ -39,7 +39,7 @@ extern "C" void load_geometry(float *v1, float *v2, float *v3, int num_vertices)
     cout << "Loaded geometry with " << num_vertices << " vertices." << endl;
 };
 
-extern "C" void load_feild_points(float *v1, int num_feild_points)
+extern "C" void load_field_points(float *v1, int num_feild_points)
 {
 
     cout << "Allocating device memory..." << endl;
@@ -61,6 +61,7 @@ extern "C" void load_source_points(float *v1, int num_source_points)
     for (int i = 0; i < num_source_points; ++i)
     {
         float3 p1 = {v1[i * 3 + 0], v1[i * 3 + 1], v1[i * 3 + 2]};
+        printf("Source Point: %f %f %f\n", p1.x, p1.y, p1.z);
         modelTes.addSourcePoint(p1);
     }
 

@@ -103,32 +103,24 @@ void Facet::MakePixelData(float pixel_length)
 	 **/
 
 	delta = pixel_length;
-	int numNeg = ceil(abs(BaseLengthNeg) / delta);
+	NumXpntsNegative = ceil(abs(BaseLengthNeg) / delta);
 	int numPos = ceil(abs(BaseLengthPos) / delta);
-	NumXpnts = numNeg + numPos;
+	NumXpnts = NumXpntsNegative + numPos;
 	NumYpnts = ceil(Height / delta);
 
-	cout << "numNeg: " << numNeg << endl;
-	cout << "numPos: " << numPos << endl;
-	cout << "delta: " << delta << endl;
 	// This is a x mid point of the row of pixels
 	float *vX = new float[NumXpnts];
 	for (int i = 0; NumXpnts > i; i++)
 	{
-		if (i < numNeg)
+		if (i < NumXpntsNegative)
 		{
-			cout << "Negative i: " << i << endl;
-			cout << "(-numNeg + i) " << (-numNeg + i) << endl;
-			cout << "delta " << delta << endl;
-			cout << "(-numNeg + i) * delta = " << (-numNeg + i) * delta << endl;
-
 			// 0 to numNeg-1,
-			vX[i] = ((-numNeg + i) * delta) + delta / 2;
+			vX[i] = ((-NumXpntsNegative + i) * delta) + delta / 2;
 		}
 		else
 		{
 			// numNeg to numXpnts-1
-			vX[i] = ((i - numNeg) * delta) + delta / 2;
+			vX[i] = ((i - NumXpntsNegative) * delta) + delta / 2;
 		}
 	}
 
@@ -138,21 +130,6 @@ void Facet::MakePixelData(float pixel_length)
 	{
 		vY[i] = (i * delta) + delta / 2;
 	}
-
-	std::cout << "Pixel Limits ***********************\n";
-	std::cout << "Vector X: ";
-	for (int i = 0; NumXpnts > i; i++)
-	{
-		std::cout << vX[i] << " ";
-	}
-	std::cout << "\n";
-
-	std::cout << "Vector Y: ";
-	for (int i = 0; NumYpnts > i; i++)
-	{
-		std::cout << vY[i] << " ";
-	}
-	std::cout << "\n";
 
 	bool *yxL = new bool[NumYpnts + 1];
 	bool *yxR = new bool[NumYpnts + 1];
@@ -199,12 +176,6 @@ void Facet::MakePixelData(float pixel_length)
 				int Top = j + 1;
 				float yB = delta * j;		// Bottom of the pixel
 				float yT = delta * (j + 1); // Top of the pixel
-
-				cout << "J: " << j << endl;
-				cout << "yB: " << yB << endl;
-				cout << "yT: " << yT << endl;
-				cout << "yL: " << yL << endl;
-				cout << "yR: " << yR << endl;
 
 				// lower left, lower right, upper left, upper right
 				if ((!yxL[Bottom]) && (!yxR[Bottom]) && (!yxL[Top]) && (!yxR[Top]))

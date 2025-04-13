@@ -1,3 +1,5 @@
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+
 CUDA_PATH := /usr/local/cuda
 NVCC := $(CUDA_PATH)/bin/nvcc
 CXXFLAGS := -O2 -g -Iinclude --compiler-options '-fPIC'
@@ -5,6 +7,7 @@ PYTHON := -g -shared --compiler-options '-fPIC'
 SRC := CudaModelTes.cu python_interface.cpp Facet.cpp 
 OBJ := $(SRC:.cu=.o)
 TARGET := cuda_project.so
+
 
 all: $(TARGET)
 

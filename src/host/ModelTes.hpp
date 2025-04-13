@@ -76,15 +76,19 @@ public:
         // This is a placeholder for the actual implementation
         auto fieldPoint = new PressurePoint(p1);
         feildPoints.push_back(fieldPoint);
+
+        printf("Field Point: %f %f %f\n", fieldPoint->position.x, fieldPoint->position.y, fieldPoint->position.z);
     }
 
     void addSourcePoint(float3 p1)
     {
         // Add the field point to the model
         // This is a placeholder for the actual implementation
-        auto fieldPoint = new PressurePoint(p1);
-        fieldPoint->pressure.r = 1.0; // Set the pressure value for the source point
-        feildPoints.push_back(fieldPoint);
+        auto sourcePoint = new PressurePoint(p1);
+        sourcePoint->pressure.r = 1.0; // Set the pressure value for the source point
+        sourcePoints.push_back(sourcePoint);
+
+        printf("Source Point: %f %f %f\n", sourcePoint->position.x, sourcePoint->position.y, sourcePoint->position.z);
     }
 
     void addTargetObject(TargetObject *object)
@@ -116,11 +120,9 @@ public:
 
     void pixelate_facets()
     {
-        cout << "Test!1" << endl;
         // Iterate over each target object and its facets
         for (auto &targetObject : targetObjects)
         {
-            cout << "Test!2" << endl;
             targetObject->MakePixelData(pixel_length);
         }
     }
@@ -141,6 +143,8 @@ public:
             MakeObjectOnGPU(facets);
             objectCnt++;
         };
+
+        DoCalculations();
     }
 };
 
