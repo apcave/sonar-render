@@ -77,7 +77,7 @@ public:
         auto fieldPoint = new PressurePoint(p1);
         feildPoints.push_back(fieldPoint);
 
-        printf("Field Point: %f %f %f\n", fieldPoint->position.x, fieldPoint->position.y, fieldPoint->position.z);
+        // printf("Field Point: %f %f %f\n", fieldPoint->position.x, fieldPoint->position.y, fieldPoint->position.z);
     }
 
     void addSourcePoint(float3 p1)
@@ -88,7 +88,7 @@ public:
         sourcePoint->pressure.r = 1.0; // Set the pressure value for the source point
         sourcePoints.push_back(sourcePoint);
 
-        printf("Source Point: %f %f %f\n", sourcePoint->position.x, sourcePoint->position.y, sourcePoint->position.z);
+        // printf("Source Point: %f %f %f\n", sourcePoint->position.x, sourcePoint->position.y, sourcePoint->position.z);
     }
 
     void addTargetObject(TargetObject *object)

@@ -291,32 +291,32 @@ __global__ void ProjectSourcePointToFacetKernel(
     dcomplex k = *k_wave;
     float delta = *pixel_delta;
 
-    printf("k_wave: %f, %f\n", k.r, k.i);
-    printf("pixel_delta: %f\n", delta);
+    // printf("k_wave: %f, %f\n", k.r, k.i);
+    // printf("pixel_delta: %f\n", delta);
 
     // Kernel code to project point to point
-    printf("ThreadIdx.x: %d, ThreadIdx.y: %d, blockIdx.x: %d, blockDim.x: %d\n", threadIdx.x, threadIdx.y, blockIdx.x, blockDim.x);
+    // printf("ThreadIdx.x: %d, ThreadIdx.y: %d, blockIdx.x: %d, blockDim.x: %d\n", threadIdx.x, threadIdx.y, blockIdx.x, blockDim.x);
     int xPnt = threadIdx.x;
     int yPnt = threadIdx.y;
 
     int NumXpnts = facet_Points[facet_num].x;
-    int NumYpnts = facet_Points[facet_num].y;
+    // int NumYpnts = facet_Points[facet_num].y;
     int NumXpntsNegative = facet_Points[facet_num].z;
 
     if (facets_PixelArea[facet_num][yPnt * NumXpnts + xPnt] == 0)
     {
-        printf("facets_PixelArea is zero\n");
+        // printf("facets_PixelArea is zero\n");
         return;
     }
 
-    printf("xPnt: %d, yPnt: %d\n", xPnt, yPnt);
-    printf("NumXpnts: %d, NumYpnts: %d, NumXpntsNegative: %d\n", NumXpnts, NumYpnts, NumXpntsNegative);
+    // printf("xPnt: %d, yPnt: %d\n", xPnt, yPnt);
+    // printf("NumXpnts: %d, NumYpnts: %d, NumXpntsNegative: %d\n", NumXpnts, NumYpnts, NumXpntsNegative);
 
     float3 P1g = source_points_position[source_point_num];
     dcomplex source_pressure = source_points_pressure[source_point_num];
 
-    printf("Source Point: %f, %f, %f\n", P1g.x, P1g.y, P1g.z);
-    printf("Source Pressure: %f, %f\n", source_pressure.r, source_pressure.i);
+    // printf("Source Point: %f, %f, %f\n", P1g.x, P1g.y, P1g.z);
+    // printf("Source Pressure: %f, %f\n", source_pressure.r, source_pressure.i);
 
     // This is the x offset from the base point to the approximate centriod of the pixel.
     float xoffset = delta * (xPnt - NumXpntsNegative) + delta / 2; // This value can be negative.
@@ -339,12 +339,12 @@ __global__ void ProjectSourcePointToFacetKernel(
     P2g.x = xAxis.x + yAxis.x + facet_base.x;
     P2g.y = xAxis.y + yAxis.y + facet_base.y;
     P2g.z = xAxis.z + yAxis.z + facet_base.z;
-    printf("Facet Point Global Ref: %f, %f, %f\n", P2g.x, P2g.y, P2g.z);
+    // printf("Facet Point Global Ref: %f, %f, %f\n", P2g.x, P2g.y, P2g.z);
 
     // The distance from the source point to the facet point.
     float r_sf = sqrtf((P1g.x - P2g.x) * (P1g.x - P2g.x) + (P1g.y - P2g.y) * (P1g.y - P2g.y) + (P1g.z - P2g.z) * (P1g.z - P2g.z));
 
-    printf("Distance from source to facet: %f\n", r_sf);
+    // printf("Distance from source to facet: %f\n", r_sf);
 
     // P2 = P2*exp(-i*k*r_sf)
     dcomplex i = devComplex(0, 1);
@@ -352,16 +352,24 @@ __global__ void ProjectSourcePointToFacetKernel(
     var = devRCmul(r_sf, var);
     var = devCexp(var);                  // This has phase and attenuation.
     var = devCmul(var, source_pressure); // This includes the orginal pressure.
-    printf("Pressure prior to spreading at facet point: %f, %f\n", var.r, var.i);
+    // printf("Pressure prior to spreading at facet point: %f, %f\n", var.r, var.i);
 
     // Area1 = Pressure the 1Pa over 1m^2
     // Area2 = 4 * PI * r_sf * r_sf
     // atten_spread = Area1 / Area2 <--- important for other projections.
     float att_spread = 1 / (4 * M_PI * r_sf * r_sf);
     var = devRCmul(att_spread, var);
-    printf("Spherical spread: %f\n", att_spread);
+    // printf("Spherical spread: %f\n", att_spread);
 
-    printf("Pressure at facet point: %f, %f\n", var.r, var.i);
+    if (devCabs(var) > 1.0)
+    {
+        printf("Pressure is too large to add to facet point.\n");
+        printf("Spherical spread: %e\n", att_spread);
+        printf("Pressure add to field point prior to spreading: %e, %e\n", var.r, var.i);
+        return;
+    }
+
+    // printf("Pressure at facet point: %f, %f\n", var.r, var.i);
 
     // Save the pressure to the facet pressure array.
     // Note var may be small and accumulate over may projects that why the complex numbers are doubles.
@@ -385,8 +393,8 @@ int CudaModelTes::ProjectSourcePointsToFacet()
                 dim3 threadsPerBlock(h_Facets_points.x, h_Facets_points.y);
                 dim3 numBlocks(1, 1);
 
-                printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
-                printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
+                // printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
+                // printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
 
                 ProjectSourcePointToFacetKernel<<<numBlocks, threadsPerBlock>>>(
                     dev_k_wave,
@@ -434,30 +442,30 @@ __global__ void ProjectSourceFacetToFeildPointKernel(
     dcomplex k = *k_wave;
     float delta = *pixel_delta;
 
-    printf("k_wave: %f, %f\n", k.r, k.i);
-    printf("pixel_delta: %f\n", delta);
+    // printf("k_wave: %f, %f\n", k.r, k.i);
+    // printf("pixel_delta: %f\n", delta);
 
     // Kernel code to project point to point
-    printf("ThreadIdx.x: %d, ThreadIdx.y: %d, blockIdx.x: %d, blockDim.x: %d\n", threadIdx.x, threadIdx.y, blockIdx.x, blockDim.x);
+    // printf("ThreadIdx.x: %d, ThreadIdx.y: %d, blockIdx.x: %d, blockDim.x: %d\n", threadIdx.x, threadIdx.y, blockIdx.x, blockDim.x);
     int xPnt = threadIdx.x;
     int yPnt = threadIdx.y;
 
     int NumXpnts = facet_Points[facet_num].x;
-    int NumYpnts = facet_Points[facet_num].y;
+    // int NumYpnts = facet_Points[facet_num].y;
     int NumXpntsNegative = facet_Points[facet_num].z;
 
     float pixel_area = facets_PixelArea[facet_num][yPnt * NumXpnts + xPnt];
     if (pixel_area == 0)
     {
-        printf("facets_PixelArea is zero\n");
+        // printf("facets_PixelArea is zero\n");
         return;
     }
 
-    printf("xPnt: %d, yPnt: %d\n", xPnt, yPnt);
-    printf("NumXpnts: %d, NumYpnts: %d, NumXpntsNegative: %d\n", NumXpnts, NumYpnts, NumXpntsNegative);
+    // printf("xPnt: %d, yPnt: %d\n", xPnt, yPnt);
+    // printf("NumXpnts: %d, NumYpnts: %d, NumXpntsNegative: %d\n", NumXpnts, NumYpnts, NumXpntsNegative);
 
     float3 P2g = field_points_position[field_point_num];
-    printf("Field Point: %f, %f, %f\n", P2g.x, P2g.y, P2g.z);
+    // printf("Field Point: %f, %f, %f\n", P2g.x, P2g.y, P2g.z);
 
     // This is the x offset from the base point to the approximate centriod of the pixel.
     float xoffset = delta * (xPnt - NumXpntsNegative) + delta / 2; // This value can be negative.
@@ -480,14 +488,14 @@ __global__ void ProjectSourceFacetToFeildPointKernel(
     P1g.x = xAxis.x + yAxis.x + facet_base.x;
     P1g.y = xAxis.y + yAxis.y + facet_base.y;
     P1g.z = xAxis.z + yAxis.z + facet_base.z;
-    printf("Facet Point Global Ref: %f, %f, %f\n", P1g.x, P1g.y, P1g.z);
+    // printf("Facet Point Global Ref: %f, %f, %f\n", P1g.x, P1g.y, P1g.z);
 
     dcomplex source_pressure = facets_Pressure[facet_num][yPnt * NumXpnts + xPnt];
 
     // The distance from the source point to the facet point.
     float r_sf = sqrtf((P1g.x - P2g.x) * (P1g.x - P2g.x) + (P1g.y - P2g.y) * (P1g.y - P2g.y) + (P1g.z - P2g.z) * (P1g.z - P2g.z));
 
-    printf("Distance from pixel to field point: %f\n", r_sf);
+    // printf("Distance from pixel to field point: %f\n", r_sf);
 
     // P2 = P2*exp(-i*k*r_sf)
     dcomplex i = devComplex(0, 1);
@@ -495,16 +503,26 @@ __global__ void ProjectSourceFacetToFeildPointKernel(
     var = devRCmul(r_sf, var);
     var = devCexp(var);                  // This has phase and attenuation.
     var = devCmul(var, source_pressure); // This includes the orginal pressure.
-    printf("Pressure add to field point prior to spreading: %f, %f\n", var.r, var.i);
+    // printf("Pressure add to field point prior to spreading: %f, %f\n", var.r, var.i);
 
     // Area1 = Pressure the 1Pa over 1m^2
     // Area2 = 4 * PI * r_sf * r_sf
     // atten_spread = Area1 / Area2 <--- important for other projections.
     float att_spread = pixel_area / (4 * M_PI * r_sf * r_sf);
     var = devRCmul(att_spread, var);
-    printf("Spherical spread: %f\n", att_spread);
+    // printf("Spherical spread: %f\n", att_spread);
 
-    printf("Pressure added to field point: %f, %f\n", var.r, var.i);
+    if (devCabs(var) > 1.0)
+    {
+        printf("Pressure is too large to add to field point.\n");
+        printf("r_sf: %f\n", r_sf);
+        printf("source_pressure: %e, %e\n", source_pressure.r, source_pressure.i);
+        printf("Spherical spread: %e\n", att_spread);
+        printf("Pressure add to field point prior to spreading: %e, %e\n", var.r, var.i);
+        return;
+    }
+
+    // printf("Pressure added to field point: %f, %f\n", var.r, var.i);
 
     // Save the pressure to the facet pressure array.
     // Note var may be small and accumulate over may projects that why the complex numbers are doubles.
@@ -530,8 +548,8 @@ int CudaModelTes::ProjectFromFacetsToFieldPoints()
                 dim3 threadsPerBlock(h_Facets_points.x, h_Facets_points.y);
                 dim3 numBlocks(1, 1);
 
-                printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
-                printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
+                // printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
+                // printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
 
                 ProjectSourceFacetToFeildPointKernel<<<numBlocks, threadsPerBlock>>>(
                     dev_k_wave,

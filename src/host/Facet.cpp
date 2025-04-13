@@ -136,8 +136,11 @@ void Facet::MakePixelData(float pixel_length)
 
 	PixelArea = new float[NumXpnts * NumYpnts];
 	PressureValues = new dcomplex[NumXpnts * NumYpnts];
+
 	for (int i = 0; NumXpnts * NumYpnts > i; i++)
 	{
+		PressureValues[i].r = 0;
+		PressureValues[i].i = 0;
 		PixelArea[i] = 0;
 	}
 
@@ -231,9 +234,19 @@ void Facet::MakePixelData(float pixel_length)
 				{
 					// Upper right and lower right out
 					// Line intersecting the pixel top and the pixel bottom.
-					float x_intersect_pixel_top = (yT - Height) / m1;
-					float x_intersect_pixel_bottom = (yB - Height) / m1;
+					float pixel_area = delta * delta;
+					float x_intersect_pixel_top = ((yT - Height) / m1) - xL;
+					float x_intersect_pixel_bottom = ((yB - Height) / m1) - xL;
 					PixelArea[j * NumXpnts + i] = (x_intersect_pixel_top * delta) + (x_intersect_pixel_bottom - x_intersect_pixel_top) * delta / 2;
+
+					if (PixelArea[j * NumXpnts + i] < 0 || PixelArea[j * NumXpnts + i] > pixel_area)
+					{
+						cout << "xL: " << xL << endl;
+						cout << "xR: " << xR << endl;
+						cout << "x_intersect_pixel_top: " << x_intersect_pixel_top << endl;
+						cout << "x_intersect_pixel_bottom: " << x_intersect_pixel_bottom << endl;
+						cout << "Error : Pixel area is less than 0 or greater than the pixel area" << endl;
+					}
 					continue;
 				}
 

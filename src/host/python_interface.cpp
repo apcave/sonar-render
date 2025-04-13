@@ -7,7 +7,7 @@ using namespace std;
 
 ModelTes modelTes;
 
-extern "C" void load_geometry(float *v1, float *v2, float *v3, int num_vertices);
+extern "C" void load_geometry(float *v1, int num_vertices);
 extern "C" void load_field_points(float *v1, int num_feild_points);
 extern "C" void load_source_points(float *v1, int num_source_points);
 extern "C" void set_initial_conditions(float cp, float frequency, float attenuation);
@@ -21,9 +21,8 @@ extern "C" void set_initial_conditions(float cp, float frequency, float attenuat
     cout << "Initial conditions set." << endl;
 };
 
-extern "C" void load_geometry(float *v1, float *v2, float *v3, int num_vertices)
+extern "C" void load_geometry(float *v1, int num_vertices)
 {
-    float *d_a, *d_b, *d_c;
 
     cout << "Allocating device memory..." << endl;
 
@@ -31,9 +30,10 @@ extern "C" void load_geometry(float *v1, float *v2, float *v3, int num_vertices)
 
     for (int i = 0; i < num_vertices; ++i)
     {
-        float3 p_v1 = {v1[i * 3 + 0], v1[i * 3 + 1], v1[i * 3 + 2]};
-        float3 p_v2 = {v2[i * 3 + 0], v2[i * 3 + 1], v2[i * 3 + 2]};
-        float3 p_v3 = {v3[i * 3 + 0], v3[i * 3 + 1], v3[i * 3 + 2]};
+        float3 p_v1 = {v1[i * 9 + 0], v1[i * 9 + 1], v1[i * 9 + 2]};
+        float3 p_v2 = {v1[i * 9 + 3], v1[i * 9 + 4], v1[i * 9 + 5]};
+        float3 p_v3 = {v1[i * 9 + 6], v1[i * 9 + 7], v1[i * 9 + 8]};
+
         object->addFacet(p_v1, p_v2, p_v3);
     }
     modelTes.addTargetObject(object);
