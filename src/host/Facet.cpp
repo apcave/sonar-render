@@ -158,6 +158,7 @@ void Facet::MakePixelData(float pixel_length)
 	bool *yxR = new bool[NumYpnts + 1];
 
 	PixelArea = new float[NumXpnts * NumYpnts];
+	PressureValues = new dcomplex[NumXpnts * NumYpnts];
 	for (int i = 0; NumXpnts * NumYpnts > i; i++)
 	{
 		PixelArea[i] = 0;

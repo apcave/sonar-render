@@ -2,6 +2,7 @@
 #define _ModelTes
 #include "Facet.hpp"
 #include "PressurePoint.hpp"
+#include "CudaModelTes.cuh"
 #include <vector>
 #include <iostream>
 
@@ -9,7 +10,7 @@ using namespace std;
 
 class TargetObject
 {
-private:
+public:
     vector<Facet *> facets;
     // TODO: Add material and medium properties.
 
@@ -34,7 +35,7 @@ public:
     }
 };
 
-class ModelTes
+class ModelTes : public CudaModelTes
 {
 
 private:
@@ -63,7 +64,8 @@ private:
     float frequency;
     float medium_attenuation;
     float omega;
-    float k = omega / medium_waveSpeed;
+    float k;
+    dcomplex k_wave;
     float resolution_factor = 7.5;
     float pixel_length;
 
@@ -89,7 +91,8 @@ public:
         medium_attenuation = attenuation;
         omega = 2 * M_PI * frequency;
         k = omega / cp;
-
+        k_wave.r = (double)k;
+        k_wave.i = (double)attenuation;
         pixel_length = medium_waveSpeed / (frequency * resolution_factor);
 
         cout << "-------------------------------------------\n";
@@ -111,6 +114,19 @@ public:
             cout << "Test!2" << endl;
             targetObject->MakePixelData(pixel_length);
         }
+    }
+
+    void copyToDevice()
+    {
+        StartCuda();
+        int objectCnt = 0;
+        for (auto &targetObject : targetObjects)
+        {
+            auto &object = targetObjects[0];
+            auto &facets = targetObject->facets;
+            MakeObjectOnGPU(facets, k_wave, pixel_length);
+            objectCnt++;
+        };
     }
 };
 

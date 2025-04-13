@@ -1,7 +1,7 @@
+#include "ModelTes.hpp"
+
 #include <cuda_runtime.h>
 #include <iostream>
-
-#include "ModelTes.hpp"
 
 using namespace std;
 
@@ -17,7 +17,7 @@ extern "C" void set_initial_conditions(float cp, float frequency, float attenuat
     cout << "Setting initial conditions..." << endl;
     modelTes.set_inital_conditions(cp, frequency, attenuation);
     cout << "Initial conditions set." << endl;
-}
+};
 
 extern "C" void load_geometry(float *v1, float *v2, float *v3, int num_vertices)
 {
@@ -36,7 +36,7 @@ extern "C" void load_geometry(float *v1, float *v2, float *v3, int num_vertices)
     }
     modelTes.addTargetObject(object);
     cout << "Loaded geometry with " << num_vertices << " vertices." << endl;
-}
+};
 
 extern "C" void load_feild_points(float *v1, int num_feild_points)
 {
@@ -50,10 +50,13 @@ extern "C" void load_feild_points(float *v1, int num_feild_points)
     }
 
     cout << "Loaded field points with " << num_feild_points << " points." << endl;
-}
+};
+
 extern "C" void pixelate_facets()
 {
     cout << "Pixelating facets..." << endl;
     modelTes.pixelate_facets();
     cout << "Pixelated facets." << endl;
-}
+    modelTes.copyToDevice();
+    cout << "Copied data to device." << endl;
+};
