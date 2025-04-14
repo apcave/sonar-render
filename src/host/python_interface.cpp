@@ -10,14 +10,14 @@ ModelTes modelTes;
 extern "C" void load_geometry(float *v1, int num_vertices);
 extern "C" void load_field_points(float *v1, int num_feild_points);
 extern "C" void load_source_points(float *v1, int num_source_points);
-extern "C" void set_initial_conditions(float cp, float frequency, float attenuation);
+extern "C" void set_initial_conditions(float cp, float frequency, float attenuation, float density);
 extern "C" void pixelate_facets();
 extern "C" void GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints);
 
-extern "C" void set_initial_conditions(float cp, float frequency, float attenuation)
+extern "C" void set_initial_conditions(float cp, float frequency, float attenuation, float density)
 {
     cout << "Setting initial conditions..." << endl;
-    modelTes.set_inital_conditions(cp, frequency, attenuation);
+    modelTes.set_inital_conditions(cp, frequency, attenuation, density);
     cout << "Initial conditions set." << endl;
 };
 

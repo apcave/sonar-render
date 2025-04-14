@@ -149,16 +149,22 @@ def make_rectangle(length, width):
     print("STL file 'rectangular_plate.stl' created successfully!")
     return plate;
 
-stl_mesh = make_rectangle(3.0,2.0)
+a = 3.0
+b = 2.0
+cp = 1480.0
+frequency = 2.0e3
+Radius = 50.0
+
+stl_mesh = make_rectangle(a,b)
 #stl_mesh = mesh.Mesh.from_file('./testing/rectangular_plate.stl')
 source_pnts = []
-source_pnts.append([0.0,0.0,15.0])
+source_pnts.append([0.0,0.0,Radius])
 angles = np.linspace(-180, 180, 360, endpoint=False)
-field_pnts= generate_field_points(15, angles)
+field_pnts= generate_field_points(Radius, angles)
 
 load_points_to_cuda(source_pnts, isSource=True)
 load_points_to_cuda(field_pnts, isSource=False)
-set_initial_conditions(1480.0, 2.0e3, 0.0)
+set_initial_conditions(cp, frequency, 0.0)
 load_stl_mesh_to_cuda(stl_mesh)
 pixelate_facets()
 
@@ -166,15 +172,63 @@ pixelate_facets()
 
 field_vals = GetFieldPoints(len(field_pnts))
 
+
+
 magnitudes = np.sqrt(field_vals[:, 0]**2 + field_vals[:, 1]**2)
+magnitudes = np.sqrt(magnitudes)
 magnitudes = np.where(magnitudes == 0, np.finfo(float).eps, magnitudes)
 
 
 db_values = 20 * np.log10(magnitudes)
 
+wavelength = cp / frequency
+A = a*b
+TES = 10*np.log10((4*np.pi*A**2)/(wavelength**2))
+print('Target Strength = ', TES)
+EchoLevel = TES - 2 * 20 * np.log10(Radius)
+print('Echo Level = ', EchoLevel)
+
+
+wavelength = cp / frequency
+A = a*b
+TES = 10*np.log10((4*np.pi*A**2)/(wavelength**2))
+TL = 2 * 20 * np.log10(Radius)
+print("<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>")
+print('Target Echo Strength = ', TES)
+print('Transmission Loss = ', TL)
+print("<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>")
+
+# Using the Cross-Sectional Area
+CrossSection = ((4*np.pi)*(A**2))/(wavelength**2)
+print('Cross Section = ', CrossSection)
+PressureRatio = (CrossSection/ (4*np.pi*Radius**2))**0.5
+print('Pressure Ratio = ', PressureRatio)
+PressureRatio_db = 20*np.log10(PressureRatio)
+print('Pressure Ratio (dB) = ', PressureRatio_db)
+TransmissionLoss_db = 20*np.log10((1/(4*np.pi*Radius**2)))
+print('Transmission Loss = ', TransmissionLoss_db)
+EchoRatio_db = PressureRatio_db + TransmissionLoss_db
+EchoRatio = PressureRatio/(4*np.pi*Radius**2)
+print("<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>")
+print( "This is close to the modelled value.")
+print('Echo Ratio = ', 20*np.log10(EchoRatio))
+print("<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>")
+
+wavelength = cp / frequency
+A = a*b
+TES = 10*np.log10(4*np.pi*A**2/wavelength**2)
+print('Target Strength = ', TES)
+EchoLevel = TES - 2 * 20 * np.log10(Radius)
+print('Echo Level = ', EchoLevel)
+
+modelled_TES = -41.25 + 40*np.log10(Radius)
+print('Modelled Target Strength = ', modelled_TES)
+
+
+
 # Plot the data
 plt.figure()
-plt.plot(angles, db_values, label="Field Values (dB)")
+plt.plot(angles, db_values + 40*np.log10(Radius), label="Field Values (dB)")
 plt.xlabel("Angle (degrees)")
 plt.ylabel("Field Value (dB)")
 plt.title("Field Values vs. Angle")

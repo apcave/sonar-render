@@ -68,6 +68,7 @@ private:
     dcomplex k_wave;
     float resolution_factor = 7.5;
     float pixel_length;
+    float density;
 
 public:
     void addFeildPoint(float3 p1)
@@ -97,11 +98,12 @@ public:
         // This is a placeholder for the actual implementation
         targetObjects.push_back(object);
     }
-    void set_inital_conditions(float cp, float t_frequency, float attenuation)
+    void set_inital_conditions(float cp, float t_frequency, float attenuation, float t_density)
     {
         medium_waveSpeed = cp;
         frequency = t_frequency;
         medium_attenuation = attenuation;
+        density = t_density;
         omega = 2 * M_PI * frequency;
         k = omega / cp;
         k_wave.r = (double)k;
@@ -112,6 +114,7 @@ public:
         cout << "Medium Wave Speed: " << medium_waveSpeed << endl;
         cout << "Frequency: " << frequency << endl;
         cout << "Medium Attenuation: " << medium_attenuation << endl;
+        cout << "Medium Density: " << density << endl;
         cout << "Omega: " << omega << endl;
         cout << "Wave Number: " << k << endl;
         cout << "Pixel Length: " << pixel_length << endl;
