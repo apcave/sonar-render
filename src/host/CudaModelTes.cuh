@@ -7,10 +7,26 @@
 #include <vector>
 using namespace std;
 
+/**
+ * @brief CudaModelTes is a class that manages the GPU resources and
+ *        calculations for the pressure field in a 3D model.
+ *
+ * Memory on the device is allocated and stored in points dev_.
+ * Data to be used on the host processor is marked with host_.
+ *
+ * The function definitions are spread across multiple CUDA files.
+ * The CUDA kernels map some of the class functions as C style functions.
+ * Each CUDA kernel is defined in a separate file with the C++ class function
+ * that calls it.
+ */
+
 class CudaModelTes
 {
 protected:
+    // Global parameters.
+    // Complex wave number.
     dcomplex *dev_k_wave;
+    // Pixel length and width.
     float *dev_pixel_delta;
 
     // Object based data.
@@ -46,8 +62,6 @@ protected:
     int StartCuda();
     int StopCuda();
     int DoCalculations();
-
-    int TestGPU();
 
     int ProjectSourcePointsToFacet();
     int ProjectFromFacetsToFieldPoints();
