@@ -7,7 +7,7 @@ from stl import mesh
 from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 
-cpp_lib = ctypes.CDLL('./src/host/cuda_project.so')
+cpp_lib = ctypes.CDLL('./build/libcuda_project.so')
 
 def set_initial_conditions(cp, frequency, attenuation):
     """ Sets the initial conditions of the CUDA model."""
@@ -228,7 +228,7 @@ print('Modelled Target Strength = ', modelled_TES)
 
 # Plot the data
 plt.figure()
-plt.plot(angles, db_values + 40*np.log10(Radius), label="Field Values (dB)")
+plt.plot(angles, db_values  + 40*np.log10(Radius), label="Field Values (dB)")
 plt.xlabel("Angle (degrees)")
 plt.ylabel("Field Value (dB)")
 plt.title("Field Values vs. Angle")

@@ -1,3 +1,0 @@
-/home/apcave/alex-portfolio/sonar-render/src/host/build/CMakeFiles/cuda_project.dir
-/home/apcave/alex-portfolio/sonar-render/src/host/build/CMakeFiles/edit_cache.dir
-/home/apcave/alex-portfolio/sonar-render/src/host/build/CMakeFiles/rebuild_cache.dir
