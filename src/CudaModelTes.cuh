@@ -61,6 +61,8 @@ protected:
     // Mutexes that provide for write safety only one thread can write to a facet at a time.
     vector<vector<int *>> mutex_in_cuda;
 
+    vector<vector<int *>> dev_Object_Facets_pixel_mutex;
+
 public:
     CudaModelTes() {};
     ~CudaModelTes() {};

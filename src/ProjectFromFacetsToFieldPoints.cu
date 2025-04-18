@@ -17,7 +17,10 @@ __global__ void ProjectFacetToFieldPointKernel(
     float3 *facets_xaxis,
     float3 *facets_yaxis,
     float **facets_PixelArea,
-    dcomplex **facets_Pressure)
+    dcomplex **facets_Pressure,
+    cudaSurfaceObject_t Pr_facet,
+    cudaSurfaceObject_t Pi_facet,
+    int *mutex_facet)
 {
     dcomplex k = *k_wave;
     float delta = *pixel_delta;
@@ -70,7 +73,14 @@ __global__ void ProjectFacetToFieldPointKernel(
     P1g.z = xAxis.z + yAxis.z + facet_base.z;
     // printf("Facet Point Global Ref: %f, %f, %f\n", P1g.x, P1g.y, P1g.z);
 
-    dcomplex source_pressure = facets_Pressure[facet_num][yPnt * NumXpnts + xPnt];
+    // dcomplex source_pressure = facets_Pressure[facet_num][yPnt * NumXpnts + xPnt];
+
+    float tmp_r, tmp_i;
+    surf2Dread<float>(&tmp_r, Pr_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
+    surf2Dread<float>(&tmp_i, Pi_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
+    dcomplex source_pressure;
+    source_pressure.r = tmp_r;
+    source_pressure.i = tmp_i;
 
     // The distance from the source point to the facet point.
     float r_sf = sqrtf((P1g.x - P2g.x) * (P1g.x - P2g.x) + (P1g.y - P2g.y) * (P1g.y - P2g.y) + (P1g.z - P2g.z) * (P1g.z - P2g.z));

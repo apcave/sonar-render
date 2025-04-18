@@ -181,7 +181,7 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     tmp_r = (float)PA_press.r + delta_Press_atA.r;
     tmp_i = (float)PA_press.i + delta_Press_atA.i;
 
-    while (atomicCAS(mutex_facet_A, 0, 1) != 0)
+    while (atomicCAS(&mutex_facet_A[index_A], 0, 1) != 0)
     {
     }
     surf2Dwrite<float>(tmp_r, Pr_facet_A, xPnt_A * sizeof(float), yPnt_A, cudaBoundaryModeTrap);
@@ -190,7 +190,7 @@ __global__ void ProjectFromFacetsToFacetsKernel(
 
     tmp_r = (float)PB_press.r + delta_Press_atB.r;
     tmp_i = (float)PB_press.i + delta_Press_atB.i;
-    while (atomicCAS(mutex_facet_B, 0, 1) != 0)
+    while (atomicCAS(&mutex_facet_B[index_B], 0, 1) != 0)
     {
     }
     surf2Dwrite<float>(tmp_r, Pr_facet_B, xPnt_B * sizeof(float), yPnt_B, cudaBoundaryModeTrap);
@@ -225,7 +225,7 @@ int CudaModelTes::ProjectFromFacetsToFacets()
             {
                 for (int facet_num_b = 0; facet_num_b < host_object_num_facets[object_num_b]; facet_num_b++)
                 {
-                    printf("Facet A: %d, %d <<--->> Facet B: %d, %d\n", object_num_a, facet_num_a, object_num_b, facet_num_b);
+                    // printf("Facet A: %d, %d <<--->> Facet B: %d, %d\n", object_num_a, facet_num_a, object_num_b, facet_num_b);
 
                     int3 h_Facets_a_points = host_Object_Facets_points[object_num_a][facet_num_a];
                     int3 h_Facets_b_points = host_Object_Facets_points[object_num_b][facet_num_b];
@@ -233,31 +233,8 @@ int CudaModelTes::ProjectFromFacetsToFacets()
                     dim3 threadsPerBlock(h_Facets_a_points.x, h_Facets_a_points.y);
                     dim3 numBlocks(h_Facets_b_points.x, h_Facets_b_points.y);
 
-                    printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
-                    printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
-
-                    if (dev_Object_Facets_Surface_Pr[object_num_a][facet_num_a] == 0)
-                    {
-                        printf("dev_Object_Facets_Surface_Pr[object_num_a][facet_num_a] is null\n");
-                        return 1;
-                    }
-                    if (dev_Object_Facets_Surface_Pr[object_num_b][facet_num_b] == 0)
-                    {
-                        
-                        printf("dev_Object_Facets_Surface_Pr[object_num_b][facet_num_b] is null\n");
-                        return 1;
-                    }
-
-                    if (dev_Object_Facets_Surface_Pi[object_num_a][facet_num_a] == 0)
-                    {
-                        printf("dev_Object_Facets_Surface_Pi[object_num_a][facet_num_a] is null\n");
-                        return 1;
-                    }
-                    if (dev_Object_Facets_Surface_Pi[object_num_b][facet_num_b] == 0)
-                    {
-                        printf("dev_Object_Facets_Surface_Pi[object_num_b][facet_num_b] is null\n");
-                        return 1;
-                    }
+                    // printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
+                    //  printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
 
                     ProjectFromFacetsToFacetsKernel<<<numBlocks, threadsPerBlock>>>(
                         dev_k_wave,
@@ -272,10 +249,10 @@ int CudaModelTes::ProjectFromFacetsToFacets()
                         dev_Object_Facets_Pressure[0],
                         dev_Object_Facets_Surface_Pr[0][facet_num_a],
                         dev_Object_Facets_Surface_Pi[0][facet_num_a],
-                        mutex_in_cuda[0][facet_num_a],
+                        dev_Object_Facets_pixel_mutex[0][facet_num_a],
                         dev_Object_Facets_Surface_Pr[0][facet_num_b],
                         dev_Object_Facets_Surface_Pi[0][facet_num_b],
-                        mutex_in_cuda[0][facet_num_b]);
+                        dev_Object_Facets_pixel_mutex[0][facet_num_b]);
 
                     cudaError_t err = cudaGetLastError();
                     if (err != cudaSuccess)

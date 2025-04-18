@@ -123,25 +123,16 @@ __global__ void ProjectSourcePointToFacetKernel(
     tmp_r += (float)var.r;
     tmp_i += (float)var.i;
 
-    // printf("Mutex Value: %d\n", *mutex_facet);
-    //  printf("atomicCAS: %d\n", atomicCAS(mutex_facet, 0, 1));
-    while (*mutex_facet == 1)
-    {
-        // printf("Mutex Value: %d\n", *mutex_facet);
-    }
+    int index = yPnt * NumXpnts + xPnt;
 
-    printf("Mutex Value: %d\n", *mutex_facet);
-
-    while (atomicCAS(mutex_facet, 0, 1) != 0)
+    while (atomicCAS(&mutex_facet[index], 0, 1) != 0)
     {
         // spin until the mutex is aquired.
     }
 
-    printf("Started surface write.");
-    // surf2Dwrite<float>(tmp_r, Pr_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
-    // surf2Dwrite<float>(tmp_i, Pi_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
+    surf2Dwrite<float>(tmp_r, Pr_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
+    surf2Dwrite<float>(tmp_i, Pi_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
     atomicExch(mutex_facet, 0);
-    printf("Exiting mutex\n");
 }
 
 int CudaModelTes::ProjectSourcePointsToFacet()
@@ -187,7 +178,7 @@ int CudaModelTes::ProjectSourcePointsToFacet()
                     dev_Object_Facets_Pressure[object_num],
                     dev_Object_Facets_Surface_Pr[object_num][facet_num],
                     dev_Object_Facets_Surface_Pi[object_num][facet_num],
-                    mutex_in_cuda[object_num][facet_num]);
+                    dev_Object_Facets_pixel_mutex[object_num][facet_num]);
 
                 cudaError_t err = cudaGetLastError();
                 if (err != cudaSuccess)
