@@ -1,5 +1,22 @@
 #include "OpenGL_TES.hpp"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+void SetPerspective(float fov, float aspect, float near, float far)
+{
+    float top = near * tan(fov * 0.5f * M_PI / 180.0f);
+    float bottom = -top;
+    float right = top * aspect;
+    float left = -right;
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    glFrustum(left, right, bottom, top, near, far);
+}
+
 OpenGL_TES::OpenGL_TES() {}
 
 OpenGL_TES::~OpenGL_TES() {}
@@ -29,23 +46,17 @@ void OpenGL_TES::InitOpenGL()
         exit(EXIT_FAILURE);
     }
 
-    // glEnable(GL_DEPTH_TEST);
+    glClearColor(0.96f, 0.96f, 0.86f, 1.0f); // Beige background
 
-    // Set the beige background color
-    // glClearColor(0.96f, 0.96f, 0.86f, 1.0f); // Beige background
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 100.0f);
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixf(glm::value_ptr(projection));
 
-    // glMatrixMode(GL_PROJECTION);
-    // glLoadIdentity();
-    // gluPerspective(45.0, (double)window_width / (double)window_height, 0.1, 100.0);
-
-    // glViewport(0, 0, window_width, window_height);
-
-    // gluLookAt(0.0, 5.0, 5.0,  // Camera position
-    //           0.0, 0.0, 0.0,  // Look-at point
-    //           0.0, 1.0, 0.0); // Up vector
-
-    // glMatrixMode(GL_MODELVIEW);
-    // glLoadIdentity();
+    glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f),  // Camera position
+                                 glm::vec3(0.0f, 0.0f, 0.0f),  // Look-at point
+                                 glm::vec3(0.0f, 1.0f, 0.0f)); // Up vector
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(glm::value_ptr(view));
 }
 
 void OpenGL_TES::RenderGL()
@@ -141,19 +152,9 @@ void OpenGL_TES::RenderObject()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glBegin(GL_TRIANGLES);
-    glColor3f(1.0f, 0.0f, 0.0f); // Red
-    glVertex3f(-0.5f, -0.5f, 0.0f);
-    glColor3f(0.0f, 1.0f, 0.0f); // Green
-    glVertex3f(0.5f, -0.5f, 0.0f);
-    glColor3f(0.0f, 0.0f, 1.0f); // Blue
-    glVertex3f(0.0f, 0.5f, 0.0f);
-    glEnd();
+    // glColor3f(1.0f, 1.0f, 1.0f); // White color
 
-    /*
-    glColor3f(1.0f, 1.0f, 1.0f); // White color
-
-    // Bind the VBO
+    // // Bind the VBO
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glEnableClientState(GL_VERTEX_ARRAY);
     glVertexPointer(3, GL_FLOAT, sizeof(float4), 0);
@@ -164,13 +165,11 @@ void OpenGL_TES::RenderObject()
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    */
 }
 
 int OpenGL_TES::MakeObjectOnGL(std::vector<Facet *> facets)
 {
     std::cout << "MakeObjectOnGL: " << facets.size() << std::endl;
-    return 1;
 
     int numFacets = facets.size();
 

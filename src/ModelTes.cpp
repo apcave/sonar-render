@@ -93,6 +93,6 @@ void ModelTes::RenderOpenGL()
 
     InitOpenGL();
     std::cout << "OpenGL initialized successfully." << std::endl;
-    // MakeObjectOnGL(targetObjects[0]->facets);
+    MakeObjectOnGL(targetObjects[0]->facets);
     RenderGL();
 }
