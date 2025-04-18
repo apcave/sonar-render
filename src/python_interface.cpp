@@ -2,6 +2,9 @@
 
 #include <cuda_runtime.h>
 #include <iostream>
+#include <thrust/complex.h>
+#include <complex>
+#include <thrust/device_vector.h>
 
 using namespace std;
 

@@ -7,3 +7,6 @@ sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda
 sudo apt update
 
 nvcc --version
+
+sudo apt update
+sudo apt install libglew-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev

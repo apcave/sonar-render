@@ -2,6 +2,13 @@
 
 #ifndef _DCOMPLEX
 #define _DCOMPLEX
+
+/**
+ * @brief double struct to hold complex numbers.
+ *
+ * I have created this struct and the associated functions to avoid using the thrust or STL library.
+ * The functions are all C style functions, so they can be used in both C and C++ code.
+ */
 typedef struct DCOMPLEX
 {
 	double r, i;

@@ -45,7 +45,7 @@ So the pressure amplitude is determined by wave energy this also includes the at
 
 Given a starting surface pressure amplitude at $i$ can be defined as
 $$
-p_i = I_i \cdot \rho \cdot cp
+p_i = (I_i \cdot \rho \cdot cp)^{1/2}
 $$
 and the intensity at surface $j$, 
 $$
@@ -53,11 +53,11 @@ I_j = I_i \cdot (A_i/A_j)
 $$
 Where $A_i$ is the area of surface $i$ and $A_j$ at surface $j$. Leading to
 $$
-p_j = I_j \cdot \rho \cdot cp = I_i \cdot (A_i/A_j) \cdot \rho \cdot cp
+p_j = (I_j \cdot \rho \cdot cp)^{1/2} = (I_i \cdot (A_i/A_j) \cdot \rho \cdot cp)^{1/2}
 $$
 So the pressure rations of 
 $$
-p_j / p_i = A_i/A_j
+p_j / p_i = \sqrt{A_i/A_j} 
 $$
 so the pressure amplitudes due to spreading is proportion the ratio of surface areas.
 
