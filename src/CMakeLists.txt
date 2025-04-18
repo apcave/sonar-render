@@ -23,6 +23,7 @@ set(CU_SRC
 set(CPP_SRC
     python_interface.cpp
     Facet.cpp
+    OpenGL_TES.cpp
 )
 
 # Add the shared library target
@@ -55,18 +56,3 @@ set_target_properties(${TARGET_NAME} PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON
     POSITION_INDEPENDENT_CODE ON
 )
-
-# Add OpenGL-related source file as a standalone executable
-add_executable(OpenGLExample ../visualise/OpenGL.cu)
-
-# Link OpenGL, GLEW, and GLFW libraries for the OpenGL executable
-target_link_libraries(OpenGLExample PRIVATE
-    OpenGL::GL
-    GLEW::GLEW
-    glfw
-    cuda
-    cudart
-)
-
-# Include directories for the OpenGL executable
-target_include_directories(OpenGLExample PRIVATE include ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})

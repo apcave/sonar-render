@@ -147,7 +147,13 @@ def make_rectangle(length, width):
     plate.save('rectangular_plate.stl')
 
     print("STL file 'rectangular_plate.stl' created successfully!")
-    return plate;
+    return plate
+
+def render_openGL():
+    """Render the OpenGL window."""
+
+    cpp_lib.RenderOpenGL()
+
 
 a = 3.0
 b = 2.0
@@ -236,4 +242,5 @@ plt.grid(True)
 plt.legend()
 plt.show()
 
+render_openGL()
 

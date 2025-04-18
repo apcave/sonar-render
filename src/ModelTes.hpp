@@ -3,6 +3,7 @@
 #include "Facet.hpp"
 #include "PressurePoint.hpp"
 #include "CudaModelTes.cuh"
+#include "OpenGL_TES.hpp"
 #include <vector>
 #include <iostream>
 
@@ -35,7 +36,7 @@ public:
     }
 };
 
-class ModelTes : public CudaModelTes
+class ModelTes : public CudaModelTes, public OpenGL_TES
 {
 
 private:
@@ -153,6 +154,13 @@ public:
     {
         // Copy the pressure values from the device to the host
         GetFieldPointValGPU(field_points_pressure);
+    }
+
+    void RenderOpenGL()
+    {
+        // Call the OpenGL rendering function
+        // This is a placeholder for the actual implementation
+        RenderGL();
     }
 };
 
