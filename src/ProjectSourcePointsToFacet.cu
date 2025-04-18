@@ -24,7 +24,10 @@ __global__ void ProjectSourcePointToFacetKernel(
     float3 *facets_xaxis,
     float3 *facets_yaxis,
     float **facets_PixelArea,
-    dcomplex **facets_Pressure)
+    dcomplex **facets_Pressure,
+    cudaSurfaceObject_t Pr_facet,
+    cudaSurfaceObject_t Pi_facet,
+    int *mutex_facet)
 {
     dcomplex k = *k_wave;
     float delta = *pixel_delta;
@@ -110,12 +113,41 @@ __global__ void ProjectSourcePointToFacetKernel(
     // Note var may be small and accumulate over may projects that why the complex numbers are doubles.
     atomicAddDouble(&(facets_Pressure[facet_num][yPnt * NumXpnts + xPnt].r), var.r);
     atomicAddDouble(&(facets_Pressure[facet_num][yPnt * NumXpnts + xPnt].i), var.i);
+
+    float tmp_r, tmp_i;
+    surf2Dread<float>(&tmp_r, Pr_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
+    surf2Dread<float>(&tmp_i, Pi_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
+
+    // printf("Read surface: %f, %f\n", tmp_r, tmp_i);
+
+    tmp_r += (float)var.r;
+    tmp_i += (float)var.i;
+
+    // printf("Mutex Value: %d\n", *mutex_facet);
+    //  printf("atomicCAS: %d\n", atomicCAS(mutex_facet, 0, 1));
+    while (*mutex_facet == 1)
+    {
+        // printf("Mutex Value: %d\n", *mutex_facet);
+    }
+
+    printf("Mutex Value: %d\n", *mutex_facet);
+
+    while (atomicCAS(mutex_facet, 0, 1) != 0)
+    {
+        // spin until the mutex is aquired.
+    }
+
+    printf("Started surface write.");
+    // surf2Dwrite<float>(tmp_r, Pr_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
+    // surf2Dwrite<float>(tmp_i, Pi_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
+    atomicExch(mutex_facet, 0);
+    printf("Exiting mutex\n");
 }
 
 int CudaModelTes::ProjectSourcePointsToFacet()
 {
     // Every facet can have a different number of pixels, where n = 1096^0.5 is the maximum number of pixels per facet.
-    // printf("Host ProjectPointToFacet....\n");
+    printf("Host ProjectPointToFacet....\n");
 
     for (int source_point_num = 0; source_point_num < host_num_source_points; source_point_num++)
     {
@@ -128,8 +160,17 @@ int CudaModelTes::ProjectSourcePointsToFacet()
                 dim3 threadsPerBlock(h_Facets_points.x, h_Facets_points.y);
                 dim3 numBlocks(1, 1);
 
-                // printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
-                // printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
+                // printf("Mutex Address : "
+                //        "%p\n",
+                //        mutex_in_cuda[object_num][facet_num]);
+
+                // printf("Surface Real Address : "
+                //        "%p\n",
+                //        dev_Object_Facets_Surface_Pr[object_num][facet_num]);
+
+                // printf("Surface Imaginary Address : "
+                //        "%p\n",
+                //        dev_Object_Facets_Surface_Pi[object_num][facet_num]);
 
                 ProjectSourcePointToFacetKernel<<<numBlocks, threadsPerBlock>>>(
                     dev_k_wave,
@@ -143,7 +184,10 @@ int CudaModelTes::ProjectSourcePointsToFacet()
                     dev_Object_Facets_xAxis[object_num],
                     dev_Object_Facets_yAxis[object_num],
                     dev_Object_Facets_PixelArea[object_num],
-                    dev_Object_Facets_Pressure[object_num]);
+                    dev_Object_Facets_Pressure[object_num],
+                    dev_Object_Facets_Surface_Pr[object_num][facet_num],
+                    dev_Object_Facets_Surface_Pi[object_num][facet_num],
+                    mutex_in_cuda[object_num][facet_num]);
 
                 cudaError_t err = cudaGetLastError();
                 if (err != cudaSuccess)
@@ -156,5 +200,7 @@ int CudaModelTes::ProjectSourcePointsToFacet()
     }
 
     cudaDeviceSynchronize();
+
+    printf("ProjectSourcePointsToFacet done.\n");
     return 0;
 }

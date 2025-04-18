@@ -127,7 +127,7 @@ void OpenGL_TES::UpdateBuffers()
 
     cudaGraphicsUnmapResources(1, &cuda_vbo_resource, 0);
 
-    // // Map Texture
+    // // // Map Texture
     // cudaArray_t d_texture_array;
     // cudaGraphicsMapResources(1, &cuda_texture_resource, 0);
     // cudaGraphicsSubResourceGetMappedArray(&d_texture_array, cuda_texture_resource, 0, 0);

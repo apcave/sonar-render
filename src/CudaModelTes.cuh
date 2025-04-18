@@ -33,6 +33,14 @@ protected:
     vector<int> host_object_num_facets;
     vector<float **> dev_Object_Facets_PixelArea; // constant
     vector<dcomplex **> dev_Object_Facets_Pressure;
+
+    vector<vector<cudaSurfaceObject_t>> dev_Object_Facets_Surface_Pr;
+    vector<vector<cudaSurfaceObject_t>> dev_Object_Facets_Surface_Pi;
+
+    // These are used to the calculated pressure on the facet during GL rendering.
+    vector<vector<cudaTextureObject_t>> dev_Object_Facets_Texture_Pr; // constant
+    vector<vector<cudaTextureObject_t>> dev_Object_Facets_Texture_Pi; // constant
+
     vector<int3 *> dev_Object_Facets_points;    // constant
     vector<float3 *> dev_Object_Facets_Normals; // constant
     vector<float3 *> dev_Object_base_points;    // constant
@@ -49,6 +57,9 @@ protected:
 
     // These are used to manage CUDA threads.
     vector<int3 *> host_Object_Facets_points;
+
+    // Mutexes that provide for write safety only one thread can write to a facet at a time.
+    vector<vector<int *>> mutex_in_cuda;
 
 public:
     CudaModelTes() {};
@@ -68,6 +79,12 @@ protected:
     int ProjectFromFacetsToFacets();
 
     int GetFieldPointValGPU(dcomplex *field_points_pressure);
+
+private:
+    void AllocateTexture(int num_xpnts,
+                         int num_ypnts,
+                         vector<cudaSurfaceObject_t> *dest_surface,
+                         vector<cudaTextureObject_t> *dest_texture);
 };
 
 #endif

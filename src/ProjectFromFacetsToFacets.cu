@@ -22,8 +22,16 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     float3 *facets_xaxis,
     float3 *facets_yaxis,
     float **facets_PixelArea,
-    dcomplex **facets_Pressure)
+    dcomplex **facets_Pressure,
+    cudaSurfaceObject_t Pr_facet_A,
+    cudaSurfaceObject_t Pi_facet_A,
+    int *mutex_facet_A,
+    cudaSurfaceObject_t Pr_facet_B,
+    cudaSurfaceObject_t Pi_facet_B,
+    int *mutex_facet_B)
 {
+    return;
+
     dcomplex k = *k_wave;
     float delta = *pixel_delta;
 
@@ -101,6 +109,19 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     dcomplex PA_press = facets_Pressure[facet_num_A][yPnt_A * NumXpnts_A + xPnt_A];
     dcomplex PB_press = facets_Pressure[facet_num_B][yPnt_B * NumXpnts_B + xPnt_B];
 
+    float tmp_r, tmp_i;
+    // surf2Dread<float>(&tmp_r, Pr_facet_A, xPnt_A * sizeof(float), yPnt_A, cudaBoundaryModeTrap);
+    // surf2Dread<float>(&tmp_i, Pi_facet_A, xPnt_A * sizeof(float), yPnt_A, cudaBoundaryModeTrap);
+    // dcomplex PA_press;
+    // PA_press.r = tmp_r;
+    // PA_press.i = tmp_i;
+
+    // surf2Dread<float>(&tmp_r, Pr_facet_B, xPnt_B * sizeof(float), yPnt_B, cudaBoundaryModeTrap);
+    // surf2Dread<float>(&tmp_i, Pi_facet_B, xPnt_B * sizeof(float), yPnt_B, cudaBoundaryModeTrap);
+    // dcomplex PB_press;
+    // PB_press.r = tmp_r;
+    // PB_press.i = tmp_i;
+
     // The distance from the source point to the facet point.
     float r_AB = sqrtf((PAg.x - PBg.x) * (PAg.x - PBg.x) + (PAg.y - PBg.y) * (PAg.y - PBg.y) + (PAg.z - PBg.z) * (PAg.z - PBg.z));
 
@@ -146,13 +167,35 @@ __global__ void ProjectFromFacetsToFacetsKernel(
 
     // printf("Pressure added to field point: %f, %f\n", var.r, var.i);
 
+    int index_A = yPnt_A * NumXpnts_A + xPnt_A;
+    int index_B = yPnt_B * NumXpnts_B + xPnt_B;
+
     // Save the pressure to the facet pressure array.
     // Note var may be small and accumulate over may projects that why the complex numbers are doubles.
-    atomicAddDouble(&(facets_Pressure[facet_num_A][yPnt_A * NumXpnts_A + xPnt_A]).r, delta_Press_atA.r);
-    atomicAddDouble(&(facets_Pressure[facet_num_A][yPnt_A * NumXpnts_A + xPnt_A]).i, delta_Press_atA.i);
+    atomicAddDouble(&(facets_Pressure[facet_num_A][index_A]).r, delta_Press_atA.r);
+    atomicAddDouble(&(facets_Pressure[facet_num_A][index_A]).i, delta_Press_atA.i);
 
-    atomicAddDouble(&(facets_Pressure[facet_num_B][yPnt_B * NumXpnts_B + xPnt_B]).r, delta_Press_atB.r);
-    atomicAddDouble(&(facets_Pressure[facet_num_B][yPnt_B * NumXpnts_B + xPnt_B]).i, delta_Press_atB.i);
+    atomicAddDouble(&(facets_Pressure[facet_num_B][index_B]).r, delta_Press_atB.r);
+    atomicAddDouble(&(facets_Pressure[facet_num_B][index_B]).i, delta_Press_atB.i);
+
+    tmp_r = (float)PA_press.r + delta_Press_atA.r;
+    tmp_i = (float)PA_press.i + delta_Press_atA.i;
+
+    while (atomicCAS(mutex_facet_A, 0, 1) != 0)
+    {
+    }
+    surf2Dwrite<float>(tmp_r, Pr_facet_A, xPnt_A * sizeof(float), yPnt_A, cudaBoundaryModeTrap);
+    surf2Dwrite<float>(tmp_i, Pi_facet_A, xPnt_A * sizeof(float), yPnt_A, cudaBoundaryModeTrap);
+    atomicExch(mutex_facet_A, 0);
+
+    tmp_r = (float)PB_press.r + delta_Press_atB.r;
+    tmp_i = (float)PB_press.i + delta_Press_atB.i;
+    while (atomicCAS(mutex_facet_B, 0, 1) != 0)
+    {
+    }
+    surf2Dwrite<float>(tmp_r, Pr_facet_B, xPnt_B * sizeof(float), yPnt_B, cudaBoundaryModeTrap);
+    surf2Dwrite<float>(tmp_i, Pi_facet_B, xPnt_B * sizeof(float), yPnt_B, cudaBoundaryModeTrap);
+    atomicExch(mutex_facet_B, 0);
 }
 
 /**
@@ -172,6 +215,8 @@ int CudaModelTes::ProjectFromFacetsToFacets()
     // TODO: Restrict the pixel maxtrix to 1024 pixels.
     // printf("ProjectFromFacetsToFacets .......\n");
 
+    // One mutex per facet, locks it so only one thread can write to the surface at a time.
+
     for (int object_num_a = 0; object_num_a < host_object_num_facets.size(); object_num_a++)
     {
         for (int facet_num_a = 0; facet_num_a < host_object_num_facets[object_num_a]; facet_num_a++)
@@ -180,7 +225,7 @@ int CudaModelTes::ProjectFromFacetsToFacets()
             {
                 for (int facet_num_b = 0; facet_num_b < host_object_num_facets[object_num_b]; facet_num_b++)
                 {
-                    // printf("Facet A: %d, %d <<--->> Facet B: %d, %d\n", object_num_a, facet_num_a, object_num_b, facet_num_b);
+                    printf("Facet A: %d, %d <<--->> Facet B: %d, %d\n", object_num_a, facet_num_a, object_num_b, facet_num_b);
 
                     int3 h_Facets_a_points = host_Object_Facets_points[object_num_a][facet_num_a];
                     int3 h_Facets_b_points = host_Object_Facets_points[object_num_b][facet_num_b];
@@ -188,8 +233,31 @@ int CudaModelTes::ProjectFromFacetsToFacets()
                     dim3 threadsPerBlock(h_Facets_a_points.x, h_Facets_a_points.y);
                     dim3 numBlocks(h_Facets_b_points.x, h_Facets_b_points.y);
 
-                    // printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
-                    // printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
+                    printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
+                    printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
+
+                    if (dev_Object_Facets_Surface_Pr[object_num_a][facet_num_a] == 0)
+                    {
+                        printf("dev_Object_Facets_Surface_Pr[object_num_a][facet_num_a] is null\n");
+                        return 1;
+                    }
+                    if (dev_Object_Facets_Surface_Pr[object_num_b][facet_num_b] == 0)
+                    {
+                        
+                        printf("dev_Object_Facets_Surface_Pr[object_num_b][facet_num_b] is null\n");
+                        return 1;
+                    }
+
+                    if (dev_Object_Facets_Surface_Pi[object_num_a][facet_num_a] == 0)
+                    {
+                        printf("dev_Object_Facets_Surface_Pi[object_num_a][facet_num_a] is null\n");
+                        return 1;
+                    }
+                    if (dev_Object_Facets_Surface_Pi[object_num_b][facet_num_b] == 0)
+                    {
+                        printf("dev_Object_Facets_Surface_Pi[object_num_b][facet_num_b] is null\n");
+                        return 1;
+                    }
 
                     ProjectFromFacetsToFacetsKernel<<<numBlocks, threadsPerBlock>>>(
                         dev_k_wave,
@@ -201,7 +269,13 @@ int CudaModelTes::ProjectFromFacetsToFacets()
                         dev_Object_Facets_xAxis[0],
                         dev_Object_Facets_yAxis[0],
                         dev_Object_Facets_PixelArea[0],
-                        dev_Object_Facets_Pressure[0]);
+                        dev_Object_Facets_Pressure[0],
+                        dev_Object_Facets_Surface_Pr[0][facet_num_a],
+                        dev_Object_Facets_Surface_Pi[0][facet_num_a],
+                        mutex_in_cuda[0][facet_num_a],
+                        dev_Object_Facets_Surface_Pr[0][facet_num_b],
+                        dev_Object_Facets_Surface_Pi[0][facet_num_b],
+                        mutex_in_cuda[0][facet_num_b]);
 
                     cudaError_t err = cudaGetLastError();
                     if (err != cudaSuccess)

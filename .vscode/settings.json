@@ -52,10 +52,13 @@
         "streambuf": "cpp",
         "cinttypes": "cpp",
         "typeinfo": "cpp",
-        "set": "cpp"
+        "set": "cpp",
+        "bitset": "cpp",
+        "valarray": "cpp"
     },
     "[cpp]": {
         "editor.defaultFormatter": "ms-vscode.cpptools"
     },
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "cmake.sourceDirectory": "/home/apcave/alex-portfolio/sonar-render/src"
 }

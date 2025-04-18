@@ -77,6 +77,66 @@ int CudaModelTes::MakeFieldPointsOnGPU(vector<PressurePoint *> field_points)
 
     return 0;
 }
+/**
+ * @brief Allocate the texture memory for the facet pressure.
+ *
+ * The surfaces are used to write/read the pressure values to the device memory.
+ * The textures are used to render the pressure in OpenGL.
+ */
+void CudaModelTes::AllocateTexture(int num_xpnts,
+                                   int num_ypnts,
+                                   vector<cudaSurfaceObject_t> *dest_surface,
+                                   vector<cudaTextureObject_t> *dest_texture,
+                                   vector<int *> *pixel_mutex)
+{
+    // Allocate the texture memory for the facet pressure
+    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
+    cudaArray_t d_array;
+    cudaError_t err = cudaMallocArray(&d_array, &channelDesc, num_xpnts, num_ypnts);
+    if (err != cudaSuccess)
+    {
+        printf("cudaMallocArray failed: %s\n", cudaGetErrorString(err));
+        return;
+    }
+
+    cudaResourceDesc resDesc = {};
+    resDesc.resType = cudaResourceTypeArray;
+    resDesc.res.array.array = d_array;
+
+    cudaTextureDesc texDesc = {};
+    texDesc.addressMode[0] = cudaAddressModeClamp;
+    texDesc.addressMode[1] = cudaAddressModeClamp;
+    texDesc.filterMode = cudaFilterModeLinear;
+    texDesc.readMode = cudaReadModeElementType;
+    texDesc.normalizedCoords = 1;
+
+    cudaSurfaceObject_t surface;
+    cudaCreateSurfaceObject(&surface, &resDesc);
+    dest_surface->push_back(surface);
+
+    // Create the texture object
+    cudaTextureObject_t texture;
+    cudaCreateTextureObject(&texture, &resDesc, &texDesc, NULL);
+    dest_texture->push_back(texture);
+
+    int *d_mutex_array;
+    // Allocate memory for the mutex array on the device
+    cudaError_t err = cudaMalloc(&d_mutex_array, num_xpnts * num_ypnts * sizeof(int));
+    if (err != cudaSuccess)
+    {
+        printf("cudaMalloc failed for mutex array: %s\n", cudaGetErrorString(err));
+        return 1;
+    }
+
+    // Initialize all mutexes to 0 (unlocked state)
+    err = cudaMemset(d_mutex_array, 0, num_xpnts * num_ypnts * sizeof(int));
+    if (err != cudaSuccess)
+    {
+        printf("cudaMemset failed for mutex array: %s\n", cudaGetErrorString(err));
+        return 1;
+    }
+    pixel_mutex->push_back(d_mutex_array);
+}
 
 int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets)
 {
@@ -90,15 +150,39 @@ int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets)
     cudaMalloc(&dev_Facets_PixelArea, number_of_facets * sizeof(float *));
     dev_Object_Facets_PixelArea.push_back(dev_Facets_PixelArea);
 
+    vector<cudaSurfaceObject_t> surface_Pr;
+    vector<cudaSurfaceObject_t> surface_Pi;
+
+    vector<cudaTextureObject_t> dev_tex_Pr;
+    vector<cudaTextureObject_t> dev_tex_Pi;
+
     float **host_PixelArea = new float *[number_of_facets];
     for (int i = 0; i < number_of_facets; i++)
     {
+
+        AllocateTexture(facets[i]->NumXpnts,
+                        facets[i]->NumYpnts,
+                        &surface_Pr,
+                        &dev_tex_Pr);
+
+        AllocateTexture(facets[i]->NumXpnts,
+                        facets[i]->NumYpnts,
+                        &surface_Pi,
+                        &dev_tex_Pi);
+
         int ArrLen = facets[i]->NumXpnts * facets[i]->NumYpnts;
         // Allocate the Area for the pixel array on the host.
         cudaMalloc(&host_PixelArea[i], ArrLen * sizeof(float));
         // Copy the pixel area data to host CUDA to the device.
         cudaMemcpy(host_PixelArea[i], facets[i]->PixelArea, ArrLen * sizeof(float), cudaMemcpyHostToDevice);
     }
+
+    dev_Object_Facets_Surface_Pr.push_back(surface_Pr);
+    dev_Object_Facets_Surface_Pi.push_back(surface_Pi);
+
+    dev_Object_Facets_Texture_Pr.push_back(dev_tex_Pr);
+    dev_Object_Facets_Texture_Pi.push_back(dev_tex_Pi);
+
     // Copy the pixel area data to the device.
     cudaMemcpy(dev_Facets_PixelArea, host_PixelArea, number_of_facets * sizeof(float *), cudaMemcpyHostToDevice);
 
@@ -204,13 +288,50 @@ int CudaModelTes::StopCuda()
 int CudaModelTes::DoCalculations()
 {
     printf("DoCalculations .......\n");
-    // TestGPU();
-    ProjectSourcePointsToFacet();
-    for (int i = 0; i < 1000; i++)
+
+    for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
     {
-        ProjectSourcePointsToFacet();
+        mutex_in_cuda.push_back(vector<int *>());
+        for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
+        {
+            int *mutex;
+            int value = 0;
+            cudaError_t cudaStatus = cudaMalloc(&mutex, sizeof(int));
+            if (cudaStatus != cudaSuccess)
+            {
+                fprintf(stderr, "mutex failed: %s\n", cudaGetErrorString(cudaStatus));
+                return 1;
+            }
+            cudaStatus = cudaMemcpy(mutex, &value, sizeof(int), cudaMemcpyHostToDevice);
+            if (cudaStatus != cudaSuccess)
+            {
+                fprintf(stderr, "mutex failed: %s\n", cudaGetErrorString(cudaStatus));
+                return 1;
+            }
+            mutex_in_cuda[object_num].push_back(mutex);
+        }
     }
-    ProjectFromFacetsToFieldPoints();
+
+    // TestGPU();
+    if (ProjectSourcePointsToFacet() != 0)
+    {
+        printf("ProjectSourcePointsToFacet failed.\n");
+        return 1;
+    }
+    // for (int i = 0; i < 1000; i++)
+    //{
+    if (ProjectFromFacetsToFacets() != 0)
+    {
+        printf("ProjectFromFacetsToFacets failed.\n");
+        return 1;
+    }
+    //}
+
+    if (ProjectFromFacetsToFieldPoints() != 0)
+    {
+        printf("ProjectFromFacetsToFieldPoints failed.\n");
+        return 1;
+    }
     return 0;
 }
 
