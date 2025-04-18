@@ -21,6 +21,7 @@ set(CU_SRC
 )
 
 set(CPP_SRC
+    ModelTes.cpp
     python_interface.cpp
     Facet.cpp
     OpenGL_TES.cpp
@@ -41,6 +42,7 @@ target_link_libraries(${TARGET_NAME} PRIVATE
     OpenGL::GL
     GLEW::GLEW
     glfw
+    GLU
     cuda
     cudart
 )

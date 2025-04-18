@@ -6,13 +6,12 @@ OpenGL_TES::~OpenGL_TES() {}
 
 void OpenGL_TES::InitOpenGL()
 {
+    std::cout << "Initializing OpenGL..." << std::endl;
     if (!glfwInit())
     {
         std::cerr << "Failed to initialize GLFW" << std::endl;
         exit(EXIT_FAILURE);
     }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); // Request OpenGL 4.x
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5); // Request OpenGL 4.5
 
     window = glfwCreateWindow(window_width, window_height, "CUDA-OpenGL Interop", NULL, NULL);
     if (!window)
@@ -30,22 +29,35 @@ void OpenGL_TES::InitOpenGL()
         exit(EXIT_FAILURE);
     }
 
-    glEnable(GL_DEPTH_TEST);
+    // glEnable(GL_DEPTH_TEST);
+
+    // Set the beige background color
+    // glClearColor(0.96f, 0.96f, 0.86f, 1.0f); // Beige background
+
+    // glMatrixMode(GL_PROJECTION);
+    // glLoadIdentity();
+    // gluPerspective(45.0, (double)window_width / (double)window_height, 0.1, 100.0);
+
+    // glViewport(0, 0, window_width, window_height);
+
+    // gluLookAt(0.0, 5.0, 5.0,  // Camera position
+    //           0.0, 0.0, 0.0,  // Look-at point
+    //           0.0, 1.0, 0.0); // Up vector
+
+    // glMatrixMode(GL_MODELVIEW);
+    // glLoadIdentity();
 }
 
 void OpenGL_TES::RenderGL()
 {
-
-    InitOpenGL();
-    std::cout << "OpenGL initialized successfully." << std::endl;
-
-    CreateBuffers();
+    // CreateBuffers();
     std::cout << "OpenGL buffers created successfully." << std::endl;
 
     while (!glfwWindowShouldClose(window))
     {
-        UpdateBuffers();
+        // UpdateBuffers();
         RenderObject();
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -63,14 +75,15 @@ void OpenGL_TES::Cleanup() {}
  */
 void OpenGL_TES::CreateBuffers()
 {
+    std::cout << "CreateBuffers" << std::endl;
     // Create VBO
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW); // 6 floats per vertex (x, y, z, u, v, w)
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    // glGenBuffers(1, &vbo);
+    // glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    // glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW); // 6 floats per vertex (x, y, z, u, v, w)
+    // glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // Register VBO with CUDA
-    cudaGraphicsGLRegisterBuffer(&cuda_vbo_resource, vbo, cudaGraphicsMapFlagsWriteDiscard);
+    // cudaGraphicsGLRegisterBuffer(&cuda_vbo_resource, vbo, cudaGraphicsMapFlagsWriteDiscard);
 
     // // Create Texture
     // glGenTextures(1, &texture);
@@ -89,6 +102,7 @@ void OpenGL_TES::CreateBuffers()
  */
 void OpenGL_TES::UpdateBuffers()
 {
+    return;
     // Map VBO
     float4 *d_vertices;
     size_t num_bytes;
@@ -127,18 +141,72 @@ void OpenGL_TES::RenderObject()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Bind VBO
+    glBegin(GL_TRIANGLES);
+    glColor3f(1.0f, 0.0f, 0.0f); // Red
+    glVertex3f(-0.5f, -0.5f, 0.0f);
+    glColor3f(0.0f, 1.0f, 0.0f); // Green
+    glVertex3f(0.5f, -0.5f, 0.0f);
+    glColor3f(0.0f, 0.0f, 1.0f); // Blue
+    glVertex3f(0.0f, 0.5f, 0.0f);
+    glEnd();
+
+    /*
+    glColor3f(1.0f, 1.0f, 1.0f); // White color
+
+    // Bind the VBO
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glEnableClientState(GL_VERTEX_ARRAY);
     glVertexPointer(3, GL_FLOAT, sizeof(float4), 0);
 
-    // Bind Texture
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    // Draw the plate
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    // Draw the geometry
+    int numVertices = 6;
+    glDrawArrays(GL_TRIANGLES, 0, numVertices);
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    */
+}
+
+int OpenGL_TES::MakeObjectOnGL(std::vector<Facet *> facets)
+{
+    std::cout << "MakeObjectOnGL: " << facets.size() << std::endl;
+    return 1;
+
+    int numFacets = facets.size();
+
+    float4 *vboData = new float4[numFacets * 3];
+    for (int i = 0; i < numFacets; ++i)
+    {
+        Facet *facet = facets[i];
+        vboData[i * 3 + 0].x = facet->v1.x;
+        vboData[i * 3 + 0].y = facet->v1.y;
+        vboData[i * 3 + 0].z = facet->v1.z;
+        vboData[i * 3 + 0].w = 1.0f;
+
+        vboData[i * 3 + 1].x = facet->v2.x;
+        vboData[i * 3 + 1].y = facet->v2.y;
+        vboData[i * 3 + 1].z = facet->v2.z;
+        vboData[i * 3 + 1].w = 1.0f;
+
+        vboData[i * 3 + 2].x = facet->v3.x;
+        vboData[i * 3 + 2].y = facet->v3.y;
+        vboData[i * 3 + 2].z = facet->v3.z;
+        vboData[i * 3 + 2].w = 1.0f;
+
+        std::cout << "Facet " << i << ": "
+                  << "v1(" << facet->v1.x << ", " << facet->v1.y << ", " << facet->v1.z << "), "
+                  << "v2(" << facet->v2.x << ", " << facet->v2.y << ", " << facet->v2.z << "), "
+                  << "v3(" << facet->v3.x << ", " << facet->v3.y << ", " << facet->v3.z << ")"
+                  << std::endl;
+    }
+
+    std::cout << "Copying data to OpenGL..." << std::endl;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float4) * numFacets * 3, vboData, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    delete[] vboData;
+    std::cout << "VBO created successfully." << std::endl;
+    return 1;
 }

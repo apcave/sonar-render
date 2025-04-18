@@ -233,14 +233,15 @@ print('Modelled Target Strength = ', modelled_TES)
 
 
 # Plot the data
-plt.figure()
-plt.plot(angles, db_values  + 40*np.log10(Radius), label="Field Values (dB)")
-plt.xlabel("Angle (degrees)")
-plt.ylabel("Field Value (dB)")
-plt.title("Field Values vs. Angle")
-plt.grid(True)
-plt.legend()
-plt.show()
+if False:
+    plt.figure()
+    plt.plot(angles, db_values  + 40*np.log10(Radius), label="Field Values (dB)")
+    plt.xlabel("Angle (degrees)")
+    plt.ylabel("Field Value (dB)")
+    plt.title("Field Values vs. Angle")
+    plt.grid(True)
+    plt.legend()
+    plt.show()
 
 render_openGL()
 

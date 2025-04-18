@@ -1,11 +1,14 @@
 #ifndef _OPENGL_TES
 #define _OPENGL_TES
+#include "Facet.hpp"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 #include <iostream>
+
+#include <vector>
 
 /**
  * @brief OpenGL class is used to manage the C style OpenGL API for rendering.
@@ -34,8 +37,11 @@ public:
 
     void Cleanup();
 
-private:
+protected:
     void InitOpenGL();
+    int MakeObjectOnGL(std::vector<Facet *> facets);
+
+private:
     void CreateBuffers();
     void UpdateBuffers();
     void RenderObject();
