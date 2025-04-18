@@ -32,7 +32,6 @@ protected:
     // Object based data.
     vector<int> host_object_num_facets;
     vector<float **> dev_Object_Facets_PixelArea; // constant
-    vector<dcomplex **> dev_Object_Facets_Pressure;
 
     vector<vector<cudaSurfaceObject_t>> dev_Object_Facets_Surface_Pr;
     vector<vector<cudaSurfaceObject_t>> dev_Object_Facets_Surface_Pi;

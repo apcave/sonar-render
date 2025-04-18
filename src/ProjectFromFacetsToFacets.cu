@@ -22,7 +22,6 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     float3 *facets_xaxis,
     float3 *facets_yaxis,
     float **facets_PixelArea,
-    dcomplex **facets_Pressure,
     cudaSurfaceObject_t Pr_facet_A,
     cudaSurfaceObject_t Pi_facet_A,
     int *mutex_facet_A,
@@ -106,21 +105,18 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     PBg.y = xAxis_B.y + yAxis_B.y + facet_base_B.y;
     PBg.z = xAxis_B.z + yAxis_B.z + facet_base_B.z;
 
-    dcomplex PA_press = facets_Pressure[facet_num_A][yPnt_A * NumXpnts_A + xPnt_A];
-    dcomplex PB_press = facets_Pressure[facet_num_B][yPnt_B * NumXpnts_B + xPnt_B];
-
     float tmp_r, tmp_i;
-    // surf2Dread<float>(&tmp_r, Pr_facet_A, xPnt_A * sizeof(float), yPnt_A, cudaBoundaryModeTrap);
-    // surf2Dread<float>(&tmp_i, Pi_facet_A, xPnt_A * sizeof(float), yPnt_A, cudaBoundaryModeTrap);
-    // dcomplex PA_press;
-    // PA_press.r = tmp_r;
-    // PA_press.i = tmp_i;
+    surf2Dread<float>(&tmp_r, Pr_facet_A, xPnt_A * sizeof(float), yPnt_A, cudaBoundaryModeTrap);
+    surf2Dread<float>(&tmp_i, Pi_facet_A, xPnt_A * sizeof(float), yPnt_A, cudaBoundaryModeTrap);
+    dcomplex PA_press;
+    PA_press.r = tmp_r;
+    PA_press.i = tmp_i;
 
-    // surf2Dread<float>(&tmp_r, Pr_facet_B, xPnt_B * sizeof(float), yPnt_B, cudaBoundaryModeTrap);
-    // surf2Dread<float>(&tmp_i, Pi_facet_B, xPnt_B * sizeof(float), yPnt_B, cudaBoundaryModeTrap);
-    // dcomplex PB_press;
-    // PB_press.r = tmp_r;
-    // PB_press.i = tmp_i;
+    surf2Dread<float>(&tmp_r, Pr_facet_B, xPnt_B * sizeof(float), yPnt_B, cudaBoundaryModeTrap);
+    surf2Dread<float>(&tmp_i, Pi_facet_B, xPnt_B * sizeof(float), yPnt_B, cudaBoundaryModeTrap);
+    dcomplex PB_press;
+    PB_press.r = tmp_r;
+    PB_press.i = tmp_i;
 
     // The distance from the source point to the facet point.
     float r_AB = sqrtf((PAg.x - PBg.x) * (PAg.x - PBg.x) + (PAg.y - PBg.y) * (PAg.y - PBg.y) + (PAg.z - PBg.z) * (PAg.z - PBg.z));
@@ -169,14 +165,6 @@ __global__ void ProjectFromFacetsToFacetsKernel(
 
     int index_A = yPnt_A * NumXpnts_A + xPnt_A;
     int index_B = yPnt_B * NumXpnts_B + xPnt_B;
-
-    // Save the pressure to the facet pressure array.
-    // Note var may be small and accumulate over may projects that why the complex numbers are doubles.
-    atomicAddDouble(&(facets_Pressure[facet_num_A][index_A]).r, delta_Press_atA.r);
-    atomicAddDouble(&(facets_Pressure[facet_num_A][index_A]).i, delta_Press_atA.i);
-
-    atomicAddDouble(&(facets_Pressure[facet_num_B][index_B]).r, delta_Press_atB.r);
-    atomicAddDouble(&(facets_Pressure[facet_num_B][index_B]).i, delta_Press_atB.i);
 
     tmp_r = (float)PA_press.r + delta_Press_atA.r;
     tmp_i = (float)PA_press.i + delta_Press_atA.i;
@@ -246,7 +234,6 @@ int CudaModelTes::ProjectFromFacetsToFacets()
                         dev_Object_Facets_xAxis[0],
                         dev_Object_Facets_yAxis[0],
                         dev_Object_Facets_PixelArea[0],
-                        dev_Object_Facets_Pressure[0],
                         dev_Object_Facets_Surface_Pr[0][facet_num_a],
                         dev_Object_Facets_Surface_Pi[0][facet_num_a],
                         dev_Object_Facets_pixel_mutex[0][facet_num_a],

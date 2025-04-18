@@ -24,7 +24,6 @@ __global__ void ProjectSourcePointToFacetKernel(
     float3 *facets_xaxis,
     float3 *facets_yaxis,
     float **facets_PixelArea,
-    dcomplex **facets_Pressure,
     cudaSurfaceObject_t Pr_facet,
     cudaSurfaceObject_t Pi_facet,
     int *mutex_facet)
@@ -107,13 +106,6 @@ __global__ void ProjectSourcePointToFacetKernel(
         return;
     }
 
-    // printf("Pressure at facet point: %f, %f\n", var.r, var.i);
-
-    // Save the pressure to the facet pressure array.
-    // Note var may be small and accumulate over may projects that why the complex numbers are doubles.
-    atomicAddDouble(&(facets_Pressure[facet_num][yPnt * NumXpnts + xPnt].r), var.r);
-    atomicAddDouble(&(facets_Pressure[facet_num][yPnt * NumXpnts + xPnt].i), var.i);
-
     float tmp_r, tmp_i;
     surf2Dread<float>(&tmp_r, Pr_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
     surf2Dread<float>(&tmp_i, Pi_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
@@ -175,7 +167,6 @@ int CudaModelTes::ProjectSourcePointsToFacet()
                     dev_Object_Facets_xAxis[object_num],
                     dev_Object_Facets_yAxis[object_num],
                     dev_Object_Facets_PixelArea[object_num],
-                    dev_Object_Facets_Pressure[object_num],
                     dev_Object_Facets_Surface_Pr[object_num][facet_num],
                     dev_Object_Facets_Surface_Pi[object_num][facet_num],
                     dev_Object_Facets_pixel_mutex[object_num][facet_num]);

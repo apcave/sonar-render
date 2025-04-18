@@ -17,7 +17,6 @@ __global__ void ProjectFacetToFieldPointKernel(
     float3 *facets_xaxis,
     float3 *facets_yaxis,
     float **facets_PixelArea,
-    dcomplex **facets_Pressure,
     cudaSurfaceObject_t Pr_facet,
     cudaSurfaceObject_t Pi_facet,
     int *mutex_facet)
@@ -72,8 +71,6 @@ __global__ void ProjectFacetToFieldPointKernel(
     P1g.y = xAxis.y + yAxis.y + facet_base.y;
     P1g.z = xAxis.z + yAxis.z + facet_base.z;
     // printf("Facet Point Global Ref: %f, %f, %f\n", P1g.x, P1g.y, P1g.z);
-
-    // dcomplex source_pressure = facets_Pressure[facet_num][yPnt * NumXpnts + xPnt];
 
     float tmp_r, tmp_i;
     surf2Dread<float>(&tmp_r, Pr_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
@@ -153,7 +150,9 @@ int CudaModelTes::ProjectFromFacetsToFieldPoints()
                     dev_Object_Facets_xAxis[object_num],
                     dev_Object_Facets_yAxis[object_num],
                     dev_Object_Facets_PixelArea[object_num],
-                    dev_Object_Facets_Pressure[object_num]);
+                    dev_Object_Facets_Surface_Pr[object_num][facet_num],
+                    dev_Object_Facets_Surface_Pi[object_num][facet_num],
+                    dev_Object_Facets_pixel_mutex[object_num][facet_num]);
 
                 cudaError_t err = cudaGetLastError();
                 if (err != cudaSuccess)

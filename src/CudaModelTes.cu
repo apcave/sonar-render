@@ -191,21 +191,6 @@ int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets)
     // Copy the pixel area data to the device.
     cudaMemcpy(dev_Facets_PixelArea, host_PixelArea, number_of_facets * sizeof(float *), cudaMemcpyHostToDevice);
 
-    dcomplex **dev_Facets_Pressure;
-    cudaMalloc(&dev_Facets_Pressure, number_of_facets * sizeof(dcomplex *));
-    dev_Object_Facets_Pressure.push_back(dev_Facets_Pressure);
-    dcomplex **host_Pressure = new dcomplex *[number_of_facets];
-    for (int i = 0; i < number_of_facets; i++)
-    {
-        int ArrLen = facets[i]->NumXpnts * facets[i]->NumYpnts;
-        // Allocate the Area for the pixel pressure array on the host.
-        cudaMalloc(&host_Pressure[i], ArrLen * sizeof(dcomplex));
-        // Copy the pixel pressure data to host CUDA to the device.
-        cudaMemcpy(host_Pressure[i], facets[i]->PressureValues, ArrLen * sizeof(dcomplex), cudaMemcpyHostToDevice);
-    }
-    // Copy the pixel pressure data to the device.
-    cudaMemcpy(dev_Facets_Pressure, host_Pressure, number_of_facets * sizeof(dcomplex *), cudaMemcpyHostToDevice);
-
     int facet_cnt = 0;
     auto host_Facets_points = new int3[number_of_facets];
     auto host_Facets_Normals = new float3[number_of_facets];
@@ -252,7 +237,6 @@ int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets)
     dev_Object_Facets_yAxis.push_back(dev_Facets_yAxis);
 
     delete[] host_PixelArea;
-    delete[] host_Pressure;
     delete[] host_Facets_Normals;
     delete[] host_base_points;
 
@@ -323,14 +307,15 @@ int CudaModelTes::DoCalculations()
         printf("ProjectSourcePointsToFacet failed.\n");
         return 1;
     }
-    // for (int i = 0; i < 1000; i++)
-    //{
-    if (ProjectFromFacetsToFacets() != 0)
+
+    for (int i = 0; i < 1000; i++)
     {
-        printf("ProjectFromFacetsToFacets failed.\n");
-        return 1;
+        if (ProjectFromFacetsToFacets() != 0)
+        {
+            printf("ProjectFromFacetsToFacets failed.\n");
+            return 1;
+        }
     }
-    //}
 
     if (ProjectFromFacetsToFieldPoints() != 0)
     {
