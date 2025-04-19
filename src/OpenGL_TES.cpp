@@ -18,13 +18,10 @@ void OpenGL_TES::MakeTextureShader()
 
         in vec2 TexCoords;
 
-        uniform sampler2D inputTexture;
-        uniform float textureScaler;
-
         void main()
         {
-            vec4 texColor = texture(inputTexture, TexCoords);
-            FragColor = texColor * textureScaler;
+            vec2 clampedTexCoords = clamp(TexCoords, 0.0, 1.0);
+            FragColor = vec4(clampedTexCoords, 0.0, 1.0); // Visualize texture coordinates
         }
     )";
     GLint success;
@@ -66,61 +63,6 @@ void OpenGL_TES::MakeTextureShader()
     textureShaderProgram = shaderProgram;
 }
 
-void OpenGL_TES::MakeUniformShader()
-{
-    if (uniformShaderProgram != 0)
-    {
-        return;
-    }
-    const char *fragmentShaderSource = R"(
-        #version 330 core
-        out vec4 FragColor;
-
-        uniform vec4 uniformColor;
-
-        void main()
-        {
-            FragColor = uniformColor;
-        }
-    )";
-    GLint success;
-    char infoLog[512];
-
-    // Compile the vertex shader
-    GLuint fragmentShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    // Check for vertex shader compilation errors
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cerr << "Vertex Shader Compilation Failed:\n"
-                  << infoLog << std::endl;
-    }
-
-    // Link shaders into a program
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    // Check for linking errors
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cerr << "Shader Program Linking Failed:\n"
-                  << infoLog << std::endl;
-    }
-    std::cout << "uniformShaderProgram linked successfully." << std::endl;
-
-    // Clean up shaders (no longer needed after linking)
-    glDeleteShader(fragmentShader);
-    uniformShaderProgram = shaderProgram;
-}
-
 OpenGL_TES::OpenGL_TES()
 {
 }
@@ -158,7 +100,7 @@ void OpenGL_TES::InitOpenGL()
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(glm::value_ptr(projection));
 
-    glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f),  // Camera position
+    glm::mat4 view = glm::lookAt(glm::vec3(0.0f, -5.0f, 5.0f), // Camera position
                                  glm::vec3(0.0f, 0.0f, 0.0f),  // Look-at point
                                  glm::vec3(0.0f, 1.0f, 0.0f)); // Up vector
     glMatrixMode(GL_MODELVIEW);
@@ -278,12 +220,20 @@ int OpenGL_TES::MakeObjectOnGL(std::vector<Facet *> facets)
 {
 
     std::vector<float> vertexData;
+    // for (auto &facet : facets)
+    // {
+    //     // Add vertex positions and texture coordinates for each facet
+    //     vertexData.insert(vertexData.end(), {facet->v1.x, facet->v1.y, facet->v1.z, facet->texCoords[0], facet->texCoords[1],
+    //                                          facet->v2.x, facet->v2.y, facet->v2.z, facet->texCoords[2], facet->texCoords[3],
+    //                                          facet->v3.x, facet->v3.y, facet->v3.z, facet->texCoords[4], facet->texCoords[5]});
+    // }
+
     for (auto &facet : facets)
     {
         // Add vertex positions and texture coordinates for each facet
-        vertexData.insert(vertexData.end(), {facet->v1.x, facet->v1.y, facet->v1.z, facet->texCoords[0], facet->texCoords[1],
-                                             facet->v2.x, facet->v2.y, facet->v2.z, facet->texCoords[2], facet->texCoords[3],
-                                             facet->v3.x, facet->v3.y, facet->v3.z, facet->texCoords[4], facet->texCoords[5]});
+        vertexData.insert(vertexData.end(), {facet->v1.x, facet->v1.y, facet->v1.z, 0.0f, 0.0f,
+                                             facet->v2.x, facet->v2.y, facet->v2.z, 1.0f, 0.0f,
+                                             facet->v3.x, facet->v3.y, facet->v3.z, 1.0f, 1.0f});
     }
 
     // Upload the vertex data to the GPU
@@ -337,8 +287,6 @@ void OpenGL_TES::ProcessFrame()
         return;
     }
 
-    MakeTextureShader();
-
     // Ensure VAO is initialized
     if (vao == 0)
     {
@@ -364,6 +312,7 @@ void OpenGL_TES::ProcessFrame()
 
     std::cout << "Processing frame..." << std::endl;
 
+    MakeTextureShader();
     glUseProgram(textureShaderProgram);
 
     // Get the memory addresses for input variables.
@@ -375,16 +324,6 @@ void OpenGL_TES::ProcessFrame()
     else
     {
         std::cout << "Uniform 'inputTexture' location: " << textureUniformLocation << std::endl;
-    }
-
-    GLint textureScalerLocation = glGetUniformLocation(textureShaderProgram, "textureScaler");
-    if (textureScalerLocation == -1)
-    {
-        std::cerr << "Error: Uniform 'textureScaler' not found in the shader program." << std::endl;
-    }
-    else
-    {
-        std::cout << "Uniform 'textureScaler' location: " << textureUniformLocation << std::endl;
     }
 
     for (auto facGL : gl_object_facets)
@@ -426,9 +365,7 @@ void OpenGL_TES::ProcessFrame()
             // Bind the texture for this facet
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, facGL->textureID);
-            glUniform1i(textureUniformLocation, 0);
-
-            glUniform1f(textureScalerLocation, 0.5f);
+            // glUniform1i(textureUniformLocation, 0);
 
             glDrawArrays(GL_TRIANGLES, triangleIndex * 3, 3); // Render 3 vertices for the facet
             triangleIndex++;

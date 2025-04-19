@@ -18,6 +18,7 @@ public:
     int textureVert[3];
     cudaGraphicsResource *cudaResource;
     cudaSurfaceObject_t surface;
+    cudaArray_t array;
 };
 
 /**
@@ -62,7 +63,6 @@ private:
     void RenderObject();
 
     void MakeTextureShader();
-    void MakeUniformShader();
 
 private:
     int window_width = 800;

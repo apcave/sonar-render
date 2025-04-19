@@ -44,7 +44,9 @@ __global__ void ProjectSourcePointToFacetKernel(
 
     int index_Bi = yPnt * NumXpnts + xPnt;
 
-    if (facets_PixelArea[facet_num][index_Bi] == 0)
+    float pixel_area = facets_PixelArea[facet_num][index_Bi];
+
+    if (pixel_area == 0)
     {
         // printf("facets_PixelArea is zero\n");
         return;
@@ -93,7 +95,8 @@ __global__ void ProjectSourcePointToFacetKernel(
     // Point sources have pressure values @ RE 1 m
     // A_i = 4 * PI * 1^2
     // A_j = 4 * PI * r_sf * r_sf
-    float A_r = pow(1 / (r_ij * r_ij), 0.5);
+    // float A_r = pow(1 / (r_ij * r_ij), 0.5);
+    float A_r = 1 / r_ij;
 
     var = devRCmul(A_r, var);
     // printf("Spherical spread: %f\n", att_spread);

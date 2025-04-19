@@ -93,7 +93,8 @@ __global__ void ProjectFacetToFieldPointKernel(
     // Area1 = Pressure the 1Pa over 1m^2
     // Area2 = 4 * PI * r_sf * r_sf
     // atten_spread = Area1 / Area2 <--- important for other projections.
-    float att_spread = pow(pixel_area / (4 * M_PI * r_sf * r_sf), 0.5);
+    float att_spread = pixel_area * pow(pixel_area / (4 * M_PI * r_sf * r_sf), 0.5);
+    // float att_spread = pixel_area / r_sf;
     var = devRCmul(att_spread, var);
     // printf("Spherical spread: %f\n", att_spread);
 

@@ -121,6 +121,8 @@ void CudaModelTes::AllocateTexture(int num_xpnts,
             printf("cudaGraphicsSubResourceGetMappedArray failed: %s\n", cudaGetErrorString(err));
             return;
         }
+
+        renderFacet->array = d_array;
     }
     else
     {
@@ -361,7 +363,7 @@ int CudaModelTes::DoCalculations()
         return 1;
     }
 
-    for (int i = 0; i < 0; i++)
+    for (int i = 0; i < 1; i++)
     {
         if (ProjectFromFacetsToFacets() != 0)
         {

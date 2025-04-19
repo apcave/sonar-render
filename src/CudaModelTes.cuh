@@ -92,6 +92,8 @@ protected:
 
     void CleanupCuda();
 
+    int CopyFromMatrixToSurface();
+
 private:
     void AllocateTexture(int num_xpnts,
                          int num_ypnts,

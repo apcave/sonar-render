@@ -116,13 +116,13 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     PBg.z = xAxis_B.z + yAxis_B.z + facet_base_B.z;
 
     dcomplex PA_press;
-    PA_press.r = Pr_ini_A[index_A];
-    PA_press.i = Pi_ini_A[index_A];
+    PA_press.r = Pr_acc_A[index_A];
+    PA_press.i = Pi_acc_A[index_A];
     ;
 
     dcomplex PB_press;
-    PB_press.r = Pr_ini_B[index_B];
-    PB_press.i = Pi_ini_B[index_B];
+    PB_press.r = Pr_acc_B[index_B];
+    PB_press.i = Pi_acc_B[index_B];
     ;
 
     // The distance from the source point to the facet point.
@@ -141,11 +141,13 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     // Area1 = Pressure the 1Pa over 1m^2
     // Area2 = 4 * PI * r_sf * r_sf
     // atten_spread = Area1 / Area2 <--- important for other projections.
-    // float att_spread_AB = pow(pixel_area_A / (4 * M_PI * r_AB * r_AB), 0.5);
-    // float att_spread_BA = pow(pixel_area_B / (4 * M_PI * r_AB * r_AB), 0.5);
+    // Intergral Area Terms and half spherical spread.
+    float att_spread_AB = pixel_area_A * pixel_area_B * pow(pixel_area_A / (2 * M_PI * r_AB * r_AB), 0.5);
+    float att_spread_BA = pixel_area_B * pixel_area_A * pow(pixel_area_B / (2 * M_PI * r_AB * r_AB), 0.5);
 
-    float att_spread_AB = pixel_area_A / (4 * M_PI * r_AB * r_AB);
-    float att_spread_BA = pixel_area_B / (4 * M_PI * r_AB * r_AB);
+    // float att_spread_AB = pixel_area_A * pixel_area_B / r_AB;
+    // float att_spread_BA = pixel_area_A * pixel_area_B / r_AB;
+
     if (att_spread_AB > 1.0)
     {
         printf("att_spread_AB: %f\n", att_spread_AB);
@@ -213,8 +215,6 @@ int CudaModelTes::ProjectFromFacetsToFacets()
 {
     // TODO: Restrict the pixel maxtrix to 1024 pixels.
     printf("ProjectFromFacetsToFacets .......\n");
-
-    cudaMemset(dev_pixel_Pressure_stats, 0, 3 * sizeof(float));
 
     // One mutex per facet, locks it so only one thread can write to the surface at a time.
     for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
@@ -301,8 +301,94 @@ int CudaModelTes::ProjectFromFacetsToFacets()
             int buff_sz = h_Facets_points.x * h_Facets_points.y * sizeof(double);
             cudaMemset((*dev_object_facet_ResultPr)[object_num][facet_num], 0, buff_sz);
             cudaMemset((*dev_object_facet_ResultPi)[object_num][facet_num], 0, buff_sz);
+
+            // cudaMemcpy(dev_object_facet_Pr[object_num][facet_num], (*dev_object_facet_InitialPi)[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
+            // cudaMemcpy(dev_object_facet_Pi[object_num][facet_num], (*dev_object_facet_InitialPi)[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
         }
     }
+    CopyFromMatrixToSurface();
+    return 0;
+}
 
+__global__ void GetMaxValue(double *Pr, double *Pi, int maxXpnt, float *stats)
+{
+    int xPnt = threadIdx.x;
+    int yPnt = threadIdx.y;
+
+    int index = yPnt * maxXpnt + xPnt;
+
+    dcomplex var;
+    var.r = Pr[index];
+    var.i = Pi[index];
+
+    float real = abs((float)var.r);
+    float imag = abs((float)var.i);
+    float abs = (float)devCabs(var);
+
+    atomicMaxFloat(&stats[0], real);
+    atomicMinFloat(&stats[1], real);
+    atomicMaxFloat(&stats[2], abs);
+
+    // printf("GetMaxValue: %e, %e, %e\n", stats[0], stats[1], stats[2]);
+    //  printf("CurVal: %e, %e, %e\n", real, imag, abs);
+}
+
+__global__ void MakeSurface(double *P, cudaSurfaceObject_t surface, int maxXpnt, float *stats)
+{
+    int xPnt = threadIdx.x;
+    int yPnt = threadIdx.y;
+
+    int index = yPnt * maxXpnt + xPnt;
+
+    float value = 0.5 + ((float)P[index] / stats[0]) / 2;
+
+    value = (float)yPnt / (float)maxXpnt;
+    surf2Dwrite(value, surface, xPnt * sizeof(float), yPnt);
+
+    printf("Write surface: %f, %f, %f\n", value, stats[0], stats[1]);
+}
+
+int CudaModelTes::CopyFromMatrixToSurface()
+{
+
+    printf("CopyFromMatrixToSurface .......\n");
+
+    cudaMemset(dev_pixel_Pressure_stats, 0, 3 * sizeof(float));
+
+    // Copy the pressure from the matrix to the surface.
+    for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
+    {
+        for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
+        {
+            int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
+            dim3 threadsPerBlock(h_Facets_points.x, h_Facets_points.y);
+            dim3 numBlocks(1, 1);
+
+            printf("Test B\n");
+            GetMaxValue<<<numBlocks, threadsPerBlock>>>(dev_object_facet_Pr[object_num][facet_num],
+                                                        dev_object_facet_Pi[object_num][facet_num],
+                                                        h_Facets_points.x,
+                                                        dev_pixel_Pressure_stats);
+        }
+    }
+    cudaDeviceSynchronize();
+    printf("Test A\n");
+    // Copy the pressure from the matrix to the surface.
+    for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
+    {
+        for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
+        {
+            int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
+            dim3 threadsPerBlock(h_Facets_points.x, h_Facets_points.y);
+            dim3 numBlocks(1, 1);
+
+            // Make the textures out of the real values.
+            MakeSurface<<<numBlocks, threadsPerBlock>>>(dev_object_facet_Pr[object_num][facet_num],
+                                                        dev_Object_Facets_Surface_Pr[object_num][facet_num],
+                                                        h_Facets_points.x,
+                                                        dev_pixel_Pressure_stats);
+        }
+    }
+    cudaDeviceSynchronize();
     return 0;
 }
