@@ -234,7 +234,7 @@ print('Modelled Target Strength = ', modelled_TES)
 
 
 # Plot the data
-if False:
+if True:
     plt.figure()
     plt.plot(angles, db_values  + 40*np.log10(Radius), label="Field Values (dB)")
     plt.xlabel("Angle (degrees)")

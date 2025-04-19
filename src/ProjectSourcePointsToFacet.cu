@@ -24,9 +24,8 @@ __global__ void ProjectSourcePointToFacetKernel(
     float3 *facets_xaxis,
     float3 *facets_yaxis,
     float **facets_PixelArea,
-    cudaSurfaceObject_t Pr_facet,
-    cudaSurfaceObject_t Pi_facet,
-    int *mutex_facet)
+    double *Pr_facet,
+    double *Pi_facet)
 {
     dcomplex k = *k_wave;
     float delta = *pixel_delta;
@@ -43,7 +42,9 @@ __global__ void ProjectSourcePointToFacetKernel(
     // int NumYpnts = facet_Points[facet_num].y;
     int NumXpntsNegative = facet_Points[facet_num].z;
 
-    if (facets_PixelArea[facet_num][yPnt * NumXpnts + xPnt] == 0)
+    int index_Bi = yPnt * NumXpnts + xPnt;
+
+    if (facets_PixelArea[facet_num][index_Bi] == 0)
     {
         // printf("facets_PixelArea is zero\n");
         return;
@@ -107,24 +108,9 @@ __global__ void ProjectSourcePointToFacetKernel(
     }
 
     float tmp_r, tmp_i;
-    surf2Dread<float>(&tmp_r, Pr_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
-    surf2Dread<float>(&tmp_i, Pi_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
 
-    // printf("Read surface: %f, %f\n", tmp_r, tmp_i);
-
-    tmp_r += (float)var.r;
-    tmp_i += (float)var.i;
-
-    int index = yPnt * NumXpnts + xPnt;
-
-    while (atomicCAS(&mutex_facet[index], 0, 1) != 0)
-    {
-        // spin until the mutex is acquired.
-    }
-
-    surf2Dwrite<float>(tmp_r, Pr_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
-    surf2Dwrite<float>(tmp_i, Pi_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
-    atomicExch(&mutex_facet[index], 0);
+    atomicAddDouble(&Pr_facet[index_Bi], var.r);
+    atomicAddDouble(&Pi_facet[index_Bi], var.i);
 }
 
 int CudaModelTes::ProjectSourcePointsToFacet()
@@ -167,9 +153,8 @@ int CudaModelTes::ProjectSourcePointsToFacet()
                     dev_Object_Facets_xAxis[object_num],
                     dev_Object_Facets_yAxis[object_num],
                     dev_Object_Facets_PixelArea[object_num],
-                    dev_Object_Facets_Surface_Pr[object_num][facet_num],
-                    dev_Object_Facets_Surface_Pi[object_num][facet_num],
-                    dev_Object_Facets_pixel_mutex[object_num][facet_num]);
+                    dev_object_facet_Pr[object_num][facet_num],
+                    dev_object_facet_Pi[object_num][facet_num]);
 
                 cudaError_t err = cudaGetLastError();
                 if (err != cudaSuccess)

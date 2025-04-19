@@ -17,9 +17,8 @@ __global__ void ProjectFacetToFieldPointKernel(
     float3 *facets_xaxis,
     float3 *facets_yaxis,
     float **facets_PixelArea,
-    cudaSurfaceObject_t Pr_facet,
-    cudaSurfaceObject_t Pi_facet,
-    int *mutex_facet)
+    double *Pr_facet,
+    double *Pi_facet)
 {
     dcomplex k = *k_wave;
     float delta = *pixel_delta;
@@ -36,7 +35,9 @@ __global__ void ProjectFacetToFieldPointKernel(
     // int NumYpnts = facet_Points[facet_num].y;
     int NumXpntsNegative = facet_Points[facet_num].z;
 
-    float pixel_area = facets_PixelArea[facet_num][yPnt * NumXpnts + xPnt];
+    int index_Ai = yPnt * NumXpnts + xPnt;
+
+    float pixel_area = facets_PixelArea[facet_num][index_Ai];
     if (pixel_area == 0)
     {
         // printf("facets_PixelArea is zero\n");
@@ -72,12 +73,9 @@ __global__ void ProjectFacetToFieldPointKernel(
     P1g.z = xAxis.z + yAxis.z + facet_base.z;
     // printf("Facet Point Global Ref: %f, %f, %f\n", P1g.x, P1g.y, P1g.z);
 
-    float tmp_r, tmp_i;
-    surf2Dread<float>(&tmp_r, Pr_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
-    surf2Dread<float>(&tmp_i, Pi_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
     dcomplex source_pressure;
-    source_pressure.r = tmp_r;
-    source_pressure.i = tmp_i;
+    source_pressure.r = Pr_facet[index_Ai];
+    source_pressure.i = Pi_facet[index_Ai];
 
     // The distance from the source point to the facet point.
     float r_sf = sqrtf((P1g.x - P2g.x) * (P1g.x - P2g.x) + (P1g.y - P2g.y) * (P1g.y - P2g.y) + (P1g.z - P2g.z) * (P1g.z - P2g.z));
@@ -101,11 +99,11 @@ __global__ void ProjectFacetToFieldPointKernel(
 
     if (devCabs(var) > 1.0)
     {
-        printf("Pressure is too large to add to field point.\n");
-        printf("r_sf: %f\n", r_sf);
-        printf("source_pressure: %e, %e\n", source_pressure.r, source_pressure.i);
-        printf("Spherical spread: %e\n", att_spread);
-        printf("Pressure add to field point prior to spreading: %e, %e\n", var.r, var.i);
+        // printf("Pressure is too large to add to field point.\n");
+        // printf("r_sf: %f\n", r_sf);
+        // printf("source_pressure: %e, %e\n", source_pressure.r, source_pressure.i);
+        // printf("Spherical spread: %e\n", att_spread);
+        // printf("Pressure add to field point prior to spreading: %e, %e\n", var.r, var.i);
         return;
     }
 
@@ -150,9 +148,8 @@ int CudaModelTes::ProjectFromFacetsToFieldPoints()
                     dev_Object_Facets_xAxis[object_num],
                     dev_Object_Facets_yAxis[object_num],
                     dev_Object_Facets_PixelArea[object_num],
-                    dev_Object_Facets_Surface_Pr[object_num][facet_num],
-                    dev_Object_Facets_Surface_Pi[object_num][facet_num],
-                    dev_Object_Facets_pixel_mutex[object_num][facet_num]);
+                    dev_object_facet_Pr[object_num][facet_num],
+                    dev_object_facet_Pi[object_num][facet_num]);
 
                 cudaError_t err = cudaGetLastError();
                 if (err != cudaSuccess)

@@ -29,7 +29,6 @@ int CudaModelTes::SetGlobalParameters(dcomplex k_wave, float pixel_delta)
     }
 
     cudaMalloc(&dev_pixel_Pressure_stats, 3 * sizeof(float));
-    cudaMalloc(&pixel_Pressure_stats_mutex, 3 * sizeof(int));
     return 0;
 }
 
@@ -170,6 +169,25 @@ int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets)
     float **dev_Facets_PixelArea;
     cudaMalloc(&dev_Facets_PixelArea, number_of_facets * sizeof(float *));
     dev_Object_Facets_PixelArea.push_back(dev_Facets_PixelArea);
+
+    std::vector<double *> facet_Pi;
+    std::vector<double *> facet_Pr;
+
+    for (int i = 0; i < number_of_facets; i++)
+    {
+        int num_pixels = facets[i]->NumXpnts * facets[i]->NumYpnts;
+        double *Pr;
+        double *Pi;
+        cudaMalloc((void **)&Pr, num_pixels * sizeof(double));
+        cudaMemset(Pr, 0, num_pixels * sizeof(double));
+        cudaMalloc((void **)&Pi, num_pixels * sizeof(double));
+        cudaMemset(Pi, 0, num_pixels * sizeof(double));
+        facet_Pr.push_back(Pr);
+        facet_Pi.push_back(Pi);
+    }
+
+    dev_object_facet_Pr.push_back(facet_Pr);
+    dev_object_facet_Pi.push_back(facet_Pi);
 
     vector<cudaSurfaceObject_t> surface_Pr;
     vector<cudaSurfaceObject_t> surface_Pi;
@@ -348,7 +366,7 @@ int CudaModelTes::DoCalculations()
         return 1;
     }
 
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 100; i++)
     {
         if (ProjectFromFacetsToFacets() != 0)
         {

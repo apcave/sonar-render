@@ -45,6 +45,9 @@ protected:
     vector<vector<cudaArray_t>> dev_Object_Facets_array_Pr; // constant
     vector<vector<cudaArray_t>> dev_Object_Facets_array_Pi; // constant
 
+    std::vector<std::vector<double *>> dev_object_facet_Pi;
+    std::vector<std::vector<double *>> dev_object_facet_Pr;
+
     vector<int3 *> dev_Object_Facets_points;    // constant
     vector<float3 *> dev_Object_Facets_Normals; // constant
     vector<float3 *> dev_Object_base_points;    // constant
