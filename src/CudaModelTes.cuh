@@ -31,7 +31,6 @@ protected:
     float *dev_pixel_delta;
 
     // Used for scaling the textures.
-    int *pixel_Pressure_stats_mutex;
     float *dev_pixel_Pressure_stats;
     float host_pixel_Pressure_stats[3];
 

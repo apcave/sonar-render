@@ -205,6 +205,17 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     atomicMax((int *)&pixel_Pressure_stats[2], __float_as_int(max_abs));
 }
 
+__global__ void CopySurfacePressureToMatrix(double *P_facet, cudaSurfaceObject_t P_facet, int numXpnt)
+{
+    int xPnt = threadIdx.x;
+    int yPnt = threadIdx.y;
+
+    float tmp;
+    surf2Dread<float>(&tmp, P_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
+
+    P_facet[xPnt * numXpnt + yPnt] = (double)tmp;
+}
+
 /**
  * @brief Project the pressure from one facet to another facet.
  *
@@ -221,8 +232,29 @@ int CudaModelTes::ProjectFromFacetsToFacets()
 {
     // TODO: Restrict the pixel maxtrix to 1024 pixels.
     // printf("ProjectFromFacetsToFacets .......\n");
-    cudaMemset(pixel_Pressure_stats_mutex, 0, 3 * sizeof(int));
     cudaMemset(dev_pixel_Pressure_stats, 0, 3 * sizeof(float));
+
+    std::vector<std::vector<double *>> host_object_facet_Pi;
+    std::vector<std::vector<double *>> host_object_facet_Pr;
+    for (int object_num_a = 0; object_num_a < host_object_num_facets.size(); object_num_a++)
+    {
+        for (int facet_num_a = 0; facet_num_a < host_object_num_facets[object_num_a]; facet_num_a++)
+        {
+            int3 h_Facets_a_points = host_Object_Facets_points[object_num_a][facet_num_a];
+            double *Pr;
+            double *Pi;
+            cudaMalloc((void **)&Pr, h_Facets_a_points.x * h_Facets_a_points.y * sizeof(double));
+            cudaMalloc((void **)&Pi, h_Facets_a_points.x * h_Facets_a_points.y * sizeof(double));
+            host_object_facet_Pi[object_num_a].push_back(Pi);
+            host_object_facet_Pr[object_num_a].push_back(Pr);
+
+            dim3 threadsPerBlock(h_Facets_a_points.x, h_Facets_a_points.y);
+            dim3 numBlocks(1, 1);
+
+            CopySurfacePressureToMatrix<<<numBlocks, threadsPerBlock>>>(Pr, dev_Object_Facets_Surface_Pr[object_num_a][facet_num_a], h_Facets_a_points.x);
+            CopySurfacePressureToMatrix<<<numBlocks, threadsPerBlock>>>(Pi, dev_Object_Facets_Surface_Pi[object_num_a][facet_num_a], h_Facets_a_points.x);
+        }
+    }
 
     // One mutex per facet, locks it so only one thread can write to the surface at a time.
 
@@ -257,10 +289,12 @@ int CudaModelTes::ProjectFromFacetsToFacets()
                         dev_Object_Facets_PixelArea[0],
                         dev_Object_Facets_Surface_Pr[0][facet_num_a],
                         dev_Object_Facets_Surface_Pi[0][facet_num_a],
-                        dev_Object_Facets_pixel_mutex[0][facet_num_a],
                         dev_Object_Facets_Surface_Pr[0][facet_num_b],
                         dev_Object_Facets_Surface_Pi[0][facet_num_b],
-                        dev_Object_Facets_pixel_mutex[0][facet_num_b],
+                        host_object_facet_Pr[0][facet_num_a],
+                        host_object_facet_Pi[0][facet_num_a],
+                        host_object_facet_Pr[0][facet_num_b],
+                        host_object_facet_Pi[0][facet_num_b],
                         dev_pixel_Pressure_stats,
                         pixel_Pressure_stats_mutex);
 
@@ -270,13 +304,9 @@ int CudaModelTes::ProjectFromFacetsToFacets()
                         printf("Kernel launch failed: %s\n", cudaGetErrorString(err));
                         return 1;
                     }
-                    break;
                 }
-                break;
             }
-            break;
         }
-        break;
     }
     cudaMemcpy(host_pixel_Pressure_stats, dev_pixel_Pressure_stats, 3 * sizeof(float), cudaMemcpyDeviceToHost);
     printf("Max Pressure: %e, %e\n", host_pixel_Pressure_stats[0], host_pixel_Pressure_stats[1]);
