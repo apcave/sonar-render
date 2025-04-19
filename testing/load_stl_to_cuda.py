@@ -172,6 +172,7 @@ load_points_to_cuda(source_pnts, isSource=True)
 load_points_to_cuda(field_pnts, isSource=False)
 set_initial_conditions(cp, frequency, 0.0)
 load_stl_mesh_to_cuda(stl_mesh)
+#render_openGL()
 pixelate_facets()
 
 #plot_geometry(stl_mesh, source_pnts, field_pnts )
@@ -233,7 +234,7 @@ print('Modelled Target Strength = ', modelled_TES)
 
 
 # Plot the data
-if True:
+if False:
     plt.figure()
     plt.plot(angles, db_values  + 40*np.log10(Radius), label="Field Values (dB)")
     plt.xlabel("Angle (degrees)")
@@ -243,5 +244,5 @@ if True:
     plt.legend()
     plt.show()
 
-# render_openGL()
+# 
 

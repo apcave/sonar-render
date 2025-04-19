@@ -35,8 +35,7 @@ public:
 	float *vX;
 	float delta;
 
-	dcomplex *PressureValues;
-
+	float texCoords[6]; // Texture coordinates for the vertices
 public:
 	Facet(float3 t_v1, float3 t_v2, float3 t_v3);
 	~Facet()

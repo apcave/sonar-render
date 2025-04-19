@@ -3,7 +3,7 @@
 #include "Facet.hpp"
 #include "PressurePoint.hpp"
 #include "CudaModelTes.cuh"
-#include "OpenGL_TES.hpp"
+
 #include <vector>
 #include <iostream>
 
@@ -36,7 +36,7 @@ public:
     }
 };
 
-class ModelTes : public CudaModelTes, public OpenGL_TES
+class ModelTes : public CudaModelTes
 {
 
 private:

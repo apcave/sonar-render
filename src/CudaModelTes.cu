@@ -28,6 +28,8 @@ int CudaModelTes::SetGlobalParameters(dcomplex k_wave, float pixel_delta)
         return 1;
     }
 
+    cudaMalloc(&dev_pixel_Pressure_stats, 3 * sizeof(float));
+    cudaMalloc(&pixel_Pressure_stats_mutex, 3 * sizeof(int));
     return 0;
 }
 
@@ -86,23 +88,59 @@ int CudaModelTes::MakeFieldPointsOnGPU(vector<PressurePoint *> field_points)
 void CudaModelTes::AllocateTexture(int num_xpnts,
                                    int num_ypnts,
                                    vector<cudaSurfaceObject_t> *dest_surface,
-                                   vector<cudaTextureObject_t> *dest_texture)
+                                   vector<cudaArray_t> *dest_array)
 {
-    // Allocate the texture memory for the facet pressure
-    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
+    cudaError_t err;
+    FacetGL *renderFacet;
     cudaArray_t d_array;
-    cudaError_t err = cudaMallocArray(&d_array, &channelDesc, num_xpnts, num_ypnts);
-    if (err != cudaSuccess)
+
+    // Allocate the texture memory for the facet pressure
+    if (usingOpenGL)
     {
-        printf("cudaMallocArray failed: %s\n", cudaGetErrorString(err));
-        return;
+        renderFacet = new FacetGL();
+        gl_object_facets.push_back(renderFacet);
+        CreateTexture(num_xpnts, num_ypnts, &(renderFacet->textureID));
+        err = cudaGraphicsGLRegisterImage(&renderFacet->cudaResource, renderFacet->textureID, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsWriteDiscard);
+        if (err != cudaSuccess)
+        {
+            printf("cudaGraphicsGLRegisterImage failed: %s\n", cudaGetErrorString(err));
+            return;
+        }
+
+        printf("Test 0.9\n");
+        err = cudaGraphicsMapResources(1, &renderFacet->cudaResource, 0);
+        if (err != cudaSuccess)
+        {
+            printf("cudaGraphicsMapResources failed: %s\n", cudaGetErrorString(err));
+            return;
+        }
+        cudaGraphicsSubResourceGetMappedArray(&d_array, renderFacet->cudaResource, 0, 0);
+
+        err = cudaGraphicsSubResourceGetMappedArray(&d_array, renderFacet->cudaResource, 0, 0);
+        if (err != cudaSuccess)
+        {
+            printf("cudaGraphicsSubResourceGetMappedArray failed: %s\n", cudaGetErrorString(err));
+            return;
+        }
+    }
+    else
+    {
+        cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
+        err = cudaMallocArray(&d_array, &channelDesc, num_xpnts, num_ypnts);
+        if (err != cudaSuccess)
+        {
+            printf("cudaMallocArray failed: %s\n", cudaGetErrorString(err));
+            return;
+        }
     }
 
     cudaResourceDesc resDesc = {};
+    memset(&resDesc, 0, sizeof(resDesc)); // Ensure all fields are zero-initialized
     resDesc.resType = cudaResourceTypeArray;
     resDesc.res.array.array = d_array;
 
     cudaTextureDesc texDesc = {};
+    memset(&texDesc, 0, sizeof(texDesc)); // Ensure all fields are zero-initialized
     texDesc.addressMode[0] = cudaAddressModeClamp;
     texDesc.addressMode[1] = cudaAddressModeClamp;
     texDesc.filterMode = cudaFilterModeLinear;
@@ -110,13 +148,15 @@ void CudaModelTes::AllocateTexture(int num_xpnts,
     texDesc.normalizedCoords = 1;
 
     cudaSurfaceObject_t surface;
-    cudaCreateSurfaceObject(&surface, &resDesc);
+    err = cudaCreateSurfaceObject(&surface, &resDesc);
+    if (err != cudaSuccess)
+    {
+        printf("cudaCreateSurfaceObject failed: %s\n", cudaGetErrorString(err));
+        return;
+    }
     dest_surface->push_back(surface);
 
-    // Create the texture object
-    cudaTextureObject_t texture;
-    cudaCreateTextureObject(&texture, &resDesc, &texDesc, NULL);
-    dest_texture->push_back(texture);
+    printf("Finished Allocating Texture.\n");
 }
 
 int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets)
@@ -134,8 +174,8 @@ int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets)
     vector<cudaSurfaceObject_t> surface_Pr;
     vector<cudaSurfaceObject_t> surface_Pi;
 
-    vector<cudaTextureObject_t> dev_tex_Pr;
-    vector<cudaTextureObject_t> dev_tex_Pi;
+    vector<cudaArray_t> dev_array_Pr;
+    vector<cudaArray_t> dev_array_Pi;
 
     vector<int *> pixel_mutex;
 
@@ -146,12 +186,12 @@ int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets)
         AllocateTexture(facets[i]->NumXpnts,
                         facets[i]->NumYpnts,
                         &surface_Pr,
-                        &dev_tex_Pr);
+                        &dev_array_Pr);
 
         AllocateTexture(facets[i]->NumXpnts,
                         facets[i]->NumYpnts,
                         &surface_Pi,
-                        &dev_tex_Pi);
+                        &dev_array_Pi);
 
         int num_pixel = facets[i]->NumXpnts * facets[i]->NumYpnts;
 
@@ -183,8 +223,8 @@ int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets)
     dev_Object_Facets_Surface_Pr.push_back(surface_Pr);
     dev_Object_Facets_Surface_Pi.push_back(surface_Pi);
 
-    dev_Object_Facets_Texture_Pr.push_back(dev_tex_Pr);
-    dev_Object_Facets_Texture_Pi.push_back(dev_tex_Pi);
+    dev_Object_Facets_array_Pr.push_back(dev_array_Pr);
+    dev_Object_Facets_array_Pi.push_back(dev_array_Pi);
 
     dev_Object_Facets_pixel_mutex.push_back(pixel_mutex);
 
@@ -308,7 +348,7 @@ int CudaModelTes::DoCalculations()
         return 1;
     }
 
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < 1; i++)
     {
         if (ProjectFromFacetsToFacets() != 0)
         {
@@ -330,4 +370,39 @@ int CudaModelTes::GetFieldPointValGPU(dcomplex *field_points_pressure)
     // Copy the field point pressures from the device to the host.
     cudaMemcpy(field_points_pressure, dev_field_points_pressure, host_num_field_points * sizeof(dcomplex), cudaMemcpyDeviceToHost);
     return 0;
+}
+
+void CudaModelTes::CleanupCuda()
+{
+    for (auto &object : dev_Object_Facets_Surface_Pr)
+    {
+        for (auto &surface : object)
+        {
+            cudaDestroySurfaceObject(surface);
+        }
+    }
+    for (auto &object : dev_Object_Facets_Surface_Pi)
+    {
+        for (auto &surface : object)
+        {
+            cudaDestroySurfaceObject(surface);
+        }
+    }
+    if (!usingOpenGL)
+    {
+        for (auto &object : dev_Object_Facets_array_Pr)
+        {
+            for (auto &array : object)
+            {
+                cudaFreeArray(array);
+            }
+        }
+        for (auto &object : dev_Object_Facets_array_Pi)
+        {
+            for (auto &array : object)
+            {
+                cudaFreeArray(array);
+            }
+        }
+    }
 }

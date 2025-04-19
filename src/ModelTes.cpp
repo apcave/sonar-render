@@ -63,6 +63,9 @@ void ModelTes::pixelate_facets()
 void ModelTes::copyToDevice()
 {
     StartCuda();
+    InitOpenGL();
+    MakeObjectOnGL(targetObjects[0]->facets);
+
     SetGlobalParameters(k_wave, pixel_length);
 
     MakeSourcePointsOnGPU(sourcePoints);
@@ -71,13 +74,17 @@ void ModelTes::copyToDevice()
     int objectCnt = 0;
     for (auto &targetObject : targetObjects)
     {
-        auto &object = targetObjects[0];
         auto &facets = targetObject->facets;
         MakeObjectOnGPU(facets);
         objectCnt++;
     };
 
     DoCalculations();
+
+    CleanupCuda();
+
+    std::cout << "CUDA calculations completed successfully." << std::endl;
+    ProcessFrame();
 }
 
 void ModelTes::GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints)

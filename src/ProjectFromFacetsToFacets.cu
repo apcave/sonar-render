@@ -27,9 +27,10 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     int *mutex_facet_A,
     cudaSurfaceObject_t Pr_facet_B,
     cudaSurfaceObject_t Pi_facet_B,
-    int *mutex_facet_B)
+    int *mutex_facet_B,
+    float *pixel_Pressure_stats,
+    int *pixel_Pressure_stats_mutex)
 {
-    return;
 
     dcomplex k = *k_wave;
     float delta = *pixel_delta;
@@ -169,21 +170,39 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     tmp_r = (float)PA_press.r + delta_Press_atA.r;
     tmp_i = (float)PA_press.i + delta_Press_atA.i;
 
+    if (mutex_facet_A[index_A] != 0)
+    {
+        printf("Test -- First A %d, %d, B %d, %d\n", index_A, mutex_facet_A[index_A], index_B, mutex_facet_B[index_B]);
+    }
     while (atomicCAS(&mutex_facet_A[index_A], 0, 1) != 0)
     {
     }
     surf2Dwrite<float>(tmp_r, Pr_facet_A, xPnt_A * sizeof(float), yPnt_A, cudaBoundaryModeTrap);
     surf2Dwrite<float>(tmp_i, Pi_facet_A, xPnt_A * sizeof(float), yPnt_A, cudaBoundaryModeTrap);
-    atomicExch(mutex_facet_A, 0);
+    atomicExch(&mutex_facet_A[index_A], 0);
 
     tmp_r = (float)PB_press.r + delta_Press_atB.r;
     tmp_i = (float)PB_press.i + delta_Press_atB.i;
+
     while (atomicCAS(&mutex_facet_B[index_B], 0, 1) != 0)
     {
     }
     surf2Dwrite<float>(tmp_r, Pr_facet_B, xPnt_B * sizeof(float), yPnt_B, cudaBoundaryModeTrap);
     surf2Dwrite<float>(tmp_i, Pi_facet_B, xPnt_B * sizeof(float), yPnt_B, cudaBoundaryModeTrap);
-    atomicExch(mutex_facet_B, 0);
+    atomicExch(&mutex_facet_B[index_B], 0);
+
+    printf("Test 3\n");
+    return;
+    float max_real = max(Pr_facet_A, Pr_facet_B);
+    atomicMax((int *)&pixel_Pressure_stats[0], __float_as_int(max_real));
+
+    float max_imag = max(Pi_facet_A, Pi_facet_B);
+    atomicMax((int *)&pixel_Pressure_stats[1], __float_as_int(max_imag));
+
+    float abs_Pi_facet_A = (float)devCabs(PA_press);
+    float abs_Pi_facet_B = (float)devCabs(PB_press);
+    float max_abs = max(abs_Pi_facet_A, abs_Pi_facet_B);
+    atomicMax((int *)&pixel_Pressure_stats[2], __float_as_int(max_abs));
 }
 
 /**
@@ -202,6 +221,8 @@ int CudaModelTes::ProjectFromFacetsToFacets()
 {
     // TODO: Restrict the pixel maxtrix to 1024 pixels.
     // printf("ProjectFromFacetsToFacets .......\n");
+    cudaMemset(pixel_Pressure_stats_mutex, 0, 3 * sizeof(int));
+    cudaMemset(dev_pixel_Pressure_stats, 0, 3 * sizeof(float));
 
     // One mutex per facet, locks it so only one thread can write to the surface at a time.
 
@@ -239,7 +260,9 @@ int CudaModelTes::ProjectFromFacetsToFacets()
                         dev_Object_Facets_pixel_mutex[0][facet_num_a],
                         dev_Object_Facets_Surface_Pr[0][facet_num_b],
                         dev_Object_Facets_Surface_Pi[0][facet_num_b],
-                        dev_Object_Facets_pixel_mutex[0][facet_num_b]);
+                        dev_Object_Facets_pixel_mutex[0][facet_num_b],
+                        dev_pixel_Pressure_stats,
+                        pixel_Pressure_stats_mutex);
 
                     cudaError_t err = cudaGetLastError();
                     if (err != cudaSuccess)
@@ -247,11 +270,20 @@ int CudaModelTes::ProjectFromFacetsToFacets()
                         printf("Kernel launch failed: %s\n", cudaGetErrorString(err));
                         return 1;
                     }
+                    break;
                 }
+                break;
             }
+            break;
         }
+        break;
     }
+    cudaMemcpy(host_pixel_Pressure_stats, dev_pixel_Pressure_stats, 3 * sizeof(float), cudaMemcpyDeviceToHost);
+    printf("Max Pressure: %e, %e\n", host_pixel_Pressure_stats[0], host_pixel_Pressure_stats[1]);
+    printf("Max Abs Pressure: %e\n", host_pixel_Pressure_stats[2]);
+
     // More testing is required on large models to see how CUDA manages the cores.
     cudaDeviceSynchronize();
+
     return 0;
 }

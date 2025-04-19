@@ -119,12 +119,12 @@ __global__ void ProjectSourcePointToFacetKernel(
 
     while (atomicCAS(&mutex_facet[index], 0, 1) != 0)
     {
-        // spin until the mutex is aquired.
+        // spin until the mutex is acquired.
     }
 
     surf2Dwrite<float>(tmp_r, Pr_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
     surf2Dwrite<float>(tmp_i, Pi_facet, xPnt * sizeof(float), yPnt, cudaBoundaryModeTrap);
-    atomicExch(mutex_facet, 0);
+    atomicExch(&mutex_facet[index], 0);
 }
 
 int CudaModelTes::ProjectSourcePointsToFacet()
