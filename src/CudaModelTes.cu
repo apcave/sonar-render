@@ -189,6 +189,44 @@ int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets)
     dev_object_facet_Pr.push_back(facet_Pr);
     dev_object_facet_Pi.push_back(facet_Pi);
 
+    facet_Pi.clear();
+    facet_Pr.clear();
+
+    for (int i = 0; i < number_of_facets; i++)
+    {
+        int num_pixels = facets[i]->NumXpnts * facets[i]->NumYpnts;
+        double *Pr;
+        double *Pi;
+        cudaMalloc((void **)&Pr, num_pixels * sizeof(double));
+        cudaMemset(Pr, 0, num_pixels * sizeof(double));
+        cudaMalloc((void **)&Pi, num_pixels * sizeof(double));
+        cudaMemset(Pi, 0, num_pixels * sizeof(double));
+        facet_Pr.push_back(Pr);
+        facet_Pi.push_back(Pi);
+    }
+
+    dev_object_facet_InitialPr->push_back(facet_Pr);
+    dev_object_facet_InitialPi->push_back(facet_Pi);
+
+    facet_Pi.clear();
+    facet_Pr.clear();
+
+    for (int i = 0; i < number_of_facets; i++)
+    {
+        int num_pixels = facets[i]->NumXpnts * facets[i]->NumYpnts;
+        double *Pr;
+        double *Pi;
+        cudaMalloc((void **)&Pr, num_pixels * sizeof(double));
+        cudaMemset(Pr, 0, num_pixels * sizeof(double));
+        cudaMalloc((void **)&Pi, num_pixels * sizeof(double));
+        cudaMemset(Pi, 0, num_pixels * sizeof(double));
+        facet_Pr.push_back(Pr);
+        facet_Pi.push_back(Pi);
+    }
+
+    dev_object_facet_ResultPr->push_back(facet_Pr);
+    dev_object_facet_ResultPi->push_back(facet_Pi);
+
     vector<cudaSurfaceObject_t> surface_Pr;
     vector<cudaSurfaceObject_t> surface_Pi;
 
@@ -213,24 +251,6 @@ int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets)
 
         int num_pixel = facets[i]->NumXpnts * facets[i]->NumYpnts;
 
-        int *d_mutex_array;
-        // Allocate memory for the mutex array on the device
-        cudaError_t err = cudaMalloc(&d_mutex_array, num_pixel * sizeof(int));
-        if (err != cudaSuccess)
-        {
-            printf("cudaMalloc failed for mutex array: %s\n", cudaGetErrorString(err));
-            return 1;
-        }
-
-        // Initialize all mutexes to 0 (unlocked state)
-        err = cudaMemset(d_mutex_array, 0, num_pixel * sizeof(int));
-        if (err != cudaSuccess)
-        {
-            printf("cudaMemset failed for mutex array: %s\n", cudaGetErrorString(err));
-            return 1;
-        }
-        pixel_mutex.push_back(d_mutex_array);
-
         int ArrLen = facets[i]->NumXpnts * facets[i]->NumYpnts;
         // Allocate the Area for the pixel array on the host.
         cudaMalloc(&host_PixelArea[i], ArrLen * sizeof(float));
@@ -243,8 +263,6 @@ int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets)
 
     dev_Object_Facets_array_Pr.push_back(dev_array_Pr);
     dev_Object_Facets_array_Pi.push_back(dev_array_Pi);
-
-    dev_Object_Facets_pixel_mutex.push_back(pixel_mutex);
 
     // Copy the pixel area data to the device.
     cudaMemcpy(dev_Facets_PixelArea, host_PixelArea, number_of_facets * sizeof(float *), cudaMemcpyHostToDevice);
@@ -336,29 +354,6 @@ int CudaModelTes::DoCalculations()
 {
     printf("DoCalculations .......\n");
 
-    for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
-    {
-        mutex_in_cuda.push_back(vector<int *>());
-        for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
-        {
-            int *mutex;
-            int value = 0;
-            cudaError_t cudaStatus = cudaMalloc(&mutex, sizeof(int));
-            if (cudaStatus != cudaSuccess)
-            {
-                fprintf(stderr, "mutex failed: %s\n", cudaGetErrorString(cudaStatus));
-                return 1;
-            }
-            cudaStatus = cudaMemcpy(mutex, &value, sizeof(int), cudaMemcpyHostToDevice);
-            if (cudaStatus != cudaSuccess)
-            {
-                fprintf(stderr, "mutex failed: %s\n", cudaGetErrorString(cudaStatus));
-                return 1;
-            }
-            mutex_in_cuda[object_num].push_back(mutex);
-        }
-    }
-
     // TestGPU();
     if (ProjectSourcePointsToFacet() != 0)
     {
@@ -366,7 +361,7 @@ int CudaModelTes::DoCalculations()
         return 1;
     }
 
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 0; i++)
     {
         if (ProjectFromFacetsToFacets() != 0)
         {

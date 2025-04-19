@@ -22,11 +22,20 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     float3 *facets_xaxis,
     float3 *facets_yaxis,
     float **facets_PixelArea,
-    double *Pr_facet_A,
-    double *Pi_facet_A,
-    double *Pr_facet_B,
-    double *Pi_facet_B,
-    float *pixel_Pressure_stats)
+    double *Pr_acc_A,
+    double *Pi_acc_A,
+    double *Pr_acc_B,
+    double *Pi_acc_B,
+
+    double *Pr_ini_A,
+    double *Pi_ini_A,
+    double *Pr_ini_B,
+    double *Pi_ini_B,
+
+    double *Pr_res_A,
+    double *Pi_res_A,
+    double *Pr_res_B,
+    double *Pi_res_B)
 {
 
     dcomplex k = *k_wave;
@@ -107,13 +116,13 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     PBg.z = xAxis_B.z + yAxis_B.z + facet_base_B.z;
 
     dcomplex PA_press;
-    PA_press.r = Pr_facet_A[index_A];
-    PA_press.i = Pi_facet_A[index_A];
+    PA_press.r = Pr_ini_A[index_A];
+    PA_press.i = Pi_ini_A[index_A];
     ;
 
     dcomplex PB_press;
-    PB_press.r = Pr_facet_B[index_B];
-    PB_press.i = Pi_facet_B[index_B];
+    PB_press.r = Pr_ini_B[index_B];
+    PB_press.i = Pi_ini_B[index_B];
     ;
 
     // The distance from the source point to the facet point.
@@ -174,21 +183,15 @@ __global__ void ProjectFromFacetsToFacetsKernel(
 
     // printf("Pressure added to field point: %f, %f\n", var.r, var.i);
 
-    atomicAddDouble(&Pr_facet_A[index_A], delta_Press_atA.r);
-    atomicAddDouble(&Pi_facet_A[index_A], delta_Press_atA.i);
-    atomicAddDouble(&Pr_facet_B[index_B], delta_Press_atB.r);
-    atomicAddDouble(&Pi_facet_B[index_B], delta_Press_atB.i);
+    atomicAddDouble(&Pr_acc_A[index_A], delta_Press_atA.r);
+    atomicAddDouble(&Pi_acc_A[index_A], delta_Press_atA.i);
+    atomicAddDouble(&Pr_acc_B[index_B], delta_Press_atB.r);
+    atomicAddDouble(&Pi_acc_B[index_B], delta_Press_atB.i);
 
-    float max_real = (float)max(Pr_facet_A[index_A], Pr_facet_B[index_B]);
-    atomicMax((int *)&pixel_Pressure_stats[0], __float_as_int(max_real));
-
-    float max_imag = (float)max(Pi_facet_A[index_A], Pi_facet_B[index_B]);
-    atomicMax((int *)&pixel_Pressure_stats[1], __float_as_int(max_imag));
-
-    float abs_Pi_facet_A = (float)devCabs(PA_press);
-    float abs_Pi_facet_B = (float)devCabs(PB_press);
-    float max_abs = max(abs_Pi_facet_A, abs_Pi_facet_B);
-    atomicMax((int *)&pixel_Pressure_stats[2], __float_as_int(max_abs));
+    atomicAddDouble(&Pr_res_A[index_A], delta_Press_atA.r);
+    atomicAddDouble(&Pi_res_A[index_A], delta_Press_atA.i);
+    atomicAddDouble(&Pr_res_B[index_B], delta_Press_atB.r);
+    atomicAddDouble(&Pi_res_B[index_B], delta_Press_atB.i);
 }
 
 /**
@@ -201,8 +204,11 @@ __global__ void ProjectFromFacetsToFacetsKernel(
  * As p_0, p_1=(p_0*T), p_2=(p_1*T), p_3(p_2*T)....p_n(p_(n-1)*T) where T < 1 <<-- Needs work!
  *
  * Note if the problem has not converged the results may not be symmetric.
+ * The pressure waves can only go forward so there is an initial pressure matrix.
+ * Ip -> Tp  Ap = Ap + Tp, Tp -> Ip
+ * The pressure transmitted get smaller and smaller and is acculutated every step.
+ * So there is an upper bound on the accumulated pressure.
  */
-
 int CudaModelTes::ProjectFromFacetsToFacets()
 {
     // TODO: Restrict the pixel maxtrix to 1024 pixels.
@@ -211,6 +217,16 @@ int CudaModelTes::ProjectFromFacetsToFacets()
     cudaMemset(dev_pixel_Pressure_stats, 0, 3 * sizeof(float));
 
     // One mutex per facet, locks it so only one thread can write to the surface at a time.
+    for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
+    {
+        for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
+        {
+            int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
+            int buff_sz = h_Facets_points.x * h_Facets_points.y * sizeof(double);
+            cudaMemcpy((*dev_object_facet_InitialPr)[object_num][facet_num], dev_object_facet_Pr[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
+            cudaMemcpy((*dev_object_facet_InitialPi)[object_num][facet_num], dev_object_facet_Pi[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
+        }
+    }
 
     for (int object_num_a = 0; object_num_a < host_object_num_facets.size(); object_num_a++)
     {
@@ -245,7 +261,14 @@ int CudaModelTes::ProjectFromFacetsToFacets()
                         dev_object_facet_Pi[0][facet_num_a],
                         dev_object_facet_Pr[0][facet_num_b],
                         dev_object_facet_Pi[0][facet_num_b],
-                        dev_pixel_Pressure_stats);
+                        (*dev_object_facet_InitialPr)[object_num_a][facet_num_a],
+                        (*dev_object_facet_InitialPi)[object_num_a][facet_num_a],
+                        (*dev_object_facet_InitialPr)[object_num_b][facet_num_b],
+                        (*dev_object_facet_InitialPi)[object_num_b][facet_num_b],
+                        (*dev_object_facet_ResultPr)[object_num_a][facet_num_a],
+                        (*dev_object_facet_ResultPi)[object_num_a][facet_num_a],
+                        (*dev_object_facet_ResultPr)[object_num_b][facet_num_b],
+                        (*dev_object_facet_ResultPi)[object_num_b][facet_num_b]);
 
                     cudaError_t err = cudaGetLastError();
                     if (err != cudaSuccess)
@@ -257,12 +280,29 @@ int CudaModelTes::ProjectFromFacetsToFacets()
             }
         }
     }
-    cudaMemcpy(host_pixel_Pressure_stats, dev_pixel_Pressure_stats, 3 * sizeof(float), cudaMemcpyDeviceToHost);
-    // printf("Max Pressure: %e, %e\n", host_pixel_Pressure_stats[0], host_pixel_Pressure_stats[1]);
-    // printf("Max Abs Pressure: %e\n", host_pixel_Pressure_stats[2]);
 
-    // More testing is required on large models to see how CUDA manages the cores.
     cudaDeviceSynchronize();
+
+    // Swap the results and the initial pressure.
+    std::vector<std::vector<double *>> *tmp = dev_object_facet_InitialPr;
+    dev_object_facet_InitialPr = dev_object_facet_ResultPr;
+    dev_object_facet_ResultPr = tmp;
+
+    tmp = dev_object_facet_InitialPi;
+    dev_object_facet_InitialPi = dev_object_facet_ResultPi;
+    dev_object_facet_ResultPi = tmp;
+
+    // One mutex per facet, locks it so only one thread can write to the surface at a time.
+    for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
+    {
+        for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
+        {
+            int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
+            int buff_sz = h_Facets_points.x * h_Facets_points.y * sizeof(double);
+            cudaMemset((*dev_object_facet_ResultPr)[object_num][facet_num], 0, buff_sz);
+            cudaMemset((*dev_object_facet_ResultPi)[object_num][facet_num], 0, buff_sz);
+        }
+    }
 
     return 0;
 }

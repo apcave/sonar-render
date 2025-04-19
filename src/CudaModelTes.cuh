@@ -45,8 +45,14 @@ protected:
     vector<vector<cudaArray_t>> dev_Object_Facets_array_Pr; // constant
     vector<vector<cudaArray_t>> dev_Object_Facets_array_Pi; // constant
 
-    std::vector<std::vector<double *>> dev_object_facet_Pi;
     std::vector<std::vector<double *>> dev_object_facet_Pr;
+    std::vector<std::vector<double *>> dev_object_facet_Pi;
+
+    std::vector<std::vector<double *>> *dev_object_facet_InitialPr = new std::vector<std::vector<double *>>();
+    std::vector<std::vector<double *>> *dev_object_facet_InitialPi = new std::vector<std::vector<double *>>();
+
+    std::vector<std::vector<double *>> *dev_object_facet_ResultPr = new std::vector<std::vector<double *>>();
+    std::vector<std::vector<double *>> *dev_object_facet_ResultPi = new std::vector<std::vector<double *>>();
 
     vector<int3 *> dev_Object_Facets_points;    // constant
     vector<float3 *> dev_Object_Facets_Normals; // constant
@@ -64,11 +70,6 @@ protected:
 
     // These are used to manage CUDA threads.
     vector<int3 *> host_Object_Facets_points;
-
-    // Mutexes that provide for write safety only one thread can write to a facet at a time.
-    vector<vector<int *>> mutex_in_cuda;
-
-    vector<vector<int *>> dev_Object_Facets_pixel_mutex;
 
 public:
     CudaModelTes() {};

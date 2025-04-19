@@ -107,8 +107,6 @@ __global__ void ProjectSourcePointToFacetKernel(
         return;
     }
 
-    float tmp_r, tmp_i;
-
     atomicAddDouble(&Pr_facet[index_Bi], var.r);
     atomicAddDouble(&Pi_facet[index_Bi], var.i);
 }
