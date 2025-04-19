@@ -208,7 +208,7 @@ int CudaModelTes::DoCalculations()
     ProjectSourcePointsToFacet();
     for (int i = 0; i < 1000; i++)
     {
-        ProjectSourcePointsToFacet();
+        ProjectFromFacetsToFacets();
     }
     ProjectFromFacetsToFieldPoints();
     return 0;
