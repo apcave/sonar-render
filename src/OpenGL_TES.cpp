@@ -10,19 +10,42 @@ void OpenGL_TES::MakeTextureShader()
     {
         return;
     }
+    const char *vertexShaderSource = R"(
+            #version 330 core
+
+            layout(location = 0) in vec3 aPos;    // Vertex position
+            layout(location = 1) in vec2 aTexCoord; // Texture coordinates
+
+            out vec2 TexCoords; // Pass texture coordinates to the fragment shader
+
+            uniform mat4 modelView;      // Model matrix
+            uniform mat4 projection;     // Projection matrix
+
+            void main()
+            {
+                TexCoords = aTexCoord; // Pass texture coordinates to the fragment shader
+                //gl_Position = vec4(aPos, 1.0); // Transform vertex position to clip space
+                //gl_Position = vec4(-1.0, -1.0, 0.0, 1.0);
+                gl_Position = projection * modelView * vec4(aPos, 1.0); // Transform vertex position to clip space
+            }
+    )";
 
     // Fragment shader
     const char *fragmentShaderSource = R"(
-        #version 330 core
-        out vec4 FragColor;
+            #version 330 core
+            out vec4 FragColor;
 
-        in vec2 TexCoords;
+            in vec2 TexCoords; // Texture coordinates passed from the vertex shader
 
-        void main()
-        {
-            vec2 clampedTexCoords = clamp(TexCoords, 0.0, 1.0);
-            FragColor = vec4(clampedTexCoords, 0.0, 1.0); // Visualize texture coordinates
-        }
+            void main()
+            {
+                // Extract u and v from TexCoords
+                float u = TexCoords.x;
+                float v = TexCoords.y;
+
+                // Use u and v to create a gradient
+                FragColor = vec4(u, v, 0.0, 1.0); // Red = u, Green = v, Blue = 0, Alpha = 1
+            }
     )";
     GLint success;
     char infoLog[512];
@@ -40,10 +63,23 @@ void OpenGL_TES::MakeTextureShader()
                   << infoLog << std::endl;
     }
 
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    glCompileShader(vertexShader);
+
+    // Check for compilation errors
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+        std::cerr << "Vertex Shader Compilation Failed:\n"
+                  << infoLog << std::endl;
+    }
+
     // Link shaders into a program
     GLuint shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
-    // glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
 
     // Check for linking errors
@@ -57,7 +93,17 @@ void OpenGL_TES::MakeTextureShader()
     }
     std::cout << "textureShaderProgram program linked successfully." << std::endl;
 
+    // Check for linking errors
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        std::cerr << "Shader Program Linking Failed:\n"
+                  << infoLog << std::endl;
+    }
+
     // Clean up shaders (no longer needed after linking)
+    glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
     textureShaderProgram = shaderProgram;
@@ -100,7 +146,7 @@ void OpenGL_TES::InitOpenGL()
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(glm::value_ptr(projection));
 
-    glm::mat4 view = glm::lookAt(glm::vec3(0.0f, -5.0f, 5.0f), // Camera position
+    glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f),  // Camera position
                                  glm::vec3(0.0f, 0.0f, 0.0f),  // Look-at point
                                  glm::vec3(0.0f, 1.0f, 0.0f)); // Up vector
     glMatrixMode(GL_MODELVIEW);
@@ -220,20 +266,12 @@ int OpenGL_TES::MakeObjectOnGL(std::vector<Facet *> facets)
 {
 
     std::vector<float> vertexData;
-    // for (auto &facet : facets)
-    // {
-    //     // Add vertex positions and texture coordinates for each facet
-    //     vertexData.insert(vertexData.end(), {facet->v1.x, facet->v1.y, facet->v1.z, facet->texCoords[0], facet->texCoords[1],
-    //                                          facet->v2.x, facet->v2.y, facet->v2.z, facet->texCoords[2], facet->texCoords[3],
-    //                                          facet->v3.x, facet->v3.y, facet->v3.z, facet->texCoords[4], facet->texCoords[5]});
-    // }
-
     for (auto &facet : facets)
     {
         // Add vertex positions and texture coordinates for each facet
-        vertexData.insert(vertexData.end(), {facet->v1.x, facet->v1.y, facet->v1.z, 0.0f, 0.0f,
-                                             facet->v2.x, facet->v2.y, facet->v2.z, 1.0f, 0.0f,
-                                             facet->v3.x, facet->v3.y, facet->v3.z, 1.0f, 1.0f});
+        vertexData.insert(vertexData.end(), {facet->v1.x, facet->v1.y, facet->v1.z, facet->texCoords[0], facet->texCoords[1],
+                                             facet->v2.x, facet->v2.y, facet->v2.z, facet->texCoords[2], facet->texCoords[3],
+                                             facet->v3.x, facet->v3.y, facet->v3.z, facet->texCoords[4], facet->texCoords[5]});
     }
 
     // Upload the vertex data to the GPU
@@ -279,7 +317,8 @@ void OpenGL_TES::ProcessFrame()
     std::cout << "Processing frame... <------------------------" << std::endl;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // glDisable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
 
     if (!glfwGetCurrentContext())
     {
@@ -313,48 +352,93 @@ void OpenGL_TES::ProcessFrame()
     std::cout << "Processing frame..." << std::endl;
 
     MakeTextureShader();
-    glUseProgram(textureShaderProgram);
 
     // Get the memory addresses for input variables.
-    GLint textureUniformLocation = glGetUniformLocation(textureShaderProgram, "inputTexture");
-    if (textureUniformLocation == -1)
+    // GLint textureUniformLocation = glGetUniformLocation(textureShaderProgram, "inputTexture");
+    // if (textureUniformLocation == -1)
+    // {
+    //     std::cerr << "Error: Uniform 'inputTexture' not found in the shader program." << std::endl;
+    // }
+    // else
+    // {
+    //     std::cout << "Uniform 'inputTexture' location: " << textureUniformLocation << std::endl;
+    // }
+
+    // for (auto facGL : gl_object_facets)
+    // {
+    //     // Unmap the CUDA resource for this facet's texture
+    //     cudaGraphicsUnmapResources(1, &facGL->cudaResource, 0);
+    // }
+
+    // glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    // float *mappedData = (float *)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY);
+    // if (mappedData)
+    // {
+    //     // Access the vertex data
+    //     for (size_t i = 0; i < 6 * 5; i += 5) // Assuming 3 position + 2 texture coordinates
+    //     {
+    //         std::cout << "Position: (" << mappedData[i] << ", " << mappedData[i + 1] << ", " << mappedData[i + 2] << ")";
+    //         std::cout << ", TexCoords: (" << mappedData[i + 3] << ", " << mappedData[i + 4] << ")" << std::endl;
+    //     }
+
+    //     if (glUnmapBuffer(GL_ARRAY_BUFFER) == GL_FALSE)
+    //     {
+    //         std::cerr << "Warning: Buffer was corrupted and could not be unmapped." << std::endl;
+    //     }
+    //     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    // }
+    // else
+    // {
+    //     std::cerr << "Failed to map buffer." << std::endl;
+    // }
+
+    // glBindVertexArray(vao);
+    GLfloat projectionMatrix[16];
+    GLfloat modelViewMatrix[16];
+
+    // Get the current projection matrix
+    glGetFloatv(GL_PROJECTION_MATRIX, projectionMatrix);
+
+    // Get the current model-view matrix
+    glGetFloatv(GL_MODELVIEW_MATRIX, modelViewMatrix);
+
+    // Get uniform locations in the shader
+    GLint projectionLoc = glGetUniformLocation(textureShaderProgram, "projection");
+    GLint modelViewLoc = glGetUniformLocation(textureShaderProgram, "modelView");
+
+    if (projectionLoc == -1)
     {
-        std::cerr << "Error: Uniform 'inputTexture' not found in the shader program." << std::endl;
-    }
-    else
-    {
-        std::cout << "Uniform 'inputTexture' location: " << textureUniformLocation << std::endl;
+        std::cerr << "Error: 'projectionLoc' not found in the shader program." << std::endl;
     }
 
-    for (auto facGL : gl_object_facets)
+    if (modelViewLoc == -1)
     {
-        // Unmap the CUDA resource for this facet's texture
-        cudaGraphicsUnmapResources(1, &facGL->cudaResource, 0);
+        std::cerr << "Error: 'modelViewLoc' not found in the shader program." << std::endl;
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    float *mappedData = (float *)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY);
-    if (mappedData)
-    {
-        // Access the vertex data
-        for (size_t i = 0; i < 6 * 5; i += 5) // Assuming 3 position + 2 texture coordinates
-        {
-            std::cout << "Position: (" << mappedData[i] << ", " << mappedData[i + 1] << ", " << mappedData[i + 2] << ")";
-            std::cout << ", TexCoords: (" << mappedData[i + 3] << ", " << mappedData[i + 4] << ")" << std::endl;
-        }
+    // Pass the matrices to the shader
+    glUseProgram(textureShaderProgram);
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projectionMatrix);
+    glUniformMatrix4fv(modelViewLoc, 1, GL_FALSE, modelViewMatrix);
 
-        if (glUnmapBuffer(GL_ARRAY_BUFFER) == GL_FALSE)
-        {
-            std::cerr << "Warning: Buffer was corrupted and could not be unmapped." << std::endl;
-        }
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-    }
-    else
-    {
-        std::cerr << "Failed to map buffer." << std::endl;
-    }
+    // Get uniform locations
+    // GLuint modelLoc = glGetUniformLocation(textureShaderProgram, "model");
+    // GLuint viewLoc = glGetUniformLocation(textureShaderProgram, "view");
+    // GLuint projectionLoc = glGetUniformLocation(textureShaderProgram, "projection");
 
-    glBindVertexArray(vao);
+    // // Set the model matrix
+    // glm::mat4 model = glm::mat4(1.0f); // Identity matrix (no transformation)
+    // glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+    // // Set the view matrix
+    // glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f), // Camera position
+    //                             glm::vec3(0.0f, 0.0f, 0.0f), // Look-at point
+    //                             glm::vec3(0.0f, 1.0f, 0.0f)); // Up vector
+    // glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+
+    // // Set the projection matrix
+    // glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 100.0f);
+    // glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
     int triangleIndex = 0;
     while (!glfwWindowShouldClose(window))
@@ -363,12 +447,21 @@ void OpenGL_TES::ProcessFrame()
         {
 
             // Bind the texture for this facet
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, facGL->textureID);
+            // glActiveTexture(GL_TEXTURE0);
+            // glBindTexture(GL_TEXTURE_2D, facGL->textureID);
             // glUniform1i(textureUniformLocation, 0);
-
+            // glUseProgram(0);
+            glBindVertexArray(vao);
             glDrawArrays(GL_TRIANGLES, triangleIndex * 3, 3); // Render 3 vertices for the facet
+            glBindVertexArray(0);
             triangleIndex++;
+
+            GLenum err;
+            err = glGetError();
+            if (err != GL_NO_ERROR)
+            {
+                std::cerr << "OpenGL error: " << err << std::endl;
+            }
         }
 
         // Swap buffers and poll events
@@ -376,7 +469,7 @@ void OpenGL_TES::ProcessFrame()
         glfwPollEvents();
     }
 
-    glBindVertexArray(0);
+    // glBindVertexArray(0);
     std::cout << "Cleaning up OpenGL..." << std::endl;
     glfwDestroyWindow(window);
     glfwTerminate();
