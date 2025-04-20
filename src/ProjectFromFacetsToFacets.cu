@@ -3,6 +3,7 @@
 #include "dcomplex.h"
 #include "CudaUtils.cuh"
 
+#include <opencv2/opencv.hpp>
 #include <stdio.h>
 
 /**
@@ -44,10 +45,10 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     // Kernel code to project point to point
     // printf("ThreadIdx.x: %d, ThreadIdx.y: %d, blockIdx.x: %d, blockDim.x: %d\n", threadIdx.x, threadIdx.y, blockIdx.x, blockDim.x);
     int xPnt_A = threadIdx.x;
-    int yPnt_A = threadIdx.y;
+    int yPnt_A = blockIdx.x;
 
-    int xPnt_B = blockIdx.x;
-    int yPnt_B = blockIdx.y;
+    int xPnt_B = blockIdx.y;
+    int yPnt_B = blockIdx.z;
 
     // To keep calculation even do not do a double projection when the two facets are the same.
     // bool skipReciprosity = facet_num_A == facet_num_B;
@@ -142,8 +143,8 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     // Area2 = 4 * PI * r_sf * r_sf
     // atten_spread = Area1 / Area2 <--- important for other projections.
     // Intergral Area Terms and half spherical spread.
-    float att_spread_AB = pixel_area_A * pixel_area_B * pow(pixel_area_A / (2 * M_PI * r_AB * r_AB), 0.5);
-    float att_spread_BA = pixel_area_B * pixel_area_A * pow(pixel_area_B / (2 * M_PI * r_AB * r_AB), 0.5);
+    float att_spread_AB = pixel_area_A * pow(pixel_area_A / (2 * M_PI * r_AB * r_AB), 0.5);
+    float att_spread_BA = pixel_area_B * pow(pixel_area_B / (2 * M_PI * r_AB * r_AB), 0.5);
 
     // float att_spread_AB = pixel_area_A * pixel_area_B / r_AB;
     // float att_spread_BA = pixel_area_A * pixel_area_B / r_AB;
@@ -216,6 +217,10 @@ int CudaModelTes::ProjectFromFacetsToFacets()
     // TODO: Restrict the pixel maxtrix to 1024 pixels.
     printf("ProjectFromFacetsToFacets .......\n");
 
+    cudaDeviceProp prop;
+    cudaGetDeviceProperties(&prop, 0); // Query device 0
+    printf("Max threads per block: %d\n", prop.maxThreadsPerBlock);
+
     // One mutex per facet, locks it so only one thread can write to the surface at a time.
     for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
     {
@@ -241,8 +246,8 @@ int CudaModelTes::ProjectFromFacetsToFacets()
                     int3 h_Facets_a_points = host_Object_Facets_points[object_num_a][facet_num_a];
                     int3 h_Facets_b_points = host_Object_Facets_points[object_num_b][facet_num_b];
 
-                    dim3 threadsPerBlock(h_Facets_a_points.x, h_Facets_a_points.y);
-                    dim3 numBlocks(h_Facets_b_points.x, h_Facets_b_points.y);
+                    dim3 threadsPerBlock(h_Facets_a_points.x, 1);
+                    dim3 numBlocks(h_Facets_a_points.y, h_Facets_b_points.x, h_Facets_b_points.y);
 
                     // printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
                     //   printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
@@ -306,14 +311,14 @@ int CudaModelTes::ProjectFromFacetsToFacets()
             // cudaMemcpy(dev_object_facet_Pi[object_num][facet_num], (*dev_object_facet_InitialPi)[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
         }
     }
-    CopyFromMatrixToSurface();
+
     return 0;
 }
 
 __global__ void GetMaxValue(double *Pr, double *Pi, int maxXpnt, float *stats)
 {
     int xPnt = threadIdx.x;
-    int yPnt = threadIdx.y;
+    int yPnt = blockIdx.x;
 
     int index = yPnt * maxXpnt + xPnt;
 
@@ -325,7 +330,9 @@ __global__ void GetMaxValue(double *Pr, double *Pi, int maxXpnt, float *stats)
     float imag = abs((float)var.i);
     float abs = (float)devCabs(var);
 
-    atomicMaxFloat(&stats[0], real);
+    float maxVal = 2 * max(real, imag);
+
+    atomicMaxFloat(&stats[0], maxVal);
     atomicMinFloat(&stats[1], real);
     atomicMaxFloat(&stats[2], abs);
 
@@ -336,20 +343,60 @@ __global__ void GetMaxValue(double *Pr, double *Pi, int maxXpnt, float *stats)
 __global__ void MakeSurface(double *P, cudaSurfaceObject_t surface, int maxXpnt, float *stats)
 {
     int xPnt = threadIdx.x;
-    int yPnt = threadIdx.y;
+    int yPnt = blockIdx.x;
 
     int index = yPnt * maxXpnt + xPnt;
 
-    float value = 0.5 + ((float)P[index] / stats[0]) / 2;
+    float value = 0.5 + ((float)P[index] / stats[0]);
 
-    value = (float)yPnt / (float)maxXpnt;
+    // value = (float)yPnt / (float)maxXpnt;
     surf2Dwrite(value, surface, xPnt * sizeof(float), yPnt);
 
-    printf("Write surface: %f, %f, %f\n", value, stats[0], stats[1]);
+    // printf("Write surface: %f, %f, %f\n", value, stats[0], stats[1]);
+}
+
+void DisplayMatrixAsImage(const std::vector<float> &matrix, int width, int height)
+{
+    // Normalize the matrix to [0, 255]
+    float minVal = *std::min_element(matrix.begin(), matrix.end());
+    float maxVal = *std::max_element(matrix.begin(), matrix.end());
+    std::vector<uint8_t> normalizedMatrix(matrix.size());
+    for (size_t i = 0; i < matrix.size(); i++)
+    {
+        normalizedMatrix[i] = static_cast<uint8_t>(255.0f * (matrix[i] - minVal) / (maxVal - minVal));
+    }
+
+    // Create an OpenCV Mat object
+    cv::Mat image(height, width, CV_8UC1, normalizedMatrix.data());
+
+    // Display the image
+    cv::imshow("Matrix as Image", image);
+    cv::waitKey(0); // Wait for a key press
 }
 
 int CudaModelTes::CopyFromMatrixToSurface()
 {
+    for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
+    {
+        for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
+        {
+            int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
+            std::vector<double> matrix(h_Facets_points.x * h_Facets_points.y);
+            cudaMemcpy(matrix.data(), dev_object_facet_Pr[object_num][facet_num], h_Facets_points.x * h_Facets_points.y * sizeof(double), cudaMemcpyDeviceToHost);
+
+            for (int j = h_Facets_points.y - 1; j >= 0; j--)
+            {
+                for (int i = 0; i < h_Facets_points.x; i++)
+                {
+                    printf("%.2f ", matrix[j * h_Facets_points.x + i]);
+                }
+                printf("\n");
+            }
+            printf("\n");
+
+            // DisplayMatrixAsImage(matrix, h_Facets_points.x, h_Facets_points.y);
+        }
+    }
 
     printf("CopyFromMatrixToSurface .......\n");
 
@@ -361,8 +408,8 @@ int CudaModelTes::CopyFromMatrixToSurface()
         for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
         {
             int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
-            dim3 threadsPerBlock(h_Facets_points.x, h_Facets_points.y);
-            dim3 numBlocks(1, 1);
+            dim3 threadsPerBlock(h_Facets_points.x, 1);
+            dim3 numBlocks(h_Facets_points.y, 1);
 
             printf("Test B\n");
             GetMaxValue<<<numBlocks, threadsPerBlock>>>(dev_object_facet_Pr[object_num][facet_num],
@@ -379,8 +426,8 @@ int CudaModelTes::CopyFromMatrixToSurface()
         for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
         {
             int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
-            dim3 threadsPerBlock(h_Facets_points.x, h_Facets_points.y);
-            dim3 numBlocks(1, 1);
+            dim3 threadsPerBlock(h_Facets_points.x, 1);
+            dim3 numBlocks(h_Facets_points.y, 1);
 
             // Make the textures out of the real values.
             MakeSurface<<<numBlocks, threadsPerBlock>>>(dev_object_facet_Pr[object_num][facet_num],
@@ -390,5 +437,24 @@ int CudaModelTes::CopyFromMatrixToSurface()
         }
     }
     cudaDeviceSynchronize();
+
+    for (auto facGL : gl_object_facets)
+    {
+        std::vector<float> matrix(facGL->numXpnts * facGL->numYpnts);
+        cudaMemcpy(matrix.data(), facGL->array, facGL->numXpnts * facGL->numYpnts * sizeof(float), cudaMemcpyDeviceToHost);
+
+        for (int j = facGL->numYpnts - 1; j >= 0; j--)
+        {
+            for (int i = 0; i < facGL->numXpnts; i++)
+            {
+                printf("%.2f ", matrix[j * facGL->numXpnts + i]);
+            }
+            printf("\n");
+        }
+        printf("\n");
+
+        // DisplayMatrixAsImage(matrix, h_Facets_points.x, h_Facets_points.y);
+    }
+    printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     return 0;
 }

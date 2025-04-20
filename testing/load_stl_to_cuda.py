@@ -164,7 +164,8 @@ Radius = 50.0
 stl_mesh = make_rectangle(a,b)
 #stl_mesh = mesh.Mesh.from_file('./testing/rectangular_plate.stl')
 source_pnts = []
-source_pnts.append([Radius*np.sin(np.pi/4),0.0,Radius*np.cos(np.pi/4)])
+source_angle = 90
+source_pnts.append([0.0,0.0,Radius])
 angles = np.linspace(-180, 180, 360, endpoint=False)
 field_pnts= generate_field_points(Radius, angles)
 
@@ -175,7 +176,7 @@ load_stl_mesh_to_cuda(stl_mesh)
 #render_openGL()
 pixelate_facets()
 
-# plot_geometry(stl_mesh, source_pnts, field_pnts )
+plot_geometry(stl_mesh, source_pnts, field_pnts )
 
 field_vals = GetFieldPoints(len(field_pnts))
 
@@ -234,7 +235,7 @@ print('Modelled Target Strength = ', modelled_TES)
 
 
 # Plot the data
-if False:
+if True:
     # db_values  + 40*np.log10(Radius)    
     plt.figure()
     plt.plot(angles, db_values  + 40*np.log10(Radius), label="Field Values (dB)")

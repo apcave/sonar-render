@@ -37,14 +37,20 @@ void OpenGL_TES::MakeTextureShader()
 
             in vec2 TexCoords; // Texture coordinates passed from the vertex shader
 
+            uniform sampler2D inputTexture;
+
             void main()
             {
                 // Extract u and v from TexCoords
-                float u = TexCoords.x;
-                float v = TexCoords.y;
+                //float u = TexCoords.x;
+                //float v = TexCoords.y;
 
                 // Use u and v to create a gradient
-                FragColor = vec4(u, v, 0.0, 1.0); // Red = u, Green = v, Blue = 0, Alpha = 1
+                // FragColor = vec4(TexCoords, 0.0, 1.0); // Red = u, Green = v, Blue = 0, Alpha = 1
+                FragColor = vec4(texture(inputTexture, TexCoords).r,
+                                 0.0,
+                                 1.0 - texture(inputTexture, TexCoords).r,
+                                 1.0); // Red = u, Green = v, Blue = 0, Alpha = 1
             }
     )";
     GLint success;
@@ -312,6 +318,17 @@ void OpenGL_TES::CreateTexture(int numXpnts, int numYpnts, GLuint *texture)
 
     std::cout << "Single-channel float texture created successfully." << std::endl;
 }
+
+void checkGLError()
+{
+    GLenum err;
+    err = glGetError();
+    if (err != GL_NO_ERROR)
+    {
+        std::cerr << "OpenGL error: " << err << std::endl;
+    }
+}
+
 void OpenGL_TES::ProcessFrame()
 {
     std::cout << "Processing frame... <------------------------" << std::endl;
@@ -416,44 +433,44 @@ void OpenGL_TES::ProcessFrame()
         std::cerr << "Error: 'modelViewLoc' not found in the shader program." << std::endl;
     }
 
+    GLint textureUniformLoc = glGetUniformLocation(textureShaderProgram, "inputTexture");
+    if (textureUniformLoc == -1)
+    {
+        std::cerr << "Error: Uniform 'inputTexture' not found in the shader program." << std::endl;
+    }
+
     // Pass the matrices to the shader
     glUseProgram(textureShaderProgram);
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projectionMatrix);
     glUniformMatrix4fv(modelViewLoc, 1, GL_FALSE, modelViewMatrix);
 
-    // Get uniform locations
-    // GLuint modelLoc = glGetUniformLocation(textureShaderProgram, "model");
-    // GLuint viewLoc = glGetUniformLocation(textureShaderProgram, "view");
-    // GLuint projectionLoc = glGetUniformLocation(textureShaderProgram, "projection");
+    for (auto facGL : gl_object_facets)
+    {
+        cudaGraphicsUnmapResources(1, &facGL->cudaResource, 0);
+    }
+    PrintTextures();
 
-    // // Set the model matrix
-    // glm::mat4 model = glm::mat4(1.0f); // Identity matrix (no transformation)
-    // glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-
-    // // Set the view matrix
-    // glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f), // Camera position
-    //                             glm::vec3(0.0f, 0.0f, 0.0f), // Look-at point
-    //                             glm::vec3(0.0f, 1.0f, 0.0f)); // Up vector
-    // glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-
-    // // Set the projection matrix
-    // glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 100.0f);
-    // glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    glBindVertexArray(vao);
+    checkGLError();
 
     int triangleIndex = 0;
     while (!glfwWindowShouldClose(window))
     {
         for (auto facGL : gl_object_facets)
         {
-
+            if (!glIsTexture(facGL->textureID))
+            {
+                std::cout << "Texture ID " << facGL->textureID << " is not valid." << std::endl;
+            }
             // Bind the texture for this facet
-            // glActiveTexture(GL_TEXTURE0);
-            // glBindTexture(GL_TEXTURE_2D, facGL->textureID);
-            // glUniform1i(textureUniformLocation, 0);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, facGL->textureID);
+            glUniform1i(textureUniformLoc, 0);
+            checkGLError();
+
             // glUseProgram(0);
-            glBindVertexArray(vao);
             glDrawArrays(GL_TRIANGLES, triangleIndex * 3, 3); // Render 3 vertices for the facet
-            glBindVertexArray(0);
+
             triangleIndex++;
 
             GLenum err;
@@ -469,8 +486,38 @@ void OpenGL_TES::ProcessFrame()
         glfwPollEvents();
     }
 
-    // glBindVertexArray(0);
+    glBindVertexArray(0);
     std::cout << "Cleaning up OpenGL..." << std::endl;
     glfwDestroyWindow(window);
     glfwTerminate();
+}
+
+void OpenGL_TES::PrintTextures()
+{
+    for (auto facGL : gl_object_facets)
+    {
+        if (!glIsTexture(facGL->textureID))
+        {
+            std::cout << "Texture ID " << facGL->textureID << " is not valid." << std::endl;
+        }
+        glBindTexture(GL_TEXTURE_2D, facGL->textureID);
+
+        // Allocate a buffer to store the texture data
+        std::vector<float> textureData(facGL->numXpnts * facGL->numYpnts * 4); // Assuming RGBA format
+
+        // Copy the texture data to the buffer
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, textureData.data());
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        for (int j = facGL->numYpnts - 1; j >= 0; j--)
+        {
+            for (int i = 0; i < facGL->numXpnts; i++)
+            {
+                printf("%.2f ", textureData[4 * (j * facGL->numXpnts + i)]);
+            }
+            printf("\n");
+        }
+        printf("\n");
+    }
 }

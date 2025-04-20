@@ -36,7 +36,7 @@ __global__ void ProjectSourcePointToFacetKernel(
     // Kernel code to project point to point
     // printf("ThreadIdx.x: %d, ThreadIdx.y: %d, blockIdx.x: %d, blockDim.x: %d\n", threadIdx.x, threadIdx.y, blockIdx.x, blockDim.x);
     int xPnt = threadIdx.x;
-    int yPnt = threadIdx.y;
+    int yPnt = blockIdx.x;
 
     int NumXpnts = facet_Points[facet_num].x;
     // int NumYpnts = facet_Points[facet_num].y;
@@ -44,9 +44,9 @@ __global__ void ProjectSourcePointToFacetKernel(
 
     int index_Bi = yPnt * NumXpnts + xPnt;
 
-    float pixel_area = facets_PixelArea[facet_num][index_Bi];
+    float A_i = facets_PixelArea[facet_num][index_Bi];
 
-    if (pixel_area == 0)
+    if (A_i == 0)
     {
         // printf("facets_PixelArea is zero\n");
         return;
@@ -78,27 +78,19 @@ __global__ void ProjectSourcePointToFacetKernel(
     pg_j.z = xAxis.z + yAxis.z + facet_base.z;
 
     // The distance from the source point to the facet point.
-    float r_ij = sqrtf((pg_i.x - pg_j.x) * (pg_i.x - pg_j.x) + (pg_i.y - pg_j.y) * (pg_i.y - pg_j.y) + (pg_i.z - pg_j.z) * (pg_i.z - pg_j.z));
+    float r_si = sqrtf((pg_i.x - pg_j.x) * (pg_i.x - pg_j.x) + (pg_i.y - pg_j.y) * (pg_i.y - pg_j.y) + (pg_i.z - pg_j.z) * (pg_i.z - pg_j.z));
 
     // P2 = P2*exp(-i*k*r_sf)
     dcomplex i = devComplex(0, 1);
     dcomplex var = devCmul(i, k);
-    var = devRCmul(r_ij, var);
+    var = devRCmul(r_si, var);
     var = devCexp(var);                  // This has phase and attenuation.
     var = devCmul(var, source_pressure); // This includes the original pressure.
     // printf("Pressure prior to spreading at facet point: %f, %f\n", var.r, var.i);
 
-    // Area1 = Pressure the 1Pa over 1m^2
-    // Area2 = 4 * PI * r_sf * r_sf
-    // atten_spread = Area1 / Area2 <--- important for other projections.
+    float var2 = A_i / r_si;
 
-    // Point sources have pressure values @ RE 1 m
-    // A_i = 4 * PI * 1^2
-    // A_j = 4 * PI * r_sf * r_sf
-    // float A_r = pow(1 / (r_ij * r_ij), 0.5);
-    float A_r = 1 / r_ij;
-
-    var = devRCmul(A_r, var);
+    var = devRCmul(var2, var);
     // printf("Spherical spread: %f\n", att_spread);
 
     if (devCabs(var) > 1.0)
@@ -116,8 +108,15 @@ __global__ void ProjectSourcePointToFacetKernel(
 
 int CudaModelTes::ProjectSourcePointsToFacet()
 {
-    // Every facet can have a different number of pixels, where n = 1096^0.5 is the maximum number of pixels per facet.
     printf("Host ProjectPointToFacet....\n");
+
+    cudaDeviceProp prop;
+    cudaGetDeviceProperties(&prop, 0); // Query device 0
+    printf("Max threads per block: %d\n", prop.maxThreadsPerBlock);
+
+    printf("ProjectFromFacetsToFieldPoints .......\n");
+
+    // Every facet can have a different number of pixels, where n = 1096^0.5 is the maximum number of pixels per facet.
 
     for (int source_point_num = 0; source_point_num < host_num_source_points; source_point_num++)
     {
@@ -127,8 +126,8 @@ int CudaModelTes::ProjectSourcePointsToFacet()
             {
                 int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
 
-                dim3 threadsPerBlock(h_Facets_points.x, h_Facets_points.y);
-                dim3 numBlocks(1, 1);
+                dim3 threadsPerBlock(h_Facets_points.x, 1);
+                dim3 numBlocks(h_Facets_points.y, 1);
 
                 // printf("Mutex Address : "
                 //        "%p\n",

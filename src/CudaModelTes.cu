@@ -97,6 +97,8 @@ void CudaModelTes::AllocateTexture(int num_xpnts,
     if (usingOpenGL)
     {
         renderFacet = new FacetGL();
+        renderFacet->numXpnts = num_xpnts;
+        renderFacet->numYpnts = num_ypnts;
         gl_object_facets.push_back(renderFacet);
         CreateTexture(num_xpnts, num_ypnts, &(renderFacet->textureID));
         err = cudaGraphicsGLRegisterImage(&renderFacet->cudaResource, renderFacet->textureID, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsWriteDiscard);
@@ -246,10 +248,10 @@ int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets)
                         &surface_Pr,
                         &dev_array_Pr);
 
-        AllocateTexture(facets[i]->NumXpnts,
-                        facets[i]->NumYpnts,
-                        &surface_Pi,
-                        &dev_array_Pi);
+        // AllocateTexture(facets[i]->NumXpnts,
+        //                 facets[i]->NumYpnts,
+        //                 &surface_Pi,
+        //                 &dev_array_Pi);
 
         int num_pixel = facets[i]->NumXpnts * facets[i]->NumYpnts;
 
@@ -363,7 +365,7 @@ int CudaModelTes::DoCalculations()
         return 1;
     }
 
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 0; i++)
     {
         if (ProjectFromFacetsToFacets() != 0)
         {
@@ -377,6 +379,13 @@ int CudaModelTes::DoCalculations()
         printf("ProjectFromFacetsToFieldPoints failed.\n");
         return 1;
     }
+
+    if (CopyFromMatrixToSurface() != 0)
+    {
+        printf("CopyFromMatrixToSurface failed.\n");
+        return 1;
+    }
+
     return 0;
 }
 

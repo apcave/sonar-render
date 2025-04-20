@@ -29,7 +29,7 @@ __global__ void ProjectFacetToFieldPointKernel(
     // Kernel code to project point to point
     // printf("ThreadIdx.x: %d, ThreadIdx.y: %d, blockIdx.x: %d, blockDim.x: %d\n", threadIdx.x, threadIdx.y, blockIdx.x, blockDim.x);
     int xPnt = threadIdx.x;
-    int yPnt = threadIdx.y;
+    int yPnt = blockIdx.x;
 
     int NumXpnts = facet_Points[facet_num].x;
     // int NumYpnts = facet_Points[facet_num].y;
@@ -120,6 +120,10 @@ int CudaModelTes::ProjectFromFacetsToFieldPoints()
 {
     printf("ProjectFromFacetsToFieldPoints .......\n");
 
+    cudaDeviceProp prop;
+    cudaGetDeviceProperties(&prop, 0); // Query device 0
+    printf("Max threads per block: %d\n", prop.maxThreadsPerBlock);
+
     for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
     {
 
@@ -131,8 +135,8 @@ int CudaModelTes::ProjectFromFacetsToFieldPoints()
 
                 int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
 
-                dim3 threadsPerBlock(h_Facets_points.x, h_Facets_points.y);
-                dim3 numBlocks(1, 1);
+                dim3 threadsPerBlock(h_Facets_points.x, 1);
+                dim3 numBlocks(h_Facets_points.y, 1);
 
                 // printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
                 // printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
@@ -163,5 +167,6 @@ int CudaModelTes::ProjectFromFacetsToFieldPoints()
     }
     // More testing is required on large models to see how CUDA manages the cores.
     cudaDeviceSynchronize();
+    printf("ProjectFromFacetsToFieldPoints done.\n");
     return 0;
 }

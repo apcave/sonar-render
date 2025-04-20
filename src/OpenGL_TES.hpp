@@ -19,6 +19,8 @@ public:
     cudaGraphicsResource *cudaResource;
     cudaSurfaceObject_t surface;
     cudaArray_t array;
+    int numXpnts;
+    int numYpnts;
 };
 
 /**
@@ -63,6 +65,7 @@ private:
     void RenderObject();
 
     void MakeTextureShader();
+    void PrintTextures();
 
 private:
     int window_width = 800;

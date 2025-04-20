@@ -47,6 +47,12 @@ target_link_libraries(${TARGET_NAME} PRIVATE
     cudart
 )
 
+# Add OpenCV support
+find_package(OpenCV REQUIRED)
+target_include_directories(${TARGET_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_include_directories(${TARGET_NAME} PRIVATE /usr/local/include/opencv4)
+target_link_libraries(${TARGET_NAME} PRIVATE ${OpenCV_LIBS})
+
 # Set compiler options for the shared library
 target_compile_options(${TARGET_NAME} PRIVATE
     $<$<COMPILE_LANGUAGE:CUDA>:--compiler-options=-fPIC>

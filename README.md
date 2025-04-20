@@ -78,3 +78,16 @@ $$
 p_j = I_j \cdot \rho \cdot cp
 $$
 
+
+
+From a point to a facet
+$$
+p_{\text{inc}}(\mathbf{r}_1) = \frac{A e^{ik |\mathbf{r}_1 - \mathbf{r}_s|}}{|\mathbf{r}_1 - \mathbf{r}_s|}
+$$
+
+From a fact to a point 
+$$
+p(\mathbf{r}) \approx -\frac{1}{4\pi} \sum_{i=1}^{N} A_i \, p_{\text{inc}}(\mathbf{r}_i) 
+\cdot \frac{(\hat{\mathbf{r}}_{ri} \cdot \mathbf{n}_i)}{r_i^2} \cdot (1 - ik r_i) 
+\cdot \frac{e^{i k r_i}}{r_i}
+$$
