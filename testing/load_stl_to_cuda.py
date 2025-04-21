@@ -191,7 +191,7 @@ db_values = 20 * np.log10(magnitudes)
 
 wavelength = cp / frequency
 A = a*b
-TES = 20*np.log10((2*a*b)/(wavelength))
+TES = 20*np.log10((4*np.pi*a*b)/(wavelength*wavelength))
 print('Target Strength = ', TES)
 EchoLevel = TES - 2 * 20 * np.log10(Radius)
 print('Echo Level = ', EchoLevel)

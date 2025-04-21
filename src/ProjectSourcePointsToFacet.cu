@@ -88,7 +88,15 @@ __global__ void ProjectSourcePointToFacetKernel(
     var = devCmul(var, source_pressure); // This includes the original pressure.
     // printf("Pressure prior to spreading at facet point: %f, %f\n", var.r, var.i);
 
-    float var2 = A_i / r_si;
+    // Area1 = Pressure the 1Pa over 1m^2
+    // Area2 = 4 * PI * r_sf * r_sf
+    // atten_spread = Area1 / Area2 <--- important for other projections.
+
+    // Point sources have pressure values @ RE 1 m
+    // A_i = 4 * PI * 1^2
+    // A_j = 4 * PI * r_sf * r_sf
+    // float A_r = pow(1 / (r_ij * r_ij), 0.5);
+    float var2 = 1 / r_si;
 
     var = devRCmul(var2, var);
     // printf("Spherical spread: %f\n", att_spread);

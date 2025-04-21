@@ -103,7 +103,7 @@ __global__ void ProjectFacetToFieldPointKernel(
     // printf("var: %e, %e\n", var.r, var.i);
     double spread = sqrt(A_i / (2 * PI));
 
-    double realTerms = spread * (A_i * sc) / lr_i;
+    double realTerms = (A_i * sc) / lr_i;
 
     var = devRCmul(realTerms, var);
 
