@@ -1,6 +1,7 @@
 #ifndef _MODEL_TES_HPP
 #define _MODEL_TES_HPP
 #include "Facet.hpp"
+#include "OpenGL_TES.hpp"
 #include "dcomplex.h"
 #include "PressurePoint.hpp"
 #include <cuda_runtime.h>
@@ -20,7 +21,7 @@ using namespace std;
  * that calls it.
  */
 
-class CudaModelTes
+class CudaModelTes : public OpenGL_TES
 {
 protected:
     // Global parameters.
@@ -29,14 +30,34 @@ protected:
     // Pixel length and width.
     float *dev_pixel_delta;
 
+    // Used for scaling the textures.
+    float *dev_pixel_Pressure_stats;
+    float host_pixel_Pressure_stats[3];
+
     // Object based data.
     vector<int> host_object_num_facets;
     vector<float **> dev_Object_Facets_PixelArea; // constant
-    vector<dcomplex **> dev_Object_Facets_Pressure;
-    vector<int3 *> dev_Object_Facets_points;    // constant
-    vector<float3 *> dev_Object_Facets_Normals; // constant
-    vector<float3 *> dev_Object_base_points;    // constant
-    vector<float3 *> dev_Object_Facets_xAxis;   // constant
+
+    vector<vector<cudaSurfaceObject_t>> dev_Object_Facets_Surface_Pr;
+    vector<vector<cudaSurfaceObject_t>> dev_Object_Facets_Surface_Pi;
+
+    // These are used to the calculated pressure on the facet during GL rendering.
+    vector<vector<cudaArray_t>> dev_Object_Facets_array_Pr; // constant
+    vector<vector<cudaArray_t>> dev_Object_Facets_array_Pi; // constant
+
+    std::vector<std::vector<double *>> dev_object_facet_Pr;
+    std::vector<std::vector<double *>> dev_object_facet_Pi;
+
+    std::vector<std::vector<double *>> *dev_object_facet_InitialPr = new std::vector<std::vector<double *>>();
+    std::vector<std::vector<double *>> *dev_object_facet_InitialPi = new std::vector<std::vector<double *>>();
+
+    std::vector<std::vector<double *>> *dev_object_facet_ResultPr = new std::vector<std::vector<double *>>();
+    std::vector<std::vector<double *>> *dev_object_facet_ResultPi = new std::vector<std::vector<double *>>();
+
+    vector<int3 *> dev_Object_Facets_points;  // constant
+    vector<float3 *> dev_Object_normals;      // constant
+    vector<float3 *> dev_Object_base_points;  // constant
+    vector<float3 *> dev_Object_Facets_xAxis; // constant
     vector<float3 *> dev_Object_Facets_yAxis;
 
     int host_num_source_points;
@@ -68,6 +89,16 @@ protected:
     int ProjectFromFacetsToFacets();
 
     int GetFieldPointValGPU(dcomplex *field_points_pressure);
+
+    void CleanupCuda();
+
+    int CopyFromMatrixToSurface();
+
+private:
+    void AllocateTexture(int num_xpnts,
+                         int num_ypnts,
+                         vector<cudaSurfaceObject_t> *dest_surface,
+                         vector<cudaArray_t> *dest_array);
 };
 
 #endif

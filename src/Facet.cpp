@@ -27,6 +27,12 @@ void Facet::GenerateFacetLimits()
 		Height = GeoMath::GetVectorLength(vLongY);
 		BaseLengthNeg = GeoMath::LengthBetweenPoints(v1, pointOnBase);
 		BaseLengthPos = GeoMath::LengthBetweenPoints(pointOnBase, v2);
+		texCoords[0] = 0.0f;
+		texCoords[1] = 0.0f;
+		texCoords[2] = 1.0f;
+		texCoords[3] = 0.0f;
+		texCoords[4] = BaseLengthNeg / (BaseLengthPos + BaseLengthNeg);
+		texCoords[5] = 1.0f;
 		break;
 
 	case 1:
@@ -36,6 +42,12 @@ void Facet::GenerateFacetLimits()
 		Height = GeoMath::GetVectorLength(vLongY);
 		BaseLengthNeg = GeoMath::LengthBetweenPoints(v1, pointOnBase);
 		BaseLengthPos = GeoMath::LengthBetweenPoints(pointOnBase, v3);
+		texCoords[0] = 0.0f;
+		texCoords[1] = 0.0f;
+		texCoords[2] = BaseLengthNeg / (BaseLengthPos + BaseLengthNeg);
+		texCoords[3] = 1.0f;
+		texCoords[4] = 1.0f;
+		texCoords[5] = 0.0f;
 		break;
 
 	case 2:
@@ -45,6 +57,12 @@ void Facet::GenerateFacetLimits()
 		Height = GeoMath::GetVectorLength(vLongY);
 		BaseLengthNeg = GeoMath::LengthBetweenPoints(v2, pointOnBase);
 		BaseLengthPos = GeoMath::LengthBetweenPoints(pointOnBase, v3);
+		texCoords[0] = BaseLengthNeg / (BaseLengthPos + BaseLengthNeg);
+		texCoords[1] = 1.0f;
+		texCoords[2] = 0.0f;
+		texCoords[3] = 0.0f;
+		texCoords[4] = 1.0f;
+		texCoords[5] = 0.0f;
 		break;
 	}
 	xAxis = GeoMath::MakeUnitVectorSc(vLongX);
@@ -135,12 +153,9 @@ void Facet::MakePixelData(float pixel_length)
 	bool *yxR = new bool[NumYpnts + 1];
 
 	PixelArea = new float[NumXpnts * NumYpnts];
-	PressureValues = new dcomplex[NumXpnts * NumYpnts];
 
 	for (int i = 0; NumXpnts * NumYpnts > i; i++)
 	{
-		PressureValues[i].r = 0;
-		PressureValues[i].i = 0;
 		PixelArea[i] = 0;
 	}
 

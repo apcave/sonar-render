@@ -6,6 +6,13 @@
 
 #include <cuda_runtime.h>
 
+/**
+ * * @brief A class that provides various geometric and mathematical operations.
+ *
+ * * This class includes methods for calculating lengths, unit vectors, cross products,
+ * * It in intended to be used as inline functions for performance reasons.
+ */
+
 class GeoMath
 {
 public:

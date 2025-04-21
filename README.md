@@ -45,7 +45,7 @@ So the pressure amplitude is determined by wave energy this also includes the at
 
 Given a starting surface pressure amplitude at $i$ can be defined as
 $$
-p_i = I_i \cdot \rho \cdot cp
+p_i = (I_i \cdot \rho \cdot cp)^{1/2}
 $$
 and the intensity at surface $j$, 
 $$
@@ -53,11 +53,11 @@ I_j = I_i \cdot (A_i/A_j)
 $$
 Where $A_i$ is the area of surface $i$ and $A_j$ at surface $j$. Leading to
 $$
-p_j = I_j \cdot \rho \cdot cp = I_i \cdot (A_i/A_j) \cdot \rho \cdot cp
+p_j = (I_j \cdot \rho \cdot cp)^{1/2} = (I_i \cdot (A_i/A_j) \cdot \rho \cdot cp)^{1/2}
 $$
 So the pressure rations of 
 $$
-p_j / p_i = A_i/A_j
+p_j / p_i = \sqrt{A_i/A_j} 
 $$
 so the pressure amplitudes due to spreading is proportion the ratio of surface areas.
 
@@ -78,3 +78,88 @@ $$
 p_j = I_j \cdot \rho \cdot cp
 $$
 
+
+
+From a point to a facet
+$$The total scattered pressure at a receiver facet centered at \( \mathbf{r}_i \) due to contributions from all source facets \( j \) is:
+
+\[
+p_{\text{scat}}(\mathbf{r}_i) = \sum_{j}
+\left[
+\frac{ik}{2\pi} \cdot
+p_{\text{inc}}(\mathbf{r}_j) \cdot
+\frac{e^{ik r_{ij}}}{r_{ij}} \cdot
+(\hat{\mathbf{r}}_{ij} \cdot \mathbf{n}_j) \cdot
+(\hat{\mathbf{r}}_{ij} \cdot \mathbf{n}_i) \cdot
+A_j
+\right]
+\]
+
+where:
+
+\begin{itemize}
+    \item \( \mathbf{r}_i, \mathbf{r}_j \) are the centers of receiver and source facets
+    \item \( \mathbf{r}_{ij} = \mathbf{r}_i - \mathbf{r}_j \), and \( r_{ij} = |\mathbf{r}_{ij}| \)
+    \item \( \hat{\mathbf{r}}_{ij} = \frac{\mathbf{r}_{ij}}{r_{ij}} \)
+    \item \( \mathbf{n}_i, \mathbf{n}_j \) are the unit normals of the receiver and source facets
+    \item \( A_j \) is the area of the \( j \)-th source facet
+    \item \( p_{\text{inc}}(\mathbf{r}_j) \) is the incident pressure at the \( j \)-th facet
+    \item \( k = \frac{2\pi}{\lambda} \) is the wavenumber
+\end{itemize}The total scattered pressure at a receiver facet centered at \( \mathbf{r}_i \) due to contributions from all source facets \( j \) is:
+
+\[
+p_{\text{scat}}(\mathbf{r}_i) = \sum_{j}
+\left[
+\frac{ik}{2\pi} \cdot
+p_{\text{inc}}(\mathbf{r}_j) \cdot
+\frac{e^{ik r_{ij}}}{r_{ij}} \cdot
+(\hat{\mathbf{r}}_{ij} \cdot \mathbf{n}_j) \cdot
+(\hat{\mathbf{r}}_{ij} \cdot \mathbf{n}_i) \cdot
+A_j
+\right]
+\]The total scattered pressure at a receiver facet centered at \( \mathbf{r}_i \) due to contributions from all source facets \( j \) is:
+
+\[
+p_{\text{scat}}(\mathbf{r}_i) = \sum_{j}
+\left[
+\frac{ik}{2\pi} \cdot
+p_{\text{inc}}(\mathbf{r}_j) \cdot
+\frac{e^{ik r_{ij}}}{r_{ij}} \cdot
+(\hat{\mathbf{r}}_{ij} \cdot \mathbf{n}_j) \cdot
+(\hat{\mathbf{r}}_{ij} \cdot \mathbf{n}_i) \cdot
+A_j
+\right]
+\]
+
+where:
+
+\begin{itemize}
+    \item \( \mathbf{r}_i, \mathbf{r}_j \) are the centers of receiver and source facets
+    \item \( \mathbf{r}_{ij} = \mathbf{r}_i - \mathbf{r}_j \), and \( r_{ij} = |\mathbf{r}_{ij}| \)
+    \item \( \hat{\mathbf{r}}_{ij} = \frac{\mathbf{r}_{ij}}{r_{ij}} \)
+    \item \( \mathbf{n}_i, \mathbf{n}_j \) are the unit normals of the receiver and source facets
+    \item \( A_j \) is the area of the \( j \)-th source facet
+    \item \( p_{\text{inc}}(\mathbf{r}_j) \) is the incident pressure at the \( j \)-th facet
+    \item \( k = \frac{2\pi}{\lambda} \) is the wavenumber
+\end{itemize}
+
+where:
+
+\begin{itemize}
+    \item \( \mathbf{r}_i, \mathbf{r}_j \) are the centers of receiver and source facets
+    \item \( \mathbf{r}_{ij} = \mathbf{r}_i - \mathbf{r}_j \), and \( r_{ij} = |\mathbf{r}_{ij}| \)
+    \item \( \hat{\mathbf{r}}_{ij} = \frac{\mathbf{r}_{ij}}{r_{ij}} \)
+    \item \( \mathbf{n}_i, \mathbf{n}_j \) are the unit normals of the receiver and source facets
+    \item \( A_j \) is the area of the \( j \)-th source facet
+    \item \( p_{\text{inc}}(\mathbf{r}_j) \) is the incident pressure at the \( j \)-th facet
+    \item \( k = \frac{2\pi}{\lambda} \) is the wavenumber
+\end{itemize}
+p_{\text{inc}}(\mathbf{r}_1) = \frac{A e^{ik |\mathbf{r}_1 - \mathbf{r}_s|}}{|\mathbf{r}_1 - \mathbf{r}_s|}
+$$
+
+From a fact to a point 
+$$
+p(\mathbf{r}) \approx -\frac{1}{4\pi} \sum_{i=1}^{N} A_i \, p_{\text{inc}}(\mathbf{r}_i) 
+\cdot \frac{(\hat{\mathbf{r}}_{ri} \cdot \mathbf{n}_i)}{r_i^2} \cdot (1 - ik r_i) 
+\cdot \frac{e^{i k r_i}}{r_i}
+$$
