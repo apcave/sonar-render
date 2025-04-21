@@ -1,0 +1,145 @@
+\documentclass{article}
+\usepackage{amsmath}
+\begin{document}
+
+\section{Discrete Kirchhoff Scattering Equation}
+
+
+\subsection{Spreading in the Near-Field}
+When the distance between the source and the receiver is small or the source is not a mono pole but a fragment of area, the usual spreading term is not valid.
+Instead ratios of areas can be used and given that a fragment of area is not infinitely small a couple of approximations are provided. Also in the near field for scattering from surface to surface half spherical spreading may be more appropriate.
+
+The usual spreading term is related to intensity $I$ and the initial and final areas $S_s$ and $S_i$. The pressure units are Pa relative to a mono pole at 1 meter (Pa re @ 1 m).
+\[
+S_s = 4\cdot \pi \cdot r_s^2  = 4 \cdot \pi
+\]
+\[
+S_i = 4 \cdot \pi \cdot r_{si}^2
+\]
+Assuming sperical spreading in free space the intesity at at distance is given by
+\[
+I_i = I_s (S_s/S_i)
+\]
+give that pressure is related to intensity by
+\[
+p_s = \sqrt{I_s \cdot \rho \cdot cp}
+\]
+\[
+p_i = \sqrt{I_s \cdot (S_s/S_I) \cdot \rho \cdot cp}
+\]
+the pressure ratios determined by the ratio of the areas
+\[
+\frac{p_i}{p_s} = \sqrt{\frac{S_s}{S_i}} = \sqrt{\frac{4\cdot \pi}{4\cdot \pi \cdot r_{si}^2}} = \frac{1}{r_{si}}
+\]
+which reduces to the inverse of the distance. This is the usual spreading term used.
+
+Now suppose that the starting intensity $I_s$ is provided by a small fragment of area $A_s$ replacing $S_s$ in the above equations. Pressure ratio becomes
+\[
+\frac{p_i}{p_s} = \sqrt{\frac{A_s}{S_i}} = \sqrt{\frac{A_s}{4\cdot \pi \cdot r_{si}^2}} = \frac{1}{r_{si}} \cdot \sqrt{\frac{A_s}{4\cdot \pi}}
+\]
+for spreading from a fragment of area $A_s$ into the far field. When processing reflections between two surfaces that are close half spherical spreading may be more appropriate. The pressure ratio becomes
+\[
+\frac{p_i}{p_s} = \frac{1}{r_{si}} \cdot \sqrt{\frac{A_s}{2\cdot \pi}}
+\]
+Now approximating as $\lim{r_{si} \to 0}$ and $S_i < A_s$ the intensity cannot magnify then replace  $S_i$ with $A_s$ and the pressure ratio becomes
+\[
+\frac{p_i}{p_s} = \sqrt{\frac{A_s}{A_s}} = 1
+\]
+Approximation when spreading for a fragment $A_s$ to a fragment of area $A_i$ and $\lim{r_{si} \to 0}$ if $S_i < A_i$ and $A_i \geq A_s$ the intensity needs to dissipate over destination surface fragment replace  $S_i$ with $A_s$ and the pressure ratio becomes
+\[
+\frac{p_i}{p_s} = \sqrt{\frac{A_s}{A_i}}
+\]
+or
+\[
+\frac{p_i}{p_s} = 1
+\]
+for this case if $A_i < A_s$.
+
+\subsection{Mono-Pole Source to Surface}
+
+When the source is a mono-pole 
+\[
+    p_{\text{inc}}(\mathbf{r}_i) = \frac{A_i e^{i \cdot k \cdot r_{si}}}{r_{si}}
+\]
+
+where:
+
+\begin{itemize}
+    \item \( r_{si} = |\mathbf{r}_i - \mathbf{r}_s| \)
+    \item \( \mathbf{r}_i \) is the center of facet \( i \)
+    \item \( \mathbf{r}_s \) is the source point
+    \item \( A_i \) is the area of facet \( i \)
+    \item \( k = \frac{2\pi}{\lambda} \) is the wavenumber
+\end{itemize}
+
+\subsection{Surface to Field Point}
+The discrete Kirchhoff scattering equation for the scattered acoustic pressure at a field point \( \mathbf{r} \) is:
+
+\[
+p_{\text{scat}}(\mathbf{r}) = \sum_{i} 
+\left[
+    \frac{ik}{2\pi} \cdot 
+    p_{\text{inc}}(\mathbf{r}_i) \cdot 
+    \frac{e^{ik r_{ri}}}{r_{ri}} \cdot 
+    (\hat{\mathbf{r}}_{ri} \cdot \mathbf{n}_i) \cdot 
+    A_i
+\right]
+\]
+applying the previous equations for spreading
+\[
+    p_{\text{scat}}(\mathbf{r}) = \sum_{i} 
+    \left[
+        \frac{ik}{2\pi} \cdot 
+        p_{\text{inc}}(\mathbf{r}_i) \cdot 
+        \frac{e^{ik r_{ri}}}{r_{ri}} \cdot
+        \sqrt{\frac{A_i}{2 \pi}} \cdot
+        (\hat{\mathbf{r}}_{ri} \cdot \mathbf{n}_i) \cdot 
+        A_i
+    \right]
+\]
+
+
+
+where:
+
+\begin{itemize}
+    \item \( \mathbf{r}_i \) is the center of facet \( i \)
+    \item \( \mathbf{r}_{ri} = \mathbf{r} - \mathbf{r}_i \)
+    \item \( r_{ri} = |\mathbf{r}_{ri}| \)
+    \item \( \hat{\mathbf{r}}_{ri} = \frac{\mathbf{r}_{ri}}{r_{ri}} \)
+    \item \( \mathbf{n}_i \) is the unit normal of facet \( i \)
+    \item \( A_i \) is the area of facet \( i \)
+    \item \( p_{\text{inc}}(\mathbf{r}_i) \) is the incident pressure at \( \mathbf{r}_i \)
+    \item \( k = \frac{2\pi}{\lambda} \) is the wavenumber
+\end{itemize}
+
+
+
+
+The total scattered pressure at a receiver facet centered at \( \mathbf{r}_i \) due to contributions from all source facets \( j \) is:
+
+\[
+p_{\text{scat}}(\mathbf{r}_i) = \sum_{j}
+\left[
+\frac{ik}{2\pi} \cdot
+p_{\text{inc}}(\mathbf{r}_j) \cdot
+\frac{e^{ik r_{ij}}}{r_{ij}} \cdot
+(\hat{\mathbf{r}}_{ij} \cdot \mathbf{n}_j) \cdot
+(\hat{\mathbf{r}}_{ij} \cdot \mathbf{n}_i) \cdot
+A_j
+\right]
+\]
+
+where:
+
+\begin{itemize}
+    \item \( \mathbf{r}_i, \mathbf{r}_j \) are the centers of receiver and source facets
+    \item \( \mathbf{r}_{ij} = \mathbf{r}_i - \mathbf{r}_j \), and \( r_{ij} = |\mathbf{r}_{ij}| \)
+    \item \( \hat{\mathbf{r}}_{ij} = \frac{\mathbf{r}_{ij}}{r_{ij}} \)
+    \item \( \mathbf{n}_i, \mathbf{n}_j \) are the unit normals of the receiver and source facets
+    \item \( A_j \) is the area of the \( j \)-th source facet
+    \item \( p_{\text{inc}}(\mathbf{r}_j) \) is the incident pressure at the \( j \)-th facet
+    \item \( k = \frac{2\pi}{\lambda} \) is the wavenumber
+\end{itemize}
+
+\end{document}

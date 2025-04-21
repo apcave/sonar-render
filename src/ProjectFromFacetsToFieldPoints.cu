@@ -1,5 +1,4 @@
 #include "CudaModelTes.cuh"
-#include "GeoMath.h"
 #include "dcomplex.h"
 #include "CudaUtils.cuh"
 
@@ -12,6 +11,7 @@ __global__ void ProjectFacetToFieldPointKernel(
     int facet_num,
     float3 *field_points_position,
     dcomplex *field_points_pressure,
+    float3 *facet_normals,
     int3 *facet_Points,
     float3 *base_points,
     float3 *facets_xaxis,
@@ -37,8 +37,8 @@ __global__ void ProjectFacetToFieldPointKernel(
 
     int index_Ai = yPnt * NumXpnts + xPnt;
 
-    float pixel_area = facets_PixelArea[facet_num][index_Ai];
-    if (pixel_area == 0)
+    float A_i = facets_PixelArea[facet_num][index_Ai];
+    if (A_i == 0)
     {
         // printf("facets_PixelArea is zero\n");
         return;
@@ -47,7 +47,7 @@ __global__ void ProjectFacetToFieldPointKernel(
     // printf("xPnt: %d, yPnt: %d\n", xPnt, yPnt);
     // printf("NumXpnts: %d, NumYpnts: %d, NumXpntsNegative: %d\n", NumXpnts, NumYpnts, NumXpntsNegative);
 
-    float3 P2g = field_points_position[field_point_num];
+    float3 r = field_points_position[field_point_num];
     // printf("Field Point: %f, %f, %f\n", P2g.x, P2g.y, P2g.z);
 
     // This is the x offset from the base point to the approximate centriod of the pixel.
@@ -67,48 +67,55 @@ __global__ void ProjectFacetToFieldPointKernel(
     yAxis.z = yoffset * yAxis.z;
 
     float3 facet_base = base_points[facet_num];
-    float3 P1g;
-    P1g.x = xAxis.x + yAxis.x + facet_base.x;
-    P1g.y = xAxis.y + yAxis.y + facet_base.y;
-    P1g.z = xAxis.z + yAxis.z + facet_base.z;
+    float3 r_i;
+    r_i.x = xAxis.x + yAxis.x + facet_base.x;
+    r_i.y = xAxis.y + yAxis.y + facet_base.y;
+    r_i.z = xAxis.z + yAxis.z + facet_base.z;
     // printf("Facet Point Global Ref: %f, %f, %f\n", P1g.x, P1g.y, P1g.z);
 
-    dcomplex source_pressure;
-    source_pressure.r = Pr_facet[index_Ai];
-    source_pressure.i = Pi_facet[index_Ai];
+    dcomplex p_inc;
+    p_inc.r = Pr_facet[index_Ai];
+    p_inc.i = Pi_facet[index_Ai];
 
-    // The distance from the source point to the facet point.
-    float r_sf = sqrtf((P1g.x - P2g.x) * (P1g.x - P2g.x) + (P1g.y - P2g.y) * (P1g.y - P2g.y) + (P1g.z - P2g.z) * (P1g.z - P2g.z));
+    float3 vr_ri = MakeVector(r_i, r);
+    float lr_i = GetVectorLength(vr_ri);
+    float3 ur_ri = DivideVector(vr_ri, lr_i);
+
+    float3 n = facet_normals[facet_num];
+    double sc = (double)DotProduct(ur_ri, n);
+
+    if (sc < 0)
+    {
+        // printf("Normal doesn't align, not adding to field point.\n");
+        return;
+    }
 
     // printf("Distance from pixel to field point: %f\n", r_sf);
 
     // P2 = P2*exp(-i*k*r_sf)
     dcomplex i = devComplex(0, 1);
-    dcomplex var = devCmul(i, k);
-    var = devRCmul(r_sf, var);
-    var = devCexp(var);                  // This has phase and attenuation.
-    var = devCmul(var, source_pressure); // This includes the orginal pressure.
-    // printf("Pressure add to field point prior to spreading: %f, %f\n", var.r, var.i);
+    dcomplex ik = devCmul(i, k);
+    dcomplex var = devRCmul(lr_i, ik);
+    var = devCexp(var); // This has phase and attenuation.
+    var = devCmul(var, p_inc);
+    // var = devCmul(var, ik);
 
-    // Area1 = Pressure the 1Pa over 1m^2
-    // Area2 = 4 * PI * r_sf * r_sf
-    // atten_spread = Area1 / Area2 <--- important for other projections.
-    float att_spread = pixel_area * pow(pixel_area / (4 * M_PI * r_sf * r_sf), 0.5);
-    // float att_spread = pixel_area / r_sf;
-    var = devRCmul(att_spread, var);
-    // printf("Spherical spread: %f\n", att_spread);
+    // printf("var: %e, %e\n", var.r, var.i);
+    double spread = sqrt(A_i / (2 * PI));
+
+    double realTerms = spread * (A_i * sc) / lr_i;
+
+    var = devRCmul(realTerms, var);
 
     if (devCabs(var) > 1.0)
     {
-        // printf("Pressure is too large to add to field point.\n");
-        // printf("r_sf: %f\n", r_sf);
-        // printf("source_pressure: %e, %e\n", source_pressure.r, source_pressure.i);
-        // printf("Spherical spread: %e\n", att_spread);
-        // printf("Pressure add to field point prior to spreading: %e, %e\n", var.r, var.i);
+        printf("Pressure is too large to add to field point.\n");
+        printf("lr_i: %f\n", lr_i);
+        printf("source_pressure: %e, %e\n", p_inc.r, p_inc.i);
+        printf("Spherical spread: %e\n", realTerms);
+        printf("Pressure to field point prior to spreading: %e, %e\n", var.r, var.i);
         return;
     }
-
-    // printf("Pressure added to field point: %f, %f\n", var.r, var.i);
 
     // Save the pressure to the facet pressure array.
     // Note var may be small and accumulate over may projects that why the complex numbers are doubles.
@@ -148,6 +155,7 @@ int CudaModelTes::ProjectFromFacetsToFieldPoints()
                     facet_num,
                     dev_field_points_position,
                     dev_field_points_pressure,
+                    dev_Object_normals[object_num],
                     dev_Object_Facets_points[object_num],
                     dev_Object_base_points[object_num],
                     dev_Object_Facets_xAxis[object_num],

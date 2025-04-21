@@ -54,10 +54,10 @@ protected:
     std::vector<std::vector<double *>> *dev_object_facet_ResultPr = new std::vector<std::vector<double *>>();
     std::vector<std::vector<double *>> *dev_object_facet_ResultPi = new std::vector<std::vector<double *>>();
 
-    vector<int3 *> dev_Object_Facets_points;    // constant
-    vector<float3 *> dev_Object_Facets_Normals; // constant
-    vector<float3 *> dev_Object_base_points;    // constant
-    vector<float3 *> dev_Object_Facets_xAxis;   // constant
+    vector<int3 *> dev_Object_Facets_points;  // constant
+    vector<float3 *> dev_Object_normals;      // constant
+    vector<float3 *> dev_Object_base_points;  // constant
+    vector<float3 *> dev_Object_Facets_xAxis; // constant
     vector<float3 *> dev_Object_Facets_yAxis;
 
     int host_num_source_points;

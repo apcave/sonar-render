@@ -57,3 +57,31 @@ __device__ float atomicMinFloat(float *address, float val)
 
     return __int_as_float(old);
 }
+
+__device__ float3 MakeVector(float3 Origin, float3 Dest)
+{
+    float3 Vc;
+    Vc.x = Dest.x - Origin.x;
+    Vc.y = Dest.y - Origin.y;
+    Vc.z = Dest.z - Origin.z;
+    return Vc;
+}
+
+__device__ float3 DivideVector(float3 vect, float variable)
+{
+    float3 dividedVect;
+    dividedVect.x = vect.x / variable;
+    dividedVect.y = vect.y / variable;
+    dividedVect.z = vect.z / variable;
+    return dividedVect;
+}
+
+__device__ float DotProduct(float3 v1, float3 v2)
+{
+    return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+
+__device__ float GetVectorLength(float3 v1)
+{
+    return sqrtf(v1.x * v1.x + v1.y * v1.y + v1.z * v1.z);
+}

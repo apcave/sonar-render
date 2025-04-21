@@ -299,7 +299,7 @@ int CudaModelTes::MakeObjectOnGPU(vector<Facet *> facets)
     float3 *dev_Facets_Normals;
     cudaMalloc(&dev_Facets_Normals, number_of_facets * sizeof(float3));
     cudaMemcpy(dev_Facets_Normals, host_Facets_Normals, number_of_facets * sizeof(float3), cudaMemcpyHostToDevice);
-    dev_Object_Facets_Normals.push_back(dev_Facets_Normals);
+    dev_Object_normals.push_back(dev_Facets_Normals);
 
     float3 *dev_base_points;
     cudaMalloc(&dev_base_points, number_of_facets * sizeof(float3));

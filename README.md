@@ -81,7 +81,79 @@ $$
 
 
 From a point to a facet
-$$
+$$The total scattered pressure at a receiver facet centered at \( \mathbf{r}_i \) due to contributions from all source facets \( j \) is:
+
+\[
+p_{\text{scat}}(\mathbf{r}_i) = \sum_{j}
+\left[
+\frac{ik}{2\pi} \cdot
+p_{\text{inc}}(\mathbf{r}_j) \cdot
+\frac{e^{ik r_{ij}}}{r_{ij}} \cdot
+(\hat{\mathbf{r}}_{ij} \cdot \mathbf{n}_j) \cdot
+(\hat{\mathbf{r}}_{ij} \cdot \mathbf{n}_i) \cdot
+A_j
+\right]
+\]
+
+where:
+
+\begin{itemize}
+    \item \( \mathbf{r}_i, \mathbf{r}_j \) are the centers of receiver and source facets
+    \item \( \mathbf{r}_{ij} = \mathbf{r}_i - \mathbf{r}_j \), and \( r_{ij} = |\mathbf{r}_{ij}| \)
+    \item \( \hat{\mathbf{r}}_{ij} = \frac{\mathbf{r}_{ij}}{r_{ij}} \)
+    \item \( \mathbf{n}_i, \mathbf{n}_j \) are the unit normals of the receiver and source facets
+    \item \( A_j \) is the area of the \( j \)-th source facet
+    \item \( p_{\text{inc}}(\mathbf{r}_j) \) is the incident pressure at the \( j \)-th facet
+    \item \( k = \frac{2\pi}{\lambda} \) is the wavenumber
+\end{itemize}The total scattered pressure at a receiver facet centered at \( \mathbf{r}_i \) due to contributions from all source facets \( j \) is:
+
+\[
+p_{\text{scat}}(\mathbf{r}_i) = \sum_{j}
+\left[
+\frac{ik}{2\pi} \cdot
+p_{\text{inc}}(\mathbf{r}_j) \cdot
+\frac{e^{ik r_{ij}}}{r_{ij}} \cdot
+(\hat{\mathbf{r}}_{ij} \cdot \mathbf{n}_j) \cdot
+(\hat{\mathbf{r}}_{ij} \cdot \mathbf{n}_i) \cdot
+A_j
+\right]
+\]The total scattered pressure at a receiver facet centered at \( \mathbf{r}_i \) due to contributions from all source facets \( j \) is:
+
+\[
+p_{\text{scat}}(\mathbf{r}_i) = \sum_{j}
+\left[
+\frac{ik}{2\pi} \cdot
+p_{\text{inc}}(\mathbf{r}_j) \cdot
+\frac{e^{ik r_{ij}}}{r_{ij}} \cdot
+(\hat{\mathbf{r}}_{ij} \cdot \mathbf{n}_j) \cdot
+(\hat{\mathbf{r}}_{ij} \cdot \mathbf{n}_i) \cdot
+A_j
+\right]
+\]
+
+where:
+
+\begin{itemize}
+    \item \( \mathbf{r}_i, \mathbf{r}_j \) are the centers of receiver and source facets
+    \item \( \mathbf{r}_{ij} = \mathbf{r}_i - \mathbf{r}_j \), and \( r_{ij} = |\mathbf{r}_{ij}| \)
+    \item \( \hat{\mathbf{r}}_{ij} = \frac{\mathbf{r}_{ij}}{r_{ij}} \)
+    \item \( \mathbf{n}_i, \mathbf{n}_j \) are the unit normals of the receiver and source facets
+    \item \( A_j \) is the area of the \( j \)-th source facet
+    \item \( p_{\text{inc}}(\mathbf{r}_j) \) is the incident pressure at the \( j \)-th facet
+    \item \( k = \frac{2\pi}{\lambda} \) is the wavenumber
+\end{itemize}
+
+where:
+
+\begin{itemize}
+    \item \( \mathbf{r}_i, \mathbf{r}_j \) are the centers of receiver and source facets
+    \item \( \mathbf{r}_{ij} = \mathbf{r}_i - \mathbf{r}_j \), and \( r_{ij} = |\mathbf{r}_{ij}| \)
+    \item \( \hat{\mathbf{r}}_{ij} = \frac{\mathbf{r}_{ij}}{r_{ij}} \)
+    \item \( \mathbf{n}_i, \mathbf{n}_j \) are the unit normals of the receiver and source facets
+    \item \( A_j \) is the area of the \( j \)-th source facet
+    \item \( p_{\text{inc}}(\mathbf{r}_j) \) is the incident pressure at the \( j \)-th facet
+    \item \( k = \frac{2\pi}{\lambda} \) is the wavenumber
+\end{itemize}
 p_{\text{inc}}(\mathbf{r}_1) = \frac{A e^{ik |\mathbf{r}_1 - \mathbf{r}_s|}}{|\mathbf{r}_1 - \mathbf{r}_s|}
 $$
 
