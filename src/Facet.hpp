@@ -1,13 +1,15 @@
 #ifndef _FacetData
 #define _FacetData
 
-#define ANSI
+#include "FacetCuda.hpp"
+
 #include <iostream>
 #include "GeoMath.h"
 #include "dcomplex.h"
 
-class Facet
+class Facet : public FacetCuda
 {
+
 public:
 	float3 Centroid;
 	float3 Normal;
@@ -47,6 +49,7 @@ public:
 
 public:
 	void PrintMatrix();
+	void MakeCuda();
 
 	void CompressPixels();
 	void MakePixelData(float pixel_length);

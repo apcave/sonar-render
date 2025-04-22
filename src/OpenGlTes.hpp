@@ -1,6 +1,8 @@
 #ifndef _OPENGL_TES
 #define _OPENGL_TES
 #include "Facet.hpp"
+#include "FacetGl.hpp"
+#include "ObjectGl.hpp"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -9,19 +11,6 @@
 #include <iostream>
 
 #include <vector>
-
-class FacetGL
-{
-
-public:
-    GLuint textureID;
-    int textureVert[3];
-    cudaGraphicsResource *cudaResource;
-    cudaSurfaceObject_t surface;
-    cudaArray_t array;
-    int numXpnts;
-    int numYpnts;
-};
 
 /**
  * @brief OpenGL class is used to manage the C style OpenGL API for rendering.
@@ -33,7 +22,7 @@ public:
  * Initially the geometry is static and calculations are done on phase and frequency.
  * So the geometry is static and the textures are updated.
  */
-class OpenGL_TES
+class OpenGlTes
 {
 public:
     GLuint textureShaderProgram = 0;
@@ -45,25 +34,21 @@ private:
     cudaGraphicsResource *cuda_vbo_resource, *cuda_texture_resource;
 
 public:
-    OpenGL_TES();
-    ~OpenGL_TES();
-
-    // Captures the thread but enables zooming etc.
-    void RenderGL();
+    OpenGlTes();
+    ~OpenGlTes();
 
     void Cleanup();
 
 protected:
     void InitOpenGL();
-    int MakeObjectOnGL(std::vector<Facet *> facets);
-    void CreateTexture(int numXpnts, int numYpnts, GLuint *texture);
+    int MakeObjectOnGl(std::vector<Facet *> facets);
+    int MakeTextureOnGl(
+        std::vector<std::vector<double *>> &dev_object_facet_Pr,
+        std::vector<std::vector<double *>> &dev_object_facet_Pi,
+        double *dev_frag_stats);
     void ProcessFrame();
 
 private:
-    void CreateBuffers();
-    void UpdateBuffers();
-    void RenderObject();
-
     void MakeTextureShader();
     void PrintTextures();
 
@@ -72,7 +57,7 @@ private:
     int window_height = 600;
 
 protected:
-    std::vector<FacetGL *> gl_object_facets;
+    std::vector<ObjectGl *> objects;
     bool usingOpenGL = true;
 };
 #endif

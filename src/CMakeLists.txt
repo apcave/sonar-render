@@ -18,13 +18,16 @@ set(CU_SRC
     ProjectSourcePointsToFacet.cu
     ProjectFromFacetsToFieldPoints.cu
     ProjectFromFacetsToFacets.cu
+    FacetGl.cu
 )
 
 set(CPP_SRC
     ModelTes.cpp
     python_interface.cpp
     Facet.cpp
-    OpenGL_TES.cpp
+    OpenGlTes.cpp
+    FacetGl.cpp
+    ObjectGl.cpp
 )
 
 # Add the shared library target

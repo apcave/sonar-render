@@ -367,3 +367,8 @@ void Facet::PrintMatrix()
 	cout << "Pixel Total Area: " << total << endl;
 	cout << "Facet Area: " << Area << endl;
 }
+
+void Facet::MakeCuda()
+{
+	allocateCuda();
+}

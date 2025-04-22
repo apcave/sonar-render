@@ -1,7 +1,7 @@
 #ifndef _MODEL_TES_HPP
 #define _MODEL_TES_HPP
 #include "Facet.hpp"
-#include "OpenGL_TES.hpp"
+#include "OpenGlTes.hpp"
 #include "dcomplex.h"
 #include "PressurePoint.hpp"
 #include <cuda_runtime.h>
@@ -21,7 +21,7 @@ using namespace std;
  * that calls it.
  */
 
-class CudaModelTes : public OpenGL_TES
+class CudaModelTes : public OpenGlTes
 {
 protected:
     // Global parameters.
@@ -93,6 +93,8 @@ protected:
     void CleanupCuda();
 
     int CopyFromMatrixToSurface();
+
+    void RenderCudaObjects();
 
 private:
     void AllocateTexture(int num_xpnts,
