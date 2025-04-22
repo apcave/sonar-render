@@ -80,38 +80,27 @@ __global__ void ProjectSourcePointToFacetKernel(
     // The distance from the source point to the facet point.
     float r_si = sqrtf((pg_i.x - pg_j.x) * (pg_i.x - pg_j.x) + (pg_i.y - pg_j.y) * (pg_i.y - pg_j.y) + (pg_i.z - pg_j.z) * (pg_i.z - pg_j.z));
 
-    // P2 = P2*exp(-i*k*r_sf)
     dcomplex i = devComplex(0, 1);
-    dcomplex var = devCmul(i, k);
-    var = devRCmul(r_si, var);
-    var = devCexp(var);                  // This has phase and attenuation.
-    var = devCmul(var, source_pressure); // This includes the original pressure.
-    // printf("Pressure prior to spreading at facet point: %f, %f\n", var.r, var.i);
+    dcomplex ik = devCmul(i, k);
+    dcomplex exp_ikr = devRCmul(r_si, ik);
+    exp_ikr = devCexp(exp_ikr); // This has phase and attenuation.
 
-    // Area1 = Pressure the 1Pa over 1m^2
-    // Area2 = 4 * PI * r_sf * r_sf
-    // atten_spread = Area1 / Area2 <--- important for other projections.
+    double p = 1 / r_si;
+    dcomplex G = devRCmul(p, exp_ikr);
 
-    // Point sources have pressure values @ RE 1 m
-    // A_i = 4 * PI * 1^2
-    // A_j = 4 * PI * r_sf * r_sf
-    // float A_r = pow(1 / (r_ij * r_ij), 0.5);
-    float var2 = 1 / r_si;
+    dcomplex R = devCmul(G, source_pressure); // Greens function times the source pressure.
 
-    var = devRCmul(var2, var);
-    // printf("Spherical spread: %f\n", att_spread);
-
-    if (devCabs(var) > 1.0)
+    if (devCabs(G) > 1.0)
     {
         printf("Source Point to Facet Error.\n");
         printf("Radius: %e\n", r_si);
         printf("Spherical spread: %e\n", A_i);
-        printf("Pressure add to field point prior to spreading: %e, %e\n", var.r, var.i);
+        printf("Pressure add to field point prior to spreading: %e, %e\n", R.r, R.i);
         return;
     }
 
-    atomicAddDouble(&Pr_facet[index_Bi], var.r);
-    atomicAddDouble(&Pi_facet[index_Bi], var.i);
+    atomicAddDouble(&Pr_facet[index_Bi], R.r);
+    atomicAddDouble(&Pi_facet[index_Bi], R.i);
 }
 
 int CudaModelTes::ProjectSourcePointsToFacet()

@@ -158,17 +158,17 @@ def render_openGL():
 a = 3.0
 b = 2.0
 cp = 1480.0
-frequency = 2.0e3
-Radius = 50.0
+frequency = 10e3
+Radius = 4000
 
 stl_mesh = make_rectangle(a,b)
 #stl_mesh = mesh.Mesh.from_file('./testing/rectangular_plate.stl')
 source_pnts = []
 
 source_pnts.append([0.0,0.0,Radius])
-angles = np.linspace(-180, 180, 360, endpoint=False)
+#angles = np.linspace(-180, 180, 360, endpoint=False)
+angles = [0.0]
 field_pnts= generate_field_points(Radius, angles)
-
 load_points_to_cuda(source_pnts, isSource=True)
 load_points_to_cuda(field_pnts, isSource=False)
 set_initial_conditions(cp, frequency, 0.0)
@@ -180,23 +180,34 @@ pixelate_facets()
 
 field_vals = GetFieldPoints(len(field_pnts))
 
-print(field_vals)
+
+print("Debug Varible :  ", field_vals[0,0])
 
 magnitudes = np.sqrt(field_vals[:, 0]**2 + field_vals[:, 1]**2)
-magnitudes = np.sqrt(magnitudes)
-magnitudes = np.where(magnitudes == 0, np.finfo(float).eps, magnitudes)
+mask = magnitudes > np.finfo(np.float32).eps
+#magnitudes = magnitudes[mask]
+#angles = angles[mask]
+wavelength = cp / frequency
+k = 2*np.pi/wavelength
+A = a*b
 
+print("Test 1 : ",(k*A)/(4*np.pi))
+print("Test 2 : ",field_vals[0,0])
 
 db_values = 20 * np.log10(magnitudes)
 
-wavelength = cp / frequency
-A = a*b
-TES = 20*np.log10((4*np.pi*a*b)/(wavelength*wavelength))
+
+
+print(("k wave python :"    , k))
+
+TES = 20*np.log10((k*A)/(4*np.pi))
 print('Target Strength = ', TES)
-EchoLevel = TES - 2 * 20 * np.log10(Radius)
-print('Echo Level = ', EchoLevel)
-
-
+AlternativeTES = 20 * np.log10(A / (2*wavelength))
+print('Alternative Target Strength = ', AlternativeTES)
+AttenTES = 20*np.log10((k*A)/(4*np.pi*Radius**2))
+print('AttenTES = ', AttenTES)
+AttenTES = AlternativeTES - 2*20*np.log10(Radius)
+print('AttenTES = ', AttenTES)
 # wavelength = cp / frequency
 # A = a*b
 # TES = 10*np.log10((4*np.pi*A**2)/(wavelength**2))
@@ -221,29 +232,38 @@ print("<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>")
 print( "This is close to the modelled value.")
 print('Echo Ratio = ', 20*np.log10(EchoRatio))
 print("<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>")
-
+print("TES MAX = ", 20 * np.log10(a*b))
+print("a >> lambda, ",a," >> ",wavelength)
+print("b >> lambda, ",b," >> ",wavelength)
+print("D = max(a,b)")
+D = max(a,b)
+print("Radius >> 2*D^2/lambda, ",Radius," >> ",2*D*D/wavelength)
 
 print('Target Strength = ', TES)
 
 atten = 20*np.log10(Radius)
 print('Attenuation = ', atten)
 
-model_vals = db_values
-index = np.where(angles == 0)[0][0] 
+test = 20*np.log10(k*A/(4*np.pi*Radius**2))
+print('Test Values = ', test)
+print('Test TES = ', test + 2*atten)
 
-print('Modelled Target Strength = ', model_vals[index] + 2* atten)
+model_vals = db_values
+#index = np.where(angles == 0)[0][0] 
+print("Modelled with Attenuation = ", model_vals)
+
+print('Modelled Target Strength = ', model_vals + 2* atten)
 
 
 
 # Plot the data
-if True:
+if False:
     # db_values  + 40*np.log10(Radius)    
     plt.figure()
-    plt.plot(angles, model_vals + 2* atten, label="Field Values (dB)")
+    plt.plot(angles, model_vals + 2 * atten, label="Field Values (dB)")
     plt.xlabel("Angle (degrees)")
     plt.ylabel("Field Value (dB)")
     plt.title("Field Values vs. Angle")
-    plt.ylim(-15.0,25.0)
     plt.grid(True)
     plt.legend()
     plt.show()

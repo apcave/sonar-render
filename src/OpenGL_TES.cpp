@@ -448,7 +448,7 @@ void OpenGL_TES::ProcessFrame()
     {
         cudaGraphicsUnmapResources(1, &facGL->cudaResource, 0);
     }
-    PrintTextures();
+    // PrintTextures();
 
     glBindVertexArray(vao);
     checkGLError();

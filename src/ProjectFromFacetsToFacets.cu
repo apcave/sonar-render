@@ -221,7 +221,6 @@ int CudaModelTes::ProjectFromFacetsToFacets()
     cudaGetDeviceProperties(&prop, 0); // Query device 0
     printf("Max threads per block: %d\n", prop.maxThreadsPerBlock);
 
-    // One mutex per facet, locks it so only one thread can write to the surface at a time.
     for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
     {
         for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
@@ -376,27 +375,27 @@ void DisplayMatrixAsImage(const std::vector<float> &matrix, int width, int heigh
 
 int CudaModelTes::CopyFromMatrixToSurface()
 {
-    for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
-    {
-        for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
-        {
-            int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
-            std::vector<double> matrix(h_Facets_points.x * h_Facets_points.y);
-            cudaMemcpy(matrix.data(), dev_object_facet_Pr[object_num][facet_num], h_Facets_points.x * h_Facets_points.y * sizeof(double), cudaMemcpyDeviceToHost);
+    // for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
+    // {
+    //     for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
+    //     {
+    //         int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
+    //         std::vector<double> matrix(h_Facets_points.x * h_Facets_points.y);
+    //         cudaMemcpy(matrix.data(), dev_object_facet_Pr[object_num][facet_num], h_Facets_points.x * h_Facets_points.y * sizeof(double), cudaMemcpyDeviceToHost);
 
-            for (int j = h_Facets_points.y - 1; j >= 0; j--)
-            {
-                for (int i = 0; i < h_Facets_points.x; i++)
-                {
-                    printf("%.2f ", matrix[j * h_Facets_points.x + i]);
-                }
-                printf("\n");
-            }
-            printf("\n");
+    //         for (int j = h_Facets_points.y - 1; j >= 0; j--)
+    //         {
+    //             for (int i = 0; i < h_Facets_points.x; i++)
+    //             {
+    //                 printf("%.2f ", matrix[j * h_Facets_points.x + i]);
+    //             }
+    //             printf("\n");
+    //         }
+    //         printf("\n");
 
-            // DisplayMatrixAsImage(matrix, h_Facets_points.x, h_Facets_points.y);
-        }
-    }
+    //         // DisplayMatrixAsImage(matrix, h_Facets_points.x, h_Facets_points.y);
+    //     }
+    // }
 
     printf("CopyFromMatrixToSurface .......\n");
 
@@ -411,7 +410,6 @@ int CudaModelTes::CopyFromMatrixToSurface()
             dim3 threadsPerBlock(h_Facets_points.x, 1);
             dim3 numBlocks(h_Facets_points.y, 1);
 
-            printf("Test B\n");
             GetMaxValue<<<numBlocks, threadsPerBlock>>>(dev_object_facet_Pr[object_num][facet_num],
                                                         dev_object_facet_Pi[object_num][facet_num],
                                                         h_Facets_points.x,
@@ -438,23 +436,23 @@ int CudaModelTes::CopyFromMatrixToSurface()
     }
     cudaDeviceSynchronize();
 
-    for (auto facGL : gl_object_facets)
-    {
-        std::vector<float> matrix(facGL->numXpnts * facGL->numYpnts);
-        cudaMemcpy(matrix.data(), facGL->array, facGL->numXpnts * facGL->numYpnts * sizeof(float), cudaMemcpyDeviceToHost);
+    // for (auto facGL : gl_object_facets)
+    // {
+    //     std::vector<float> matrix(facGL->numXpnts * facGL->numYpnts);
+    //     cudaMemcpy(matrix.data(), facGL->array, facGL->numXpnts * facGL->numYpnts * sizeof(float), cudaMemcpyDeviceToHost);
 
-        for (int j = facGL->numYpnts - 1; j >= 0; j--)
-        {
-            for (int i = 0; i < facGL->numXpnts; i++)
-            {
-                printf("%.2f ", matrix[j * facGL->numXpnts + i]);
-            }
-            printf("\n");
-        }
-        printf("\n");
+    //     for (int j = facGL->numYpnts - 1; j >= 0; j--)
+    //     {
+    //         for (int i = 0; i < facGL->numXpnts; i++)
+    //         {
+    //             printf("%.2f ", matrix[j * facGL->numXpnts + i]);
+    //         }
+    //         printf("\n");
+    //     }
+    //     printf("\n");
 
-        // DisplayMatrixAsImage(matrix, h_Facets_points.x, h_Facets_points.y);
-    }
+    //     // DisplayMatrixAsImage(matrix, h_Facets_points.x, h_Facets_points.y);
+    // }
     printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     return 0;
 }

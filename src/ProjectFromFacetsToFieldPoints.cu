@@ -78,8 +78,8 @@ __global__ void ProjectFacetToFieldPointKernel(
     p_inc.i = Pi_facet[index_Ai];
 
     float3 vr_ri = MakeVector(r_i, r);
-    float lr_i = GetVectorLength(vr_ri);
-    float3 ur_ri = DivideVector(vr_ri, lr_i);
+    float r_if = GetVectorLength(vr_ri);
+    float3 ur_ri = DivideVector(vr_ri, r_if);
 
     float3 n = facet_normals[facet_num];
     double sc = (double)DotProduct(ur_ri, n);
@@ -95,32 +95,36 @@ __global__ void ProjectFacetToFieldPointKernel(
     // P2 = P2*exp(-i*k*r_sf)
     dcomplex i = devComplex(0, 1);
     dcomplex ik = devCmul(i, k);
-    dcomplex var = devRCmul(lr_i, ik);
-    var = devCexp(var); // This has phase and attenuation.
-    var = devCmul(var, p_inc);
-    // var = devCmul(var, ik);
+    dcomplex exp_ikr = devRCmul(r_if, ik);
+    exp_ikr = devCexp(exp_ikr); // This has phase and attenuation.
+
+    double p = -1 / (4 * PI);
+    dcomplex Gt = devRCmul(p, exp_ikr);
+
+    dcomplex dG_dr_a = devRCmul(1 / r_if, ik); // First term.
+    double dG_dr_b = 1 / (r_if * r_if);        // Second term often ignored useful for near field.
+    dcomplex dG_dr = dG_dr_a;
+    dG_dr.r += dG_dr_b;
+    dG_dr = devCmul(dG_dr, Gt); // This is the derivative of the Greens function.
 
     // printf("var: %e, %e\n", var.r, var.i);
-    double spread = sqrt(A_i / (2 * PI));
+    dcomplex result = devRCmul(A_i * sc, dG_dr); // Area term for the integral.
+    result = devCmul(result, p_inc);             // This includes the original pressure.
 
-    double realTerms = (A_i * sc) / lr_i;
-
-    var = devRCmul(realTerms, var);
-
-    if (devCabs(var) > 1.0)
+    if (devCabs(result) > 1.0)
     {
         printf("Pressure is too large to add to field point.\n");
-        printf("lr_i: %f\n", lr_i);
+        printf("lr_i: %f\n", r_if);
         printf("source_pressure: %e, %e\n", p_inc.r, p_inc.i);
-        printf("Spherical spread: %e\n", realTerms);
-        printf("Pressure to field point prior to spreading: %e, %e\n", var.r, var.i);
+        // printf("Spherical spread: %e\n", realTerms);
+        printf("Pressure to field point prior to spreading: %e, %e\n", result.r, result.i);
         return;
     }
 
     // Save the pressure to the facet pressure array.
     // Note var may be small and accumulate over may projects that why the complex numbers are doubles.
-    atomicAddDouble(&(field_points_pressure[field_point_num].r), var.r);
-    atomicAddDouble(&(field_points_pressure[field_point_num].i), var.i);
+    atomicAddDouble(&(field_points_pressure[field_point_num].r), result.r);
+    atomicAddDouble(&(field_points_pressure[field_point_num].i), result.i);
 }
 
 int CudaModelTes::ProjectFromFacetsToFieldPoints()
