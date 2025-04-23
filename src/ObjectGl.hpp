@@ -14,12 +14,15 @@ public:
 
 public:
     ObjectGl();
-    ObjectGl(std::vector<Facet *> facets);
     ~ObjectGl();
 
     void RenderObject(GLint textureUniformLoc);
 
     void AllocateGl();
+
+private:
+    void PrintVBO();
+    void MakeVBO();
 
 private:
     GLuint vbo;
