@@ -89,9 +89,9 @@ __global__ void ProjectSourcePointToFacetKernel(
     if (devCabs(G) > 1.0)
     {
         printf("Source Point to Facet Error.\n");
-        printf("Radius: %e\n", r_si);
-        printf("Spherical spread: %e\n", A_i);
-        printf("Pressure add to field point prior to spreading: %e, %e\n", R.r, R.i);
+        // printf("Radius: %e\n", r_si);
+        // printf("Spherical spread: %e\n", A_i);
+        // printf("Pressure add to field point prior to spreading: %e, %e\n", R.r, R.i);
         return;
     }
 

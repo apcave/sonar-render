@@ -51,7 +51,7 @@ void Model::set_inital_conditions(float cp, float t_frequency, float attenuation
     cout << "Resolution Factor: " << resolution_factor << endl;
 }
 
-void Model::pixelate_facets()
+void Model::MakeFragments()
 {
     // Iterate over each target object and its facets
     for (auto object : targetObjects)
@@ -60,7 +60,7 @@ void Model::pixelate_facets()
     }
 }
 
-void Model::copyToDevice()
+void Model::RenderCuda()
 {
     StartCuda();
 
@@ -75,9 +75,6 @@ void Model::copyToDevice()
     MakeFieldPointsOnGPU(feildPoints);
 
     DoCalculations();
-
-    CleanupCuda();
-
     std::cout << "CUDA calculations completed successfully." << std::endl;
 }
 
@@ -103,4 +100,11 @@ void Model::RenderOpenGL()
     WriteCudaToGlTexture();
 
     ProcessFrame();
+}
+
+void Model::TearDownModel()
+{
+    sourcePoints.clear();
+    feildPoints.clear();
+    StopCuda();
 }

@@ -18,6 +18,7 @@ class FacetCuda : public FacetGl
 {
 public:
     FacetCuda();
+    ~FacetCuda();
     void AllocateCuda(float3 &normal,
                       float3 &base_point,
                       float3 &xAxis,
@@ -29,21 +30,21 @@ public:
 
 private:
     // Area of the fragment.
-    float *dev_frag_area;
-    dev_facet *dev_data;
+    float *dev_frag_area = nullptr;
+    dev_facet *dev_data = nullptr;
     int3 frag_points;
 
 private:
     // Presure on the surface.
-    double *dev_Pr;
-    double *dev_Pi;
+    double *dev_Pr = nullptr;
+    double *dev_Pi = nullptr;
 
     // Working buffers for facet to facet calculations.
-    double *dev_Pr_initial;
-    double *dev_Pi_initial;
+    double *dev_Pr_initial = nullptr;
+    double *dev_Pi_initial = nullptr;
 
-    double *dev_Pr_result;
-    double *dev_Pi_result;
+    double *dev_Pr_result = nullptr;
+    double *dev_Pi_result = nullptr;
 
     friend class ModelCuda;
 };

@@ -31,10 +31,10 @@ private:
 	float BaseLengthPos;
 	float Area;
 
-	float *fragArea;
+	float *fragArea = nullptr;
 
-	float *vY;
-	float *vX;
+	float *vY = nullptr;
+	float *vX = nullptr;
 	float delta;
 
 public:

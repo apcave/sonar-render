@@ -26,25 +26,25 @@ class ModelCuda : public ModelGl
 protected:
     // Global parameters.
     // Complex wave number.
-    dcomplex *dev_k_wave;
+    dcomplex *dev_k_wave = nullptr;
     // Pixel length and width.
-    float *dev_frag_delta;
+    float *dev_frag_delta = nullptr;
 
     // Used for scaling the textures.
-    float *dev_pixel_Pressure_stats;
-    float host_pixel_Pressure_stats[3];
+    float *dev_frag_stats = nullptr;
+    float host_frag_stats[3];
 
     int host_num_source_points;
-    float3 *dev_source_points_position;   // constant
-    dcomplex *dev_source_points_pressure; // constant
+    float3 *dev_source_points_position = nullptr;   // constant
+    dcomplex *dev_source_points_pressure = nullptr; // constant
 
     int host_num_field_points;
-    float3 *dev_field_points_position;   // constant
-    dcomplex *dev_field_points_pressure; // constant
+    float3 *dev_field_points_position = nullptr;   // constant
+    dcomplex *dev_field_points_pressure = nullptr; // constant
 
 public:
-    ModelCuda() {};
-    ~ModelCuda() {};
+    ModelCuda();
+    ~ModelCuda();
 
 protected:
     int SetGlobalParameters(dcomplex k_wave, float pixel_delta);
@@ -53,6 +53,7 @@ protected:
     int MakeFieldPointsOnGPU(vector<PressurePoint *> field_points);
     int StartCuda();
     int StopCuda();
+
     int DoCalculations();
 
     int ProjectSourcePointsToFacet();
@@ -60,8 +61,6 @@ protected:
     int ProjectFromFacetsToFacets();
 
     int GetFieldPointValGPU(dcomplex *field_points_pressure);
-
-    void CleanupCuda();
 
     void RenderCudaObjects();
 

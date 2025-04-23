@@ -344,6 +344,8 @@ void Facet::MakeFragmentData(float frag_length)
 	}
 	delete[] yxL;
 	delete[] yxR;
+	yxL = nullptr;
+	yxR = nullptr;
 }
 
 void Facet::PrintMatrix()
@@ -371,4 +373,20 @@ void Facet::PrintMatrix()
 void Facet::MakeCuda()
 {
 	AllocateCuda(Normal, pointOnBase, xAxis, yAxis, fragArea);
+}
+
+Facet::~Facet()
+{
+	if (fragArea)
+	{
+		delete[] fragArea;
+	}
+	if (vY)
+	{
+		delete[] vY;
+	}
+	if (vX)
+	{
+		delete[] vX;
+	}
 }

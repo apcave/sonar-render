@@ -48,14 +48,14 @@ def load_stl_mesh_to_cuda(stl_mesh, isSource=False):
  
     cpp_lib.load_geometry(v0_ptr, num_facets)
 
-def pixelate_facets():
+def render_cuda():
     """Pixelate the facets of the STL mesh."""
 
     # Define the function signature in the shared library
-    cpp_lib.pixelate_facets.argtypes = []
-    cpp_lib.pixelate_facets.restype = None
+    cpp_lib.render_cuda.argtypes = []
+    cpp_lib.render_cuda.restype = None
 
-    cpp_lib.pixelate_facets()
+    cpp_lib.render_cuda()
     # Define the function signature in the shared library
 
 def generate_field_points(radius, angles):
@@ -154,6 +154,9 @@ def render_openGL():
 
     cpp_lib.RenderOpenGL()
 
+def TearDownCuda():
+    """Tear down the CUDA model."""
+    cpp_lib.TearDownCuda()
 
 a = 3.0
 b = 2.0
@@ -169,18 +172,25 @@ source_pnts.append([0.0,0.0,Radius])
 #angles = np.linspace(-180, 180, 360, endpoint=False)
 angles = [0.0]
 field_pnts= generate_field_points(Radius, angles)
-load_points_to_cuda(source_pnts, isSource=True)
-load_points_to_cuda(field_pnts, isSource=False)
-set_initial_conditions(cp, frequency, 0.0)
-load_stl_mesh_to_cuda(stl_mesh)
-#render_openGL()
-pixelate_facets()
 
+while True:
+    print("Loading CUDA")
+    load_points_to_cuda(source_pnts, isSource=True)
+    load_points_to_cuda(field_pnts, isSource=False)
+    set_initial_conditions(cp, frequency, 0.0)
+    load_stl_mesh_to_cuda(stl_mesh)
+    #render_openGL()
+    print("Doing CUDA Calculation")
+    render_cuda()
+    print("Clearing the GPU...")
+    TearDownCuda()
+
+print("<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 # plot_geometry(stl_mesh, source_pnts, field_pnts )
 
 field_vals = GetFieldPoints(len(field_pnts))
 
-
+print("Tear Down Cuda")
 print("Debug Varible :  ", field_vals[0,0])
 
 magnitudes = np.sqrt(field_vals[:, 0]**2 + field_vals[:, 1]**2)
@@ -269,4 +279,4 @@ if False:
     plt.show()
 
 # 
-render_openGL()
+#render_openGL()

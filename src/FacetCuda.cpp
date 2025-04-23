@@ -41,3 +41,39 @@ void FacetCuda::AllocateCuda(float3 &normal,
     cudaMemcpy(dev_data, &host_facet, sizeof(dev_facet), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_frag_area, frag_area, numXpnts * numYpnts * sizeof(float), cudaMemcpyHostToDevice);
 }
+
+FacetCuda::~FacetCuda()
+{
+    if (dev_frag_area)
+    {
+        cudaFree(dev_frag_area);
+    }
+    if (dev_data)
+    {
+        cudaFree(dev_data);
+    }
+    if (dev_Pr)
+    {
+        cudaFree(dev_Pr);
+    }
+    if (dev_Pi)
+    {
+        cudaFree(dev_Pi);
+    }
+    if (dev_Pr_initial)
+    {
+        cudaFree(dev_Pr_initial);
+    }
+    if (dev_Pi_initial)
+    {
+        cudaFree(dev_Pi_initial);
+    }
+    if (dev_Pr_result)
+    {
+        cudaFree(dev_Pr_result);
+    }
+    if (dev_Pi_result)
+    {
+        cudaFree(dev_Pi_result);
+    }
+}

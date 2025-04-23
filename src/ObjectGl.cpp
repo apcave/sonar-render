@@ -41,6 +41,28 @@ void ObjectGl::MakeVBO()
 
 ObjectGl::~ObjectGl()
 {
+    // Delete the VBO
+    if (vbo != 0)
+    {
+        glDeleteBuffers(1, &vbo);
+        std::cout << "VBO " << vbo << " deleted." << std::endl;
+        vbo = 0; // Reset to 0 to avoid dangling references
+    }
+
+    // Delete the VAO
+    if (vao != 0)
+    {
+        glDeleteVertexArrays(1, &vao);
+        std::cout << "VAO " << vao << " deleted." << std::endl;
+        vao = 0; // Reset to 0 to avoid dangling references
+    }
+
+    for (auto facet : facets)
+    {
+        std::cout << "Deleting facet " << facet->textureID << std::endl;
+        delete facet;
+    }
+    facets.clear();
 }
 
 ObjectGl::ObjectGl()

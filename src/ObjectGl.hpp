@@ -25,7 +25,7 @@ private:
     void MakeVBO();
 
 private:
-    GLuint vbo;
-    GLuint vao;
+    GLuint vbo = 0;
+    GLuint vao = 0;
 };
 #endif

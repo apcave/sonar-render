@@ -44,9 +44,11 @@ public:
 
     void set_inital_conditions(float cp, float t_frequency, float attenuation, float t_density);
 
-    void pixelate_facets();
+    void MakeFragments();
 
-    void copyToDevice();
+    void RenderCuda();
+
+    void TearDownModel();
 
     void GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints);
     void RenderOpenGL();

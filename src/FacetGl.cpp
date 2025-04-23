@@ -38,8 +38,22 @@ void FacetGl::AllocateGl()
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void FacetGl::Delete()
+FacetGl::~FacetGl()
 {
+    return;
+    // Unregister the OpenGL texture from CUDA
+    if (cudaResource)
+    {
+        cudaGraphicsUnregisterResource(cudaResource);
+        cudaResource = nullptr;
+    }
+
+    // Delete the OpenGL texture
+    if (textureID)
+    {
+        glDeleteTextures(1, &textureID);
+        textureID = 0;
+    }
 }
 
 void FacetGl::MapToCuda()

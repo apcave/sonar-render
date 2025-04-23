@@ -14,9 +14,10 @@ extern "C" void load_geometry(float *v1, int num_vertices);
 extern "C" void load_field_points(float *v1, int num_feild_points);
 extern "C" void load_source_points(float *v1, int num_source_points);
 extern "C" void set_initial_conditions(float cp, float frequency, float attenuation, float density);
-extern "C" void pixelate_facets();
+extern "C" void render_cuda();
 extern "C" void GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints);
 extern "C" void RenderOpenGL();
+extern "C" void TearDownCuda();
 
 extern "C" void set_initial_conditions(float cp, float frequency, float attenuation, float density)
 {
@@ -73,12 +74,12 @@ extern "C" void load_source_points(float *v1, int num_source_points)
     cout << "Loaded source points with " << num_source_points << " points." << endl;
 };
 
-extern "C" void pixelate_facets()
+extern "C" void render_cuda()
 {
     cout << "Pixelating facets..." << endl;
-    modelTes.pixelate_facets();
+    modelTes.MakeFragments();
     cout << "Pixelated facets." << endl;
-    modelTes.copyToDevice();
+    modelTes.RenderCuda();
     cout << "Copied data to device." << endl;
 };
 
@@ -94,4 +95,11 @@ extern "C" void RenderOpenGL()
     cout << "Rendering OpenGL..." << endl;
     modelTes.RenderOpenGL();
     cout << "Rendered OpenGL." << endl;
+}
+
+extern "C" void TearDownCuda()
+{
+    cout << "Tearing down CUDA..." << endl;
+    modelTes.TearDownModel();
+    cout << "Tore down CUDA." << endl;
 }

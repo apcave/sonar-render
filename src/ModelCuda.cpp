@@ -27,7 +27,7 @@ int ModelCuda::SetGlobalParameters(dcomplex k_wave, float pixel_delta)
         return 1;
     }
 
-    cudaMalloc(&dev_pixel_Pressure_stats, 3 * sizeof(float));
+    cudaMalloc(&dev_frag_stats, 3 * sizeof(float));
     return 0;
 }
 
@@ -65,6 +65,9 @@ int ModelCuda::MakeFieldPointsOnGPU(vector<PressurePoint *> field_points)
     {
         position[i] = field_points[i]->position;
         pressure[i] = field_points[i]->pressure;
+
+        std::cout << "Field Point: " << position[i].x << " " << position[i].y << " " << position[i].z << std::endl;
+        std::cout << "Pressure Point: " << pressure[i].r << " " << pressure[i].i << std::endl;
     }
     // Allocate memory for the source points on the device
     cudaMalloc(&dev_field_points_position, host_num_field_points * sizeof(float3));
@@ -103,19 +106,51 @@ int ModelCuda::StartCuda()
 
 int ModelCuda::StopCuda()
 {
-    // cudaError_t cudaStatus = cudaUnbindTexture(dev_Positions);
-    // if (cudaStatus != cudaSuccess)
-    // {
-    //     printf("Unbinding of Positions Texture Failed!\n");
-    //     return 1;
-    // }
+    if (dev_k_wave)
+    {
+        cudaFree(dev_k_wave);
+        dev_k_wave = nullptr;
+    }
+    if (dev_frag_delta)
+    {
+        cudaFree(dev_frag_delta);
+        dev_frag_delta = nullptr;
+    }
+    if (dev_frag_stats)
+    {
+        cudaFree(dev_frag_stats);
+        dev_frag_stats = nullptr;
+    }
+    if (dev_source_points_position)
+    {
+        cudaFree(dev_source_points_position);
+        dev_source_points_position = nullptr;
+    }
+    if (dev_source_points_pressure)
+    {
+        cudaFree(dev_source_points_pressure);
+        dev_source_points_pressure = nullptr;
+    }
+    if (dev_field_points_position)
+    {
+        cudaFree(dev_field_points_position);
+        dev_field_points_position = nullptr;
+    }
+    if (dev_field_points_pressure)
+    {
+        cudaFree(dev_field_points_pressure);
+        dev_field_points_pressure = nullptr;
+    }
+    std::cout << "Deleted Model Variables." << std::endl;
+    for (auto object : targetObjects)
+    {
+        std::cout << "Test 1\n";
+        delete object;
+        std::cout << "Test 2\n";
+    }
+    std::cout << "Deleted Objects." << std::endl;
+    targetObjects.clear();
 
-    // cudaStatus = cudaDeviceReset();
-    // if (cudaStatus != cudaSuccess)
-    // {
-    //     fprintf(stderr, "cudaDeviceReset failed!\n");
-    //     return 1;
-    // }
     return 0;
 }
 
@@ -159,7 +194,7 @@ void ModelCuda::WriteCudaToGlTexture()
 {
     for (auto object : targetObjects)
     {
-        object->WriteSurfaceToGlTexture(dev_pixel_Pressure_stats);
+        object->WriteSurfaceToGlTexture(dev_frag_stats);
     }
 }
 
@@ -168,16 +203,24 @@ int ModelCuda::GetSurfaceScalers()
     printf("Get the texture scalers from the surface pressure .......\n");
 
     // Clear the pressure stats.
-    cudaMemset(dev_pixel_Pressure_stats, 0, 3 * sizeof(float));
+    cudaMemset(dev_frag_stats, 0, 3 * sizeof(float));
 
     // Copy the pressure from the matrix to the surface.
     for (auto object : targetObjects)
     {
-        object->GetSurfaceScalers(dev_pixel_Pressure_stats);
+        object->GetSurfaceScalers(dev_frag_stats);
     }
     return 1;
 }
 
-void ModelCuda::CleanupCuda()
+ModelCuda::ModelCuda()
 {
+    // Initialize the CUDA device
+    cudaSetDevice(0);
+    cudaDeviceReset();
+}
+
+ModelCuda::~ModelCuda()
+{
+    StopCuda();
 }

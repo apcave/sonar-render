@@ -16,14 +16,14 @@
 class FacetGl
 {
 public:
-    GLuint textureID;
+    GLuint textureID = 0;
 
 public:
     FacetGl();
+    ~FacetGl();
     void AllocateGl();
 
     void PrintOpenGlTexture();
-    void Delete();
 
 protected:
     void MapToCuda();
@@ -40,7 +40,7 @@ protected:
 
     // Used by CUDA level to write to the OpenGL texture.
     cudaSurfaceObject_t surface;
-    cudaGraphicsResource *cudaResource;
+    cudaGraphicsResource *cudaResource = nullptr;
     bool readyToRender;
 };
 #endif
