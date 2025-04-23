@@ -9,9 +9,7 @@ import math
 
 def monostatic_iterated(pnts, object, cp, frequency):
     """The source points and field points are iterated over while the other data is fixed.
-    Returns a matrix or vector of field point pressure values for the source points."""
-
-    
+    Returns a matrix or vector of field point pressure values for the source points."""  
 
     p_reflect = []
     for pnt in pnts:
@@ -98,13 +96,90 @@ def do_monostatic_rotation():
 do_monostatic_rotation()
 
 
-exit()
+# def bistatic_TES(a, b, wavelength, theta_i_deg, theta_s_deg):
+#     """
+#     Calculates bistatic TES for a rectangular plate.
+    
+#     Parameters:
+#     a : float
+#         Plate length along x (meters)
+#     b : float
+#         Plate width along y (meters)
+#     wavelength : float
+#         Acoustic wavelength (meters)
+#     theta_i_deg : float or ndarray
+#         Incident angle in degrees (0 = broadside incidence)
+#     theta_s_deg : float or ndarray
+#         Scattering angle in degrees (0 = broadside scattering)
+    
+#     Returns:
+#     TES_dB : float or ndarray
+#         Target Echo Strength in decibels
+#     """
+#     # Convert angles to radians
+#     theta_i = np.radians(theta_i_deg)
+#     theta_s = np.radians(theta_s_deg)
+
+#     # Wavenumber
+#     k = 2 * np.pi / wavelength
+
+#     # Define beta and gamma for diffraction terms
+#     beta = (np.pi * a / wavelength) * (np.sin(theta_s) - np.sin(theta_i))
+#     gamma = (np.pi * b / wavelength) * (np.cos(theta_s) - np.cos(theta_i))
+
+#     # Handle division by zero in sinc-like terms
+#     def sinc(x):
+#         return np.ones_like(x) if np.all(x == 0) else np.sinc(x / np.pi)
+
+#     sinc_beta = sinc(beta)
+#     sinc_gamma = sinc(gamma)
+
+#     # Compute TES
+#     TES = ((a * b) / (2 * wavelength))**2
+#     TES *= sinc_beta**2 * sinc_gamma**2
+#     TES *= ((np.cos(theta_i) + np.cos(theta_s)) / 2)**2
+
+#     TES_dB = 10 * np.log10(TES + 1e-12)  # avoid log(0)
+#     return TES_dB
+
+def bistatic_tes_rectangular_plate(a, b, wavelength, theta_i_deg, theta_s_deg):
+    """
+    Calculate bistatic TES of a rectangular plate using Kirchhoff approximation.
+
+    Parameters:
+    - a, b: dimensions of the plate (meters)
+    - wavelength: wavelength (meters)
+    - theta_i_deg: incident angle from normal (degrees)
+    - theta_s_deg: scattering angle from normal (degrees)
+
+    Returns:
+    - TES in dB
+    """
+    k = 2 * np.pi / wavelength
+    theta_i = np.radians(theta_i_deg)
+    theta_s = np.radians(theta_s_deg)
+
+    X = (k * a / 2) * (np.sin(theta_s) - np.sin(theta_i))
+    Y = (k * b / 2) * (np.cos(theta_s) - np.cos(theta_i))
+
+    sinc_X = np.sinc(X / np.pi)  # numpy sinc is sin(pi*x)/(pi*x)
+    sinc_Y = np.sinc(Y / np.pi)
+
+    cos_mid_angle = np.cos((theta_i + theta_s) / 2)
+    amplitude = (a * b / wavelength) * cos_mid_angle * sinc_X * sinc_Y
+
+    tes_linear = amplitude**2
+    tes_db = 10 * np.log10(tes_linear + 1e-12)  # +1e-12 to avoid log(0)
+    return tes_db
 
 
 #stl_mesh = mesh.Mesh.from_file('./testing/rectangular_plate.stl')
 source_pnts = []
 
-source_pnts.append([0.0,0.0,range])
+
+angle_i = [30.0]
+source_pnts= geo.generate_field_points(range, angle_i)
+angle_i = [-30.0]
 angles = np.linspace(-180, 180, 360, endpoint=False)
 field_pnts= geo.generate_field_points(range, angles)
 
@@ -159,13 +234,14 @@ print("Modelled with Attenuation = ", db_values[index])
 print('Analytical TES = ', TES)
 print('Modelled TES = ', db_values[index] + 2* atten)
 
-
+bistatic_TES = bistatic_tes_rectangular_plate(a, b, wavelength, angle_i, angles )
 
 # Plot the data
 if True:
     # db_values  + 40*np.log10(Radius)    
     plt.figure()
     plt.plot(angles, db_values + 2 * atten, label="Field Values (dB)")
+    plt.plot(angles, bistatic_TES, label="Analytic (dB)")
     plt.xlabel("Angle (degrees)")
     plt.ylabel("Field Value (dB)")
     plt.title("Field Values vs. Angle")
