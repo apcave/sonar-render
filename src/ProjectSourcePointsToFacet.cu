@@ -101,13 +101,6 @@ __global__ void ProjectSourcePointToFacetKernel(
 
 int ModelCuda::ProjectSourcePointsToFacet()
 {
-    printf("Host ProjectPointToFacet....\n");
-
-    cudaDeviceProp prop;
-    cudaGetDeviceProperties(&prop, 0); // Query device 0
-    printf("Max threads per block: %d\n", prop.maxThreadsPerBlock);
-
-    printf("ProjectFromFacetsToFieldPoints .......\n");
 
     // Every facet can have a different number of pixels, where n = 1096^0.5 is the maximum number of pixels per facet.
 
@@ -142,7 +135,5 @@ int ModelCuda::ProjectSourcePointsToFacet()
     }
 
     cudaDeviceSynchronize();
-
-    printf("ProjectSourcePointsToFacet done.\n");
     return 0;
 }

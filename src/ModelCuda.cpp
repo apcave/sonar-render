@@ -8,7 +8,6 @@ using namespace std;
 
 int ModelCuda::SetGlobalParameters(dcomplex k_wave, float pixel_delta)
 {
-    printf("SetGlobalParameters .......\n");
     // Set the global parameters for the GPU
     cudaMalloc(&dev_k_wave, 1 * sizeof(dcomplex));
     cudaError_t cudaStatus = cudaMemcpy(dev_k_wave, &k_wave, sizeof(dcomplex), cudaMemcpyHostToDevice);
@@ -18,7 +17,6 @@ int ModelCuda::SetGlobalParameters(dcomplex k_wave, float pixel_delta)
         return 1;
     }
 
-    printf("pixel_delta: %f\n", pixel_delta);
     cudaMalloc(&dev_frag_delta, 1 * sizeof(float));
     cudaStatus = cudaMemcpy(dev_frag_delta, &pixel_delta, sizeof(float), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess)
@@ -34,7 +32,6 @@ int ModelCuda::SetGlobalParameters(dcomplex k_wave, float pixel_delta)
 int ModelCuda::MakeSourcePointsOnGPU(vector<PressurePoint *> source_points)
 {
     host_num_source_points = source_points.size();
-    printf("MakeSourcePointsOnGPU (num pnts %d) .......\n", host_num_source_points);
 
     auto position = new float3[host_num_source_points];
     auto pressure = new dcomplex[host_num_source_points];
@@ -65,9 +62,6 @@ int ModelCuda::MakeFieldPointsOnGPU(vector<PressurePoint *> field_points)
     {
         position[i] = field_points[i]->position;
         pressure[i] = field_points[i]->pressure;
-
-        std::cout << "Field Point: " << position[i].x << " " << position[i].y << " " << position[i].z << std::endl;
-        std::cout << "Pressure Point: " << pressure[i].r << " " << pressure[i].i << std::endl;
     }
     // Allocate memory for the source points on the device
     cudaMalloc(&dev_field_points_position, host_num_field_points * sizeof(float3));
@@ -87,8 +81,6 @@ int ModelCuda::MakeObjectOnGPU(vector<Facet *> facets)
     {
         facet->MakeCuda();
     }
-
-    printf("Allocated object memory on GPU.\n");
     return 0;
 }
 
@@ -100,7 +92,6 @@ int ModelCuda::StartCuda()
         printf("cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
         return 1;
     }
-    printf("CUDA started successfully.\n");
     return 0;
 }
 
@@ -141,14 +132,11 @@ int ModelCuda::StopCuda()
         cudaFree(dev_field_points_pressure);
         dev_field_points_pressure = nullptr;
     }
-    std::cout << "Deleted Model Variables." << std::endl;
+
     for (auto object : targetObjects)
     {
-        std::cout << "Test 1\n";
         delete object;
-        std::cout << "Test 2\n";
     }
-    std::cout << "Deleted Objects." << std::endl;
     targetObjects.clear();
 
     return 0;
@@ -156,7 +144,6 @@ int ModelCuda::StopCuda()
 
 int ModelCuda::DoCalculations()
 {
-    printf("DoCalculations .......\n");
 
     // TestGPU();
     if (ProjectSourcePointsToFacet() != 0)
@@ -200,8 +187,6 @@ void ModelCuda::WriteCudaToGlTexture()
 
 int ModelCuda::GetSurfaceScalers()
 {
-    printf("Get the texture scalers from the surface pressure .......\n");
-
     // Clear the pressure stats.
     cudaMemset(dev_frag_stats, 0, 3 * sizeof(float));
 

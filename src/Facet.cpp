@@ -69,20 +69,20 @@ void Facet::GenerateFacetLimits()
 	yAxis = GeoMath::MakeUnitVectorSc(vLongY);
 	Area = (BaseLength * Height) / 2.0f;
 
-	cout << "Height: " << Height << endl;
-	cout << "BaseLength: " << BaseLength << endl;
-	cout << "BaseLengthNeg: " << BaseLengthNeg << endl;
-	cout << "BaseLengthPos: " << BaseLengthPos << endl;
-	cout << "Point on base: " << pointOnBase.x << ", " << pointOnBase.y << ", " << pointOnBase.z << endl;
-	cout << "xAxis: " << xAxis.x << ", " << xAxis.y << ", " << xAxis.z << endl;
-	cout << "yAxis: " << yAxis.x << ", " << yAxis.y << ", " << yAxis.z << endl;
-	cout << "Normal: " << Normal.x << ", " << Normal.y << ", " << Normal.z << endl;
-	cout << "v1: " << v1.x << ", " << v1.y << ", " << v1.z << endl;
-	cout << "v2: " << v2.x << ", " << v2.y << ", " << v2.z << endl;
-	cout << "v3: " << v3.x << ", " << v3.y << ", " << v3.z << endl;
-	cout << "vLongX: " << vLongX.x << ", " << vLongX.y << ", " << vLongX.z << endl;
-	cout << "vLongY: " << vLongY.x << ", " << vLongY.y << ", " << vLongY.z << endl;
-	cout << "-------------------------------------\n";
+	// cout << "Height: " << Height << endl;
+	// cout << "BaseLength: " << BaseLength << endl;
+	// cout << "BaseLengthNeg: " << BaseLengthNeg << endl;
+	// cout << "BaseLengthPos: " << BaseLengthPos << endl;
+	// cout << "Point on base: " << pointOnBase.x << ", " << pointOnBase.y << ", " << pointOnBase.z << endl;
+	// cout << "xAxis: " << xAxis.x << ", " << xAxis.y << ", " << xAxis.z << endl;
+	// cout << "yAxis: " << yAxis.x << ", " << yAxis.y << ", " << yAxis.z << endl;
+	// cout << "Normal: " << Normal.x << ", " << Normal.y << ", " << Normal.z << endl;
+	// cout << "v1: " << v1.x << ", " << v1.y << ", " << v1.z << endl;
+	// cout << "v2: " << v2.x << ", " << v2.y << ", " << v2.z << endl;
+	// cout << "v3: " << v3.x << ", " << v3.y << ", " << v3.z << endl;
+	// cout << "vLongX: " << vLongX.x << ", " << vLongX.y << ", " << vLongX.z << endl;
+	// cout << "vLongY: " << vLongY.x << ", " << vLongY.y << ", " << vLongY.z << endl;
+	// cout << "-------------------------------------\n";
 }
 
 void Facet::CalculateCentroid()
@@ -161,9 +161,6 @@ void Facet::MakeFragmentData(float frag_length)
 
 	float m1 = Height / (-BaseLengthPos);
 	float m2 = Height / (BaseLengthNeg);
-
-	cout << "m1: " << m1 << endl;
-	cout << "m2: " << m2 << endl;
 
 	for (int i = 0; numXpnts > i; i++)
 	{
@@ -289,15 +286,6 @@ void Facet::MakeFragmentData(float frag_length)
 			// printf("Pixels along y axis ******************\n");
 			for (int j = 0; numYpnts > j; j++)
 			{
-				// if(!yxL[j])
-				//	printf("Lower Left Out\n");
-				// if(!yxL[j+1])
-				//	printf("Upper Left Out\n");
-				// if(!yxR[j])
-				//	printf("Lower Right Out\n");
-				// if(!yxR[j+1])
-				//	printf("Upper Right Out\n");
-
 				// lower left, lower right, upper left, upper right
 				if ((!yxL[j]) && (!yxR[j]) && (!yxL[j + 1]) && (!yxR[j + 1]))
 				{

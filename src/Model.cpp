@@ -39,16 +39,6 @@ void Model::set_inital_conditions(float cp, float t_frequency, float attenuation
     k_wave.r = (double)k;
     k_wave.i = (double)attenuation;
     frag_length = medium_waveSpeed / (frequency * resolution_factor);
-
-    cout << "-------------------------------------------\n";
-    cout << "Medium Wave Speed: " << medium_waveSpeed << endl;
-    cout << "Frequency: " << frequency << endl;
-    cout << "Medium Attenuation: " << medium_attenuation << endl;
-    cout << "Medium Density: " << density << endl;
-    cout << "Omega: " << omega << endl;
-    cout << "Wave Number: " << k << endl;
-    cout << "Pixel Length: " << frag_length << endl;
-    cout << "Resolution Factor: " << resolution_factor << endl;
 }
 
 void Model::MakeFragments()
@@ -75,7 +65,6 @@ void Model::RenderCuda()
     MakeFieldPointsOnGPU(feildPoints);
 
     DoCalculations();
-    std::cout << "CUDA calculations completed successfully." << std::endl;
 }
 
 void Model::GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints)
@@ -92,7 +81,6 @@ void Model::GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoint
 void Model::RenderOpenGL()
 {
     InitOpenGL();
-    std::cout << "OpenGL initialized successfully." << std::endl;
 
     MakeObjectsOnGl();
 

@@ -124,11 +124,9 @@ __global__ void ProjectFacetToFieldPointKernel(
 
 int ModelCuda::ProjectFromFacetsToFieldPoints()
 {
-    printf("ProjectFromFacetsToFieldPoints .......\n");
-
-    cudaDeviceProp prop;
-    cudaGetDeviceProperties(&prop, 0); // Query device 0
-    printf("Max threads per block: %d\n", prop.maxThreadsPerBlock);
+    // cudaDeviceProp prop;
+    // cudaGetDeviceProperties(&prop, 0); // Query device 0
+    // printf("Max threads per block: %d\n", prop.maxThreadsPerBlock);
 
     for (auto object : targetObjects)
     {
@@ -164,6 +162,5 @@ int ModelCuda::ProjectFromFacetsToFieldPoints()
     }
     // More testing is required on large models to see how CUDA manages the cores.
     cudaDeviceSynchronize();
-    printf("ProjectFromFacetsToFieldPoints done.\n");
     return 0;
 }

@@ -18,8 +18,6 @@ void ObjectGl::MakeVBO()
     glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    std::cout << "VBO created successfully." << std::endl;
-
     // Vertex Attribute Object....
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -59,7 +57,6 @@ ObjectGl::~ObjectGl()
 
     for (auto facet : facets)
     {
-        std::cout << "Deleting facet " << facet->textureID << std::endl;
         delete facet;
     }
     facets.clear();

@@ -77,7 +77,6 @@ def make_rectangle(length, width):
     #print(plate.vectors)
     
     # Save the mesh to an STL file
-    plate.save('rectangular_plate.stl')
+    # plate.save('rectangular_plate.stl')
 
-    print("STL file 'rectangular_plate.stl' created successfully!")
     return plate
