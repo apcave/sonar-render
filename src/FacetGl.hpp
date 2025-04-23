@@ -1,10 +1,6 @@
 #ifndef _OPEN_GL_FACET
 #define _OPEN_GL_FACET
 
-#include "Facet.hpp"
-
-#include <vector>
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <cuda_runtime.h>
@@ -19,30 +15,32 @@
  */
 class FacetGl
 {
+public:
+    GLuint textureID;
 
 public:
     FacetGl();
-    void WriteSurface(double *dev_Pr, double *dev_Pi, float *dev_frag_stats);
+    void AllocateGl();
+
     void PrintOpenGlTexture();
     void Delete();
 
-private:
-    void CreateOpenGl();
+protected:
     void MapToCuda();
 
 private:
-    bool readyToRender;
-    GLuint textureID;
-    int textureVert[3];
-    cudaGraphicsResource *cudaResource;
     cudaResourceDesc resDesc;
-    cudaSurfaceObject_t surface;
     cudaTextureDesc texDesc;
     cudaArray_t array;
 
 protected:
     int numXpnts;
     int numYpnts;
-    int numXpntsNegative
+    int numXpntsNegative;
+
+    // Used by CUDA level to write to the OpenGL texture.
+    cudaSurfaceObject_t surface;
+    cudaGraphicsResource *cudaResource;
+    bool readyToRender;
 };
 #endif

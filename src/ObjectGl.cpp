@@ -1,6 +1,6 @@
 #include "ObjectGl.hpp"
 
-int ObjectGl::ObjectGl(std::vector<Facet *> facets)
+ObjectGl::ObjectGl(std::vector<Facet *> facets)
 {
 
     std::vector<float> vertexData;
@@ -19,8 +19,14 @@ int ObjectGl::ObjectGl(std::vector<Facet *> facets)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     std::cout << "VBO created successfully." << std::endl;
+}
 
-    return 1;
+ObjectGl::~ObjectGl()
+{
+}
+
+ObjectGl::ObjectGl()
+{
 }
 
 void ObjectGl::RenderObject(GLint textureUniformLoc)
@@ -77,15 +83,10 @@ void ObjectGl::RenderObject(GLint textureUniformLoc)
     }
 }
 
-void ObjectGl::MakeTextureOnGl(
-    std::vector<double *> &dev_facet_Pr,
-    std::vector<double *> &dev_facet_Pi,
-    float *dev_frag_stats)
+void ObjectGl::AllocateGl()
 {
-    int numFacet = dev_facet_Pr.size();
-    for (int i = 0; i < numFacet; ++i)
+    for (auto facet : facets)
     {
-        auto facet = facets[i];
-        facet->WriteSurface(dev_facet_Pr[i], dev_facet_Pi[i], dev_frag_stats);
+        facet->AllocateGl();
     }
 }

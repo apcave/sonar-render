@@ -1,11 +1,14 @@
 #include "FacetGl.hpp"
 
+#include <iostream>
+#include <vector>
+
 FacetGl::FacetGl()
 {
     readyToRender = false;
 }
 
-void FacetGl::CreateOpenGl()
+void FacetGl::AllocateGl()
 {
     readyToRender = false;
     std::cout << "CreateTexture for Single-Channel Float Texture" << std::endl;

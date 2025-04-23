@@ -1,8 +1,6 @@
-#ifndef _OPENGL_TES
-#define _OPENGL_TES
-#include "Facet.hpp"
-#include "FacetGl.hpp"
-#include "ObjectGl.hpp"
+#ifndef _MODEL_GL
+#define _MODEL_GL
+#include "Object.hpp"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -22,30 +20,26 @@
  * Initially the geometry is static and calculations are done on phase and frequency.
  * So the geometry is static and the textures are updated.
  */
-class OpenGlTes
+class ModelGl
 {
 public:
-    GLuint textureShaderProgram = 0;
-    GLuint uniformShaderProgram = 0;
-
 private:
+    // The openGL window.
     GLFWwindow *window;
-    GLuint vbo, vao, texture;
-    cudaGraphicsResource *cuda_vbo_resource, *cuda_texture_resource;
+
+    // This is the shader that processes the texture at a fragment level.
+    GLuint textureShaderProgram = 0;
 
 public:
-    OpenGlTes();
-    ~OpenGlTes();
+    ModelGl();
+    ~ModelGl();
 
     void Cleanup();
 
 protected:
     void InitOpenGL();
-    int MakeObjectOnGl(std::vector<Facet *> facets);
-    int MakeTextureOnGl(
-        std::vector<std::vector<double *>> &dev_object_facet_Pr,
-        std::vector<std::vector<double *>> &dev_object_facet_Pi,
-        double *dev_frag_stats);
+    int MakeObjectsOnGl();
+    int MakeTextureOnGl(double *dev_frag_stats);
     void ProcessFrame();
 
 private:
@@ -57,7 +51,7 @@ private:
     int window_height = 600;
 
 protected:
-    std::vector<ObjectGl *> objects;
+    std::vector<Object *> targetObjects;
     bool usingOpenGL = true;
 };
 #endif

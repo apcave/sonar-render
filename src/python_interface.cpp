@@ -1,4 +1,4 @@
-#include "ModelTes.hpp"
+#include "Model.hpp"
 
 #include <cuda_runtime.h>
 #include <iostream>
@@ -8,7 +8,7 @@
 
 using namespace std;
 
-ModelTes modelTes;
+Model modelTes;
 
 extern "C" void load_geometry(float *v1, int num_vertices);
 extern "C" void load_field_points(float *v1, int num_feild_points);
@@ -30,7 +30,7 @@ extern "C" void load_geometry(float *v1, int num_vertices)
 
     cout << "Allocating device memory..." << endl;
 
-    auto object = new TargetObject();
+    auto object = new Object();
 
     for (int i = 0; i < num_vertices; ++i)
     {
@@ -38,7 +38,7 @@ extern "C" void load_geometry(float *v1, int num_vertices)
         float3 p_v2 = {v1[i * 9 + 3], v1[i * 9 + 4], v1[i * 9 + 5]};
         float3 p_v3 = {v1[i * 9 + 6], v1[i * 9 + 7], v1[i * 9 + 8]};
 
-        object->addFacet(p_v1, p_v2, p_v3);
+        object->AddFacet(p_v1, p_v2, p_v3);
     }
     modelTes.addTargetObject(object);
     cout << "Loaded geometry with " << num_vertices << " vertices." << endl;

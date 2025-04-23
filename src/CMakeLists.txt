@@ -14,19 +14,22 @@ set(TARGET_NAME cuda_project)
 # Add source files for the shared library
 set(CU_SRC
     CudaUtils.cu
-    CudaModelTes.cu
     ProjectSourcePointsToFacet.cu
     ProjectFromFacetsToFieldPoints.cu
     ProjectFromFacetsToFacets.cu
-    FacetGl.cu
+    FacetCuda.cu
 )
 
 set(CPP_SRC
-    ModelTes.cpp
+    Model.cpp
+    ModelCuda.cpp
+    ModelGl.cpp
     python_interface.cpp
     Facet.cpp
-    OpenGlTes.cpp
+    FacetCuda.cpp
     FacetGl.cpp
+    Object.cpp
+    ObjectCuda.cpp
     ObjectGl.cpp
 )
 

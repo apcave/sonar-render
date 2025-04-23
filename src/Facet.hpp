@@ -11,15 +11,17 @@ class Facet : public FacetCuda
 {
 
 public:
+	float3 v1;
+	float3 v2;
+	float3 v3;
+	float texCoords[6]; // Texture coordinates for the vertices
+
+private:
 	float3 Centroid;
 	float3 Normal;
 	float3 xAxis;
 	float3 yAxis;
 	float3 pointOnBase;
-
-	float3 v1;
-	float3 v2;
-	float3 v3;
 
 	int Material;
 
@@ -29,30 +31,22 @@ public:
 	float BaseLengthPos;
 	float Area;
 
-	float *PixelArea;
-	int NumXpnts;
-	int NumYpnts;
-	int NumXpntsNegative;
+	float *fragArea;
+
 	float *vY;
 	float *vX;
 	float delta;
 
-	float texCoords[6]; // Texture coordinates for the vertices
 public:
 	Facet(float3 t_v1, float3 t_v2, float3 t_v3);
-	~Facet()
-	{
-		delete[] PixelArea;
-		delete[] vY;
-		delete[] vX;
-	};
+	~Facet();
 
 public:
 	void PrintMatrix();
 	void MakeCuda();
 
 	void CompressPixels();
-	void MakePixelData(float pixel_length);
+	void MakeFragmentData(float frag_length);
 
 private:
 	void GenerateFacetLimits();

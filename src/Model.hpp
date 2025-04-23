@@ -1,42 +1,15 @@
-#ifndef _ModelTes
-#define _ModelTes
+#ifndef _MODEL
+#define _MODEL
 #include "Facet.hpp"
 #include "PressurePoint.hpp"
-#include "CudaModelTes.cuh"
+#include "ModelCuda.hpp"
 
 #include <vector>
 #include <iostream>
 
 using namespace std;
 
-class TargetObject
-{
-public:
-    vector<Facet *> facets;
-    // TODO: Add material and medium properties.
-
-public:
-    void addFacet(float3 v1, float3 v2, float3 v3)
-    {
-        // Add the facet to the target object
-        // This is a placeholder for the actual implementation
-        auto facet = new Facet(v1, v2, v3);
-        facets.push_back(facet);
-    }
-
-    void MakePixelData(float pixel_length)
-    {
-        // Iterate over each facet and call the pixelation function
-        for (auto &facet : facets)
-        {
-            // Call the pixelation function on each facet
-            facet->MakePixelData(pixel_length);
-            facet->PrintMatrix();
-        }
-    }
-};
-
-class ModelTes : public CudaModelTes
+class Model : public ModelCuda
 {
 
 private:
@@ -47,14 +20,6 @@ private:
      * Sound doesn't reflect off the source surface.
      */
     vector<PressurePoint *> sourcePoints;
-    TargetObject *sourceObject = NULL;
-
-    /**
-     * Objects the targets that cause reflections.
-     * Targets consist of facets.
-     * Targets can have material coatings with different acoustics properties.
-     */
-    vector<TargetObject *> targetObjects;
 
     /**
      * Feild points are the output points at where the pressure is measured.
@@ -68,14 +33,14 @@ private:
     float k;
     dcomplex k_wave;
     float resolution_factor = 7.5;
-    float pixel_length;
+    float frag_length;
     float density;
 
 public:
     void addFeildPoint(float3 p1);
 
     void addSourcePoint(float3 p1);
-    void addTargetObject(TargetObject *object);
+    void addTargetObject(Object *object);
 
     void set_inital_conditions(float cp, float t_frequency, float attenuation, float t_density);
 

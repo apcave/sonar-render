@@ -1,9 +1,8 @@
-#include "CudaModelTes.cuh"
+#include "ModelCuda.hpp"
 #include "GeoMath.h"
 #include "dcomplex.h"
 #include "CudaUtils.cuh"
 
-#include <opencv2/opencv.hpp>
 #include <stdio.h>
 
 /**
@@ -212,247 +211,104 @@ __global__ void ProjectFromFacetsToFacetsKernel(
  * The pressure transmitted get smaller and smaller and is acculutated every step.
  * So there is an upper bound on the accumulated pressure.
  */
-int CudaModelTes::ProjectFromFacetsToFacets()
+int ModelCuda::ProjectFromFacetsToFacets()
 {
-    // TODO: Restrict the pixel maxtrix to 1024 pixels.
-    printf("ProjectFromFacetsToFacets .......\n");
+    // // TODO: Restrict the pixel maxtrix to 1024 pixels.
+    // printf("ProjectFromFacetsToFacets .......\n");
 
-    cudaDeviceProp prop;
-    cudaGetDeviceProperties(&prop, 0); // Query device 0
-    printf("Max threads per block: %d\n", prop.maxThreadsPerBlock);
+    // cudaDeviceProp prop;
+    // cudaGetDeviceProperties(&prop, 0); // Query device 0
+    // printf("Max threads per block: %d\n", prop.maxThreadsPerBlock);
 
-    for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
-    {
-        for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
-        {
-            int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
-            int buff_sz = h_Facets_points.x * h_Facets_points.y * sizeof(double);
-            cudaMemcpy((*dev_object_facet_InitialPr)[object_num][facet_num], dev_object_facet_Pr[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
-            cudaMemcpy((*dev_object_facet_InitialPi)[object_num][facet_num], dev_object_facet_Pi[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
-        }
-    }
-
-    for (int object_num_a = 0; object_num_a < host_object_num_facets.size(); object_num_a++)
-    {
-        for (int facet_num_a = 0; facet_num_a < host_object_num_facets[object_num_a]; facet_num_a++)
-        {
-            for (int object_num_b = 0; object_num_b < host_object_num_facets.size(); object_num_b++)
-            {
-                for (int facet_num_b = 0; facet_num_b < host_object_num_facets[object_num_b]; facet_num_b++)
-                {
-                    // printf("Facet A: %d, %d <<--->> Facet B: %d, %d\n", object_num_a, facet_num_a, object_num_b, facet_num_b);
-
-                    int3 h_Facets_a_points = host_Object_Facets_points[object_num_a][facet_num_a];
-                    int3 h_Facets_b_points = host_Object_Facets_points[object_num_b][facet_num_b];
-
-                    dim3 threadsPerBlock(h_Facets_a_points.x, 1);
-                    dim3 numBlocks(h_Facets_a_points.y, h_Facets_b_points.x, h_Facets_b_points.y);
-
-                    // printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
-                    //   printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
-
-                    ProjectFromFacetsToFacetsKernel<<<numBlocks, threadsPerBlock>>>(
-                        dev_k_wave,
-                        dev_pixel_delta,
-                        facet_num_a,
-                        facet_num_b,
-                        dev_Object_Facets_points[0],
-                        dev_Object_base_points[0],
-                        dev_Object_Facets_xAxis[0],
-                        dev_Object_Facets_yAxis[0],
-                        dev_Object_Facets_PixelArea[0],
-                        dev_object_facet_Pr[0][facet_num_a],
-                        dev_object_facet_Pi[0][facet_num_a],
-                        dev_object_facet_Pr[0][facet_num_b],
-                        dev_object_facet_Pi[0][facet_num_b],
-                        (*dev_object_facet_InitialPr)[object_num_a][facet_num_a],
-                        (*dev_object_facet_InitialPi)[object_num_a][facet_num_a],
-                        (*dev_object_facet_InitialPr)[object_num_b][facet_num_b],
-                        (*dev_object_facet_InitialPi)[object_num_b][facet_num_b],
-                        (*dev_object_facet_ResultPr)[object_num_a][facet_num_a],
-                        (*dev_object_facet_ResultPi)[object_num_a][facet_num_a],
-                        (*dev_object_facet_ResultPr)[object_num_b][facet_num_b],
-                        (*dev_object_facet_ResultPi)[object_num_b][facet_num_b]);
-
-                    cudaError_t err = cudaGetLastError();
-                    if (err != cudaSuccess)
-                    {
-                        printf("Kernel launch failed: %s\n", cudaGetErrorString(err));
-                        return 1;
-                    }
-                }
-            }
-        }
-    }
-
-    cudaDeviceSynchronize();
-
-    // Swap the results and the initial pressure.
-    std::vector<std::vector<double *>> *tmp = dev_object_facet_InitialPr;
-    dev_object_facet_InitialPr = dev_object_facet_ResultPr;
-    dev_object_facet_ResultPr = tmp;
-
-    tmp = dev_object_facet_InitialPi;
-    dev_object_facet_InitialPi = dev_object_facet_ResultPi;
-    dev_object_facet_ResultPi = tmp;
-
-    // One mutex per facet, locks it so only one thread can write to the surface at a time.
-    for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
-    {
-        for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
-        {
-            int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
-            int buff_sz = h_Facets_points.x * h_Facets_points.y * sizeof(double);
-            cudaMemset((*dev_object_facet_ResultPr)[object_num][facet_num], 0, buff_sz);
-            cudaMemset((*dev_object_facet_ResultPi)[object_num][facet_num], 0, buff_sz);
-
-            // cudaMemcpy(dev_object_facet_Pr[object_num][facet_num], (*dev_object_facet_InitialPi)[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
-            // cudaMemcpy(dev_object_facet_Pi[object_num][facet_num], (*dev_object_facet_InitialPi)[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
-        }
-    }
-
-    return 0;
-}
-
-__global__ void GetMaxValue(double *Pr, double *Pi, int maxXpnt, float *stats)
-{
-    int xPnt = threadIdx.x;
-    int yPnt = blockIdx.x;
-
-    int index = yPnt * maxXpnt + xPnt;
-
-    dcomplex var;
-    var.r = Pr[index];
-    var.i = Pi[index];
-
-    float real = abs((float)var.r);
-    float imag = abs((float)var.i);
-    float abs = (float)devCabs(var);
-
-    float maxVal = 2 * max(real, imag);
-
-    atomicMaxFloat(&stats[0], maxVal);
-    atomicMinFloat(&stats[1], real);
-    atomicMaxFloat(&stats[2], abs);
-
-    // printf("GetMaxValue: %e, %e, %e\n", stats[0], stats[1], stats[2]);
-    //  printf("CurVal: %e, %e, %e\n", real, imag, abs);
-}
-
-__global__ void MakeSurface(double *P, cudaSurfaceObject_t surface, int maxXpnt, float *stats)
-{
-    int xPnt = threadIdx.x;
-    int yPnt = blockIdx.x;
-
-    int index = yPnt * maxXpnt + xPnt;
-
-    float value = 0.5 + ((float)P[index] / stats[0]);
-
-    // value = (float)yPnt / (float)maxXpnt;
-    surf2Dwrite(value, surface, xPnt * sizeof(float), yPnt);
-
-    // printf("Write surface: %f, %f, %f\n", value, stats[0], stats[1]);
-}
-
-void DisplayMatrixAsImage(const std::vector<float> &matrix, int width, int height)
-{
-    // Normalize the matrix to [0, 255]
-    float minVal = *std::min_element(matrix.begin(), matrix.end());
-    float maxVal = *std::max_element(matrix.begin(), matrix.end());
-    std::vector<uint8_t> normalizedMatrix(matrix.size());
-    for (size_t i = 0; i < matrix.size(); i++)
-    {
-        normalizedMatrix[i] = static_cast<uint8_t>(255.0f * (matrix[i] - minVal) / (maxVal - minVal));
-    }
-
-    // Create an OpenCV Mat object
-    cv::Mat image(height, width, CV_8UC1, normalizedMatrix.data());
-
-    // Display the image
-    cv::imshow("Matrix as Image", image);
-    cv::waitKey(0); // Wait for a key press
-}
-
-int CudaModelTes::CopyFromMatrixToSurface()
-{
     // for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
     // {
     //     for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
     //     {
     //         int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
-    //         std::vector<double> matrix(h_Facets_points.x * h_Facets_points.y);
-    //         cudaMemcpy(matrix.data(), dev_object_facet_Pr[object_num][facet_num], h_Facets_points.x * h_Facets_points.y * sizeof(double), cudaMemcpyDeviceToHost);
-
-    //         for (int j = h_Facets_points.y - 1; j >= 0; j--)
-    //         {
-    //             for (int i = 0; i < h_Facets_points.x; i++)
-    //             {
-    //                 printf("%.2f ", matrix[j * h_Facets_points.x + i]);
-    //             }
-    //             printf("\n");
-    //         }
-    //         printf("\n");
-
-    //         // DisplayMatrixAsImage(matrix, h_Facets_points.x, h_Facets_points.y);
+    //         int buff_sz = h_Facets_points.x * h_Facets_points.y * sizeof(double);
+    //         cudaMemcpy((*dev_object_facet_InitialPr)[object_num][facet_num], dev_object_facet_Pr[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
+    //         cudaMemcpy((*dev_object_facet_InitialPi)[object_num][facet_num], dev_object_facet_Pi[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
     //     }
     // }
 
-    printf("CopyFromMatrixToSurface .......\n");
-
-    cudaMemset(dev_pixel_Pressure_stats, 0, 3 * sizeof(float));
-
-    // Copy the pressure from the matrix to the surface.
-    for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
-    {
-        for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
-        {
-            int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
-            dim3 threadsPerBlock(h_Facets_points.x, 1);
-            dim3 numBlocks(h_Facets_points.y, 1);
-
-            GetMaxValue<<<numBlocks, threadsPerBlock>>>(dev_object_facet_Pr[object_num][facet_num],
-                                                        dev_object_facet_Pi[object_num][facet_num],
-                                                        h_Facets_points.x,
-                                                        dev_pixel_Pressure_stats);
-        }
-    }
-    cudaDeviceSynchronize();
-    printf("Test A\n");
-    // Copy the pressure from the matrix to the surface.
-    for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
-    {
-        for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
-        {
-            int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
-            dim3 threadsPerBlock(h_Facets_points.x, 1);
-            dim3 numBlocks(h_Facets_points.y, 1);
-
-            // Make the textures out of the real values.
-            MakeSurface<<<numBlocks, threadsPerBlock>>>(dev_object_facet_Pr[object_num][facet_num],
-                                                        dev_Object_Facets_Surface_Pr[object_num][facet_num],
-                                                        h_Facets_points.x,
-                                                        dev_pixel_Pressure_stats);
-        }
-    }
-    cudaDeviceSynchronize();
-
-    // for (auto facGL : gl_object_facets)
+    // for (int object_num_a = 0; object_num_a < host_object_num_facets.size(); object_num_a++)
     // {
-    //     std::vector<float> matrix(facGL->numXpnts * facGL->numYpnts);
-    //     cudaMemcpy(matrix.data(), facGL->array, facGL->numXpnts * facGL->numYpnts * sizeof(float), cudaMemcpyDeviceToHost);
-
-    //     for (int j = facGL->numYpnts - 1; j >= 0; j--)
+    //     for (int facet_num_a = 0; facet_num_a < host_object_num_facets[object_num_a]; facet_num_a++)
     //     {
-    //         for (int i = 0; i < facGL->numXpnts; i++)
+    //         for (int object_num_b = 0; object_num_b < host_object_num_facets.size(); object_num_b++)
     //         {
-    //             printf("%.2f ", matrix[j * facGL->numXpnts + i]);
-    //         }
-    //         printf("\n");
-    //     }
-    //     printf("\n");
+    //             for (int facet_num_b = 0; facet_num_b < host_object_num_facets[object_num_b]; facet_num_b++)
+    //             {
+    //                 // printf("Facet A: %d, %d <<--->> Facet B: %d, %d\n", object_num_a, facet_num_a, object_num_b, facet_num_b);
 
-    //     // DisplayMatrixAsImage(matrix, h_Facets_points.x, h_Facets_points.y);
+    //                 int3 h_Facets_a_points = host_Object_Facets_points[object_num_a][facet_num_a];
+    //                 int3 h_Facets_b_points = host_Object_Facets_points[object_num_b][facet_num_b];
+
+    //                 dim3 threadsPerBlock(h_Facets_a_points.x, 1);
+    //                 dim3 numBlocks(h_Facets_a_points.y, h_Facets_b_points.x, h_Facets_b_points.y);
+
+    //                 // printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
+    //                 //   printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
+
+    //                 ProjectFromFacetsToFacetsKernel<<<numBlocks, threadsPerBlock>>>(
+    //                     dev_k_wave,
+    //                     dev_pixel_delta,
+    //                     facet_num_a,
+    //                     facet_num_b,
+    //                     dev_Object_Facets_points[0],
+    //                     dev_Object_base_points[0],
+    //                     dev_Object_Facets_xAxis[0],
+    //                     dev_Object_Facets_yAxis[0],
+    //                     dev_Object_Facets_PixelArea[0],
+    //                     dev_object_facet_Pr[0][facet_num_a],
+    //                     dev_object_facet_Pi[0][facet_num_a],
+    //                     dev_object_facet_Pr[0][facet_num_b],
+    //                     dev_object_facet_Pi[0][facet_num_b],
+    //                     (*dev_object_facet_InitialPr)[object_num_a][facet_num_a],
+    //                     (*dev_object_facet_InitialPi)[object_num_a][facet_num_a],
+    //                     (*dev_object_facet_InitialPr)[object_num_b][facet_num_b],
+    //                     (*dev_object_facet_InitialPi)[object_num_b][facet_num_b],
+    //                     (*dev_object_facet_ResultPr)[object_num_a][facet_num_a],
+    //                     (*dev_object_facet_ResultPi)[object_num_a][facet_num_a],
+    //                     (*dev_object_facet_ResultPr)[object_num_b][facet_num_b],
+    //                     (*dev_object_facet_ResultPi)[object_num_b][facet_num_b]);
+
+    //                 cudaError_t err = cudaGetLastError();
+    //                 if (err != cudaSuccess)
+    //                 {
+    //                     printf("Kernel launch failed: %s\n", cudaGetErrorString(err));
+    //                     return 1;
+    //                 }
+    //             }
+    //         }
+    //     }
     // }
-    printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+
+    // cudaDeviceSynchronize();
+
+    // // Swap the results and the initial pressure.
+    // std::vector<std::vector<double *>> *tmp = dev_object_facet_InitialPr;
+    // dev_object_facet_InitialPr = dev_object_facet_ResultPr;
+    // dev_object_facet_ResultPr = tmp;
+
+    // tmp = dev_object_facet_InitialPi;
+    // dev_object_facet_InitialPi = dev_object_facet_ResultPi;
+    // dev_object_facet_ResultPi = tmp;
+
+    // // One mutex per facet, locks it so only one thread can write to the surface at a time.
+    // for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
+    // {
+    //     for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
+    //     {
+    //         int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
+    //         int buff_sz = h_Facets_points.x * h_Facets_points.y * sizeof(double);
+    //         cudaMemset((*dev_object_facet_ResultPr)[object_num][facet_num], 0, buff_sz);
+    //         cudaMemset((*dev_object_facet_ResultPi)[object_num][facet_num], 0, buff_sz);
+
+    //         // cudaMemcpy(dev_object_facet_Pr[object_num][facet_num], (*dev_object_facet_InitialPi)[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
+    //         // cudaMemcpy(dev_object_facet_Pi[object_num][facet_num], (*dev_object_facet_InitialPi)[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
+    //     }
+    // }
+
     return 0;
 }

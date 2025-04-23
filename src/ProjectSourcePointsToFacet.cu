@@ -1,4 +1,4 @@
-#include "CudaModelTes.cuh"
+#include "ModelCuda.hpp"
 #include "GeoMath.h"
 #include "dcomplex.h"
 #include "CudaUtils.cuh"
@@ -14,21 +14,17 @@
  */
 __global__ void ProjectSourcePointToFacetKernel(
     dcomplex *k_wave,
-    float *pixel_delta,
+    float *frag_delta,
     int source_point_num,
-    int facet_num,
     float3 *source_points_position,
     dcomplex *source_points_pressure,
-    int3 *facet_Points,
-    float3 *base_points,
-    float3 *facets_xaxis,
-    float3 *facets_yaxis,
-    float **facets_PixelArea,
+    dev_facet *facet_data,
+    float *frag_area,
     double *Pr_facet,
     double *Pi_facet)
 {
     dcomplex k = *k_wave;
-    float delta = *pixel_delta;
+    float delta = *frag_delta;
 
     // printf("k_wave: %f, %f\n", k.r, k.i);
     // printf("pixel_delta: %f\n", delta);
@@ -38,13 +34,13 @@ __global__ void ProjectSourcePointToFacetKernel(
     int xPnt = threadIdx.x;
     int yPnt = blockIdx.x;
 
-    int NumXpnts = facet_Points[facet_num].x;
+    int NumXpnts = facet_data->frag_points.x;
     // int NumYpnts = facet_Points[facet_num].y;
-    int NumXpntsNegative = facet_Points[facet_num].z;
+    int NumXpntsNegative = facet_data->frag_points.z;
 
-    int index_Bi = yPnt * NumXpnts + xPnt;
+    int index = yPnt * NumXpnts + xPnt;
 
-    float A_i = facets_PixelArea[facet_num][index_Bi];
+    float A_i = frag_area[index];
 
     if (A_i == 0)
     {
@@ -60,8 +56,8 @@ __global__ void ProjectSourcePointToFacetKernel(
     // This is the y offset from the base point to the approximate centriod of the pixel.
     float yoffset = delta * yPnt + delta / 2;
 
-    float3 xAxis = facets_xaxis[facet_num];
-    float3 yAxis = facets_yaxis[facet_num];
+    float3 xAxis = facet_data->xAxis;
+    float3 yAxis = facet_data->yAxis;
 
     xAxis.x = xoffset * xAxis.x;
     xAxis.y = xoffset * xAxis.y;
@@ -71,7 +67,7 @@ __global__ void ProjectSourcePointToFacetKernel(
     yAxis.y = yoffset * yAxis.y;
     yAxis.z = yoffset * yAxis.z;
 
-    float3 facet_base = base_points[facet_num];
+    float3 facet_base = facet_data->base_point;
     float3 pg_j;
     pg_j.x = xAxis.x + yAxis.x + facet_base.x;
     pg_j.y = xAxis.y + yAxis.y + facet_base.y;
@@ -99,11 +95,11 @@ __global__ void ProjectSourcePointToFacetKernel(
         return;
     }
 
-    atomicAddDouble(&Pr_facet[index_Bi], R.r);
-    atomicAddDouble(&Pi_facet[index_Bi], R.i);
+    atomicAddDouble(&Pr_facet[index], R.r);
+    atomicAddDouble(&Pi_facet[index], R.i);
 }
 
-int CudaModelTes::ProjectSourcePointsToFacet()
+int ModelCuda::ProjectSourcePointsToFacet()
 {
     printf("Host ProjectPointToFacet....\n");
 
@@ -117,41 +113,23 @@ int CudaModelTes::ProjectSourcePointsToFacet()
 
     for (int source_point_num = 0; source_point_num < host_num_source_points; source_point_num++)
     {
-        for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
+        for (auto object : targetObjects)
         {
-            for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
+            for (auto facet : object->facets)
             {
-                int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
-
-                dim3 threadsPerBlock(h_Facets_points.x, 1);
-                dim3 numBlocks(h_Facets_points.y, 1);
-
-                // printf("Mutex Address : "
-                //        "%p\n",
-                //        mutex_in_cuda[object_num][facet_num]);
-
-                // printf("Surface Real Address : "
-                //        "%p\n",
-                //        dev_Object_Facets_Surface_Pr[object_num][facet_num]);
-
-                // printf("Surface Imaginary Address : "
-                //        "%p\n",
-                //        dev_Object_Facets_Surface_Pi[object_num][facet_num]);
+                dim3 threadsPerBlock(facet->frag_points.x, 1);
+                dim3 numBlocks(facet->frag_points.y, 1);
 
                 ProjectSourcePointToFacetKernel<<<numBlocks, threadsPerBlock>>>(
                     dev_k_wave,
-                    dev_pixel_delta,
+                    dev_frag_delta,
                     source_point_num,
-                    facet_num,
                     dev_source_points_position,
                     dev_source_points_pressure,
-                    dev_Object_Facets_points[object_num],
-                    dev_Object_base_points[object_num],
-                    dev_Object_Facets_xAxis[object_num],
-                    dev_Object_Facets_yAxis[object_num],
-                    dev_Object_Facets_PixelArea[object_num],
-                    dev_object_facet_Pr[object_num][facet_num],
-                    dev_object_facet_Pi[object_num][facet_num]);
+                    facet->dev_data,
+                    facet->dev_frag_area,
+                    facet->dev_Pr,
+                    facet->dev_Pi);
 
                 cudaError_t err = cudaGetLastError();
                 if (err != cudaSuccess)

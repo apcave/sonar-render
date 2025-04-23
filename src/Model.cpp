@@ -1,6 +1,6 @@
-#include "ModelTes.hpp"
+#include "Model.hpp"
 
-void ModelTes::addFeildPoint(float3 p1)
+void Model::addFeildPoint(float3 p1)
 {
     // Add the field point to the model
     // This is a placeholder for the actual implementation
@@ -10,7 +10,7 @@ void ModelTes::addFeildPoint(float3 p1)
     // printf("Field Point: %f %f %f\n", fieldPoint->position.x, fieldPoint->position.y, fieldPoint->position.z);
 }
 
-void ModelTes::addSourcePoint(float3 p1)
+void Model::addSourcePoint(float3 p1)
 {
     // Add the field point to the model
     // This is a placeholder for the actual implementation
@@ -21,14 +21,14 @@ void ModelTes::addSourcePoint(float3 p1)
     // printf("Source Point: %f %f %f\n", sourcePoint->position.x, sourcePoint->position.y, sourcePoint->position.z);
 }
 
-void ModelTes::addTargetObject(TargetObject *object)
+void Model::addTargetObject(Object *object)
 {
     // Add the target object to the model
     // This is a placeholder for the actual implementation
     targetObjects.push_back(object);
 }
 
-void ModelTes::set_inital_conditions(float cp, float t_frequency, float attenuation, float t_density)
+void Model::set_inital_conditions(float cp, float t_frequency, float attenuation, float t_density)
 {
     medium_waveSpeed = cp;
     frequency = t_frequency;
@@ -38,7 +38,7 @@ void ModelTes::set_inital_conditions(float cp, float t_frequency, float attenuat
     k = omega / cp;
     k_wave.r = (double)k;
     k_wave.i = (double)attenuation;
-    pixel_length = medium_waveSpeed / (frequency * resolution_factor);
+    frag_length = medium_waveSpeed / (frequency * resolution_factor);
 
     cout << "-------------------------------------------\n";
     cout << "Medium Wave Speed: " << medium_waveSpeed << endl;
@@ -47,59 +47,60 @@ void ModelTes::set_inital_conditions(float cp, float t_frequency, float attenuat
     cout << "Medium Density: " << density << endl;
     cout << "Omega: " << omega << endl;
     cout << "Wave Number: " << k << endl;
-    cout << "Pixel Length: " << pixel_length << endl;
+    cout << "Pixel Length: " << frag_length << endl;
     cout << "Resolution Factor: " << resolution_factor << endl;
 }
 
-void ModelTes::pixelate_facets()
+void Model::pixelate_facets()
 {
     // Iterate over each target object and its facets
-    for (auto &targetObject : targetObjects)
+    for (auto object : targetObjects)
     {
-        targetObject->MakePixelData(pixel_length);
+        object->MakeFragmentData(frag_length);
     }
 }
 
-void ModelTes::copyToDevice()
+void Model::copyToDevice()
 {
     StartCuda();
-    InitOpenGL();
-    MakeObjectOnGL(targetObjects[0]->facets);
 
-    SetGlobalParameters(k_wave, pixel_length);
+    SetGlobalParameters(k_wave, frag_length);
+
+    for (auto object : targetObjects)
+    {
+        object->MakeCudaObjects();
+    }
 
     MakeSourcePointsOnGPU(sourcePoints);
     MakeFieldPointsOnGPU(feildPoints);
-
-    int objectCnt = 0;
-    for (auto &targetObject : targetObjects)
-    {
-        auto &facets = targetObject->facets;
-        MakeObjectOnGPU(facets);
-        objectCnt++;
-    };
 
     DoCalculations();
 
     CleanupCuda();
 
     std::cout << "CUDA calculations completed successfully." << std::endl;
-    ProcessFrame();
 }
 
-void ModelTes::GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints)
+void Model::GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints)
 {
     // Copy the pressure values from the device to the host
     GetFieldPointValGPU(field_points_pressure);
 }
 
-void ModelTes::RenderOpenGL()
+/**
+ * @brief Renders surface pressure to OpenGL viewport.
+ *
+ * Note it expects the CUDA calculations to be done before calling this function.
+ */
+void Model::RenderOpenGL()
 {
-    // Call the OpenGL rendering function
-    // This is a placeholder for the actual implementation
-
     InitOpenGL();
     std::cout << "OpenGL initialized successfully." << std::endl;
-    MakeObjectOnGL(targetObjects[0]->facets);
-    RenderGL();
+
+    MakeObjectsOnGl();
+
+    GetSurfaceScalers();
+    WriteCudaToGlTexture();
+
+    ProcessFrame();
 }

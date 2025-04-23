@@ -10,16 +10,18 @@
 class ObjectGl
 {
 public:
+    std::vector<Facet *> facets;
+
+public:
+    ObjectGl();
     ObjectGl(std::vector<Facet *> facets);
+    ~ObjectGl();
 
     void RenderObject(GLint textureUniformLoc);
-    void MakeTextureOnGl(
-        std::vector<double *> &dev_facet_Pr,
-        std::vector<double *> &dev_facet_Pi,
-        double *dev_frag_stats);
+
+    void AllocateGl();
 
 private:
-    std::vector<FacetGl *> facets;
     GLuint vbo;
     GLuint vao;
 };

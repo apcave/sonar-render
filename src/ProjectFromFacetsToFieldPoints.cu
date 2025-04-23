@@ -1,4 +1,4 @@
-#include "CudaModelTes.cuh"
+#include "ModelCuda.hpp"
 #include "dcomplex.h"
 #include "CudaUtils.cuh"
 
@@ -6,22 +6,17 @@
 
 __global__ void ProjectFacetToFieldPointKernel(
     dcomplex *k_wave,
-    float *pixel_delta,
+    float *frag_delta,
     int field_point_num,
-    int facet_num,
     float3 *field_points_position,
     dcomplex *field_points_pressure,
-    float3 *facet_normals,
-    int3 *facet_Points,
-    float3 *base_points,
-    float3 *facets_xaxis,
-    float3 *facets_yaxis,
-    float **facets_PixelArea,
+    dev_facet *facet_data,
+    float *frag_area,
     double *Pr_facet,
     double *Pi_facet)
 {
     dcomplex k = *k_wave;
-    float delta = *pixel_delta;
+    float delta = *frag_delta;
 
     // printf("k_wave: %f, %f\n", k.r, k.i);
     // printf("pixel_delta: %f\n", delta);
@@ -31,13 +26,13 @@ __global__ void ProjectFacetToFieldPointKernel(
     int xPnt = threadIdx.x;
     int yPnt = blockIdx.x;
 
-    int NumXpnts = facet_Points[facet_num].x;
+    int NumXpnts = facet_data->frag_points.x;
     // int NumYpnts = facet_Points[facet_num].y;
-    int NumXpntsNegative = facet_Points[facet_num].z;
+    int NumXpntsNegative = facet_data->frag_points.z;
 
-    int index_Ai = yPnt * NumXpnts + xPnt;
+    int index = yPnt * NumXpnts + xPnt;
 
-    float A_i = facets_PixelArea[facet_num][index_Ai];
+    float A_i = frag_area[index];
     if (A_i == 0)
     {
         // printf("facets_PixelArea is zero\n");
@@ -55,8 +50,8 @@ __global__ void ProjectFacetToFieldPointKernel(
     // This is the y offset from the base point to the approximate centriod of the pixel.
     float yoffset = delta * yPnt + delta / 2;
 
-    float3 xAxis = facets_xaxis[facet_num];
-    float3 yAxis = facets_yaxis[facet_num];
+    float3 xAxis = facet_data->xAxis;
+    float3 yAxis = facet_data->yAxis;
 
     xAxis.x = xoffset * xAxis.x;
     xAxis.y = xoffset * xAxis.y;
@@ -66,7 +61,7 @@ __global__ void ProjectFacetToFieldPointKernel(
     yAxis.y = yoffset * yAxis.y;
     yAxis.z = yoffset * yAxis.z;
 
-    float3 facet_base = base_points[facet_num];
+    float3 facet_base = facet_data->base_point;
     float3 r_i;
     r_i.x = xAxis.x + yAxis.x + facet_base.x;
     r_i.y = xAxis.y + yAxis.y + facet_base.y;
@@ -74,14 +69,14 @@ __global__ void ProjectFacetToFieldPointKernel(
     // printf("Facet Point Global Ref: %f, %f, %f\n", P1g.x, P1g.y, P1g.z);
 
     dcomplex p_inc;
-    p_inc.r = Pr_facet[index_Ai];
-    p_inc.i = Pi_facet[index_Ai];
+    p_inc.r = Pr_facet[index];
+    p_inc.i = Pi_facet[index];
 
     float3 vr_ri = MakeVector(r_i, r);
     float r_if = GetVectorLength(vr_ri);
     float3 ur_ri = DivideVector(vr_ri, r_if);
 
-    float3 n = facet_normals[facet_num];
+    float3 n = facet_data->normal;
     double sc = (double)DotProduct(ur_ri, n);
 
     if (sc < 0)
@@ -127,7 +122,7 @@ __global__ void ProjectFacetToFieldPointKernel(
     atomicAddDouble(&(field_points_pressure[field_point_num].i), result.i);
 }
 
-int CudaModelTes::ProjectFromFacetsToFieldPoints()
+int ModelCuda::ProjectFromFacetsToFieldPoints()
 {
     printf("ProjectFromFacetsToFieldPoints .......\n");
 
@@ -135,38 +130,28 @@ int CudaModelTes::ProjectFromFacetsToFieldPoints()
     cudaGetDeviceProperties(&prop, 0); // Query device 0
     printf("Max threads per block: %d\n", prop.maxThreadsPerBlock);
 
-    for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
+    for (auto object : targetObjects)
     {
-
-        for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
+        for (auto facet : object->facets)
         {
-
             for (int field_point_num = 0; field_point_num < host_num_field_points; field_point_num++)
             {
-
-                int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
-
-                dim3 threadsPerBlock(h_Facets_points.x, 1);
-                dim3 numBlocks(h_Facets_points.y, 1);
+                dim3 threadsPerBlock(facet->frag_points.x, 1);
+                dim3 numBlocks(facet->frag_points.y, 1);
 
                 // printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
                 // printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
 
                 ProjectFacetToFieldPointKernel<<<numBlocks, threadsPerBlock>>>(
                     dev_k_wave,
-                    dev_pixel_delta,
+                    dev_frag_delta,
                     field_point_num,
-                    facet_num,
                     dev_field_points_position,
                     dev_field_points_pressure,
-                    dev_Object_normals[object_num],
-                    dev_Object_Facets_points[object_num],
-                    dev_Object_base_points[object_num],
-                    dev_Object_Facets_xAxis[object_num],
-                    dev_Object_Facets_yAxis[object_num],
-                    dev_Object_Facets_PixelArea[object_num],
-                    dev_object_facet_Pr[object_num][facet_num],
-                    dev_object_facet_Pi[object_num][facet_num]);
+                    facet->dev_data,
+                    facet->dev_frag_area,
+                    facet->dev_Pr,
+                    facet->dev_Pi);
 
                 cudaError_t err = cudaGetLastError();
                 if (err != cudaSuccess)

@@ -9,12 +9,12 @@ void Facet::GenerateFacetLimits()
 	 * The two new triangles have the same height, a reference point along the base at the cut.
 	 */
 
-	float Lengths[3];
-	Lengths[0] = GeoMath::LengthBetweenPoints(v1, v2);
-	Lengths[1] = GeoMath::LengthBetweenPoints(v1, v3);
-	Lengths[2] = GeoMath::LengthBetweenPoints(v2, v3);
+	float lengths[3];
+	lengths[0] = GeoMath::LengthBetweenPoints(v1, v2);
+	lengths[1] = GeoMath::LengthBetweenPoints(v1, v3);
+	lengths[2] = GeoMath::LengthBetweenPoints(v2, v3);
 
-	unsigned int MaxIndx = GeoMath::GetMaxIndex(Lengths, 3);
+	unsigned int MaxIndx = GeoMath::GetMaxIndex(lengths, 3);
 
 	float3 vLongX;
 	float3 vLongY;
@@ -23,7 +23,7 @@ void Facet::GenerateFacetLimits()
 	case 0:
 		vLongX = GeoMath::MakeVectorSc(v1, v2);
 		vLongY = GeoMath::MakeVectorThroughPointPerpToVector(v1, vLongX, v3, pointOnBase);
-		BaseLength = Lengths[0];
+		BaseLength = lengths[0];
 		Height = GeoMath::GetVectorLength(vLongY);
 		BaseLengthNeg = GeoMath::LengthBetweenPoints(v1, pointOnBase);
 		BaseLengthPos = GeoMath::LengthBetweenPoints(pointOnBase, v2);
@@ -38,7 +38,7 @@ void Facet::GenerateFacetLimits()
 	case 1:
 		vLongX = GeoMath::MakeVectorSc(v1, v3);
 		vLongY = GeoMath::MakeVectorThroughPointPerpToVector(v1, vLongX, v2, pointOnBase);
-		BaseLength = Lengths[1];
+		BaseLength = lengths[1];
 		Height = GeoMath::GetVectorLength(vLongY);
 		BaseLengthNeg = GeoMath::LengthBetweenPoints(v1, pointOnBase);
 		BaseLengthPos = GeoMath::LengthBetweenPoints(pointOnBase, v3);
@@ -53,7 +53,7 @@ void Facet::GenerateFacetLimits()
 	case 2:
 		vLongX = GeoMath::MakeVectorSc(v2, v3);
 		vLongY = GeoMath::MakeVectorThroughPointPerpToVector(v2, vLongX, v1, pointOnBase);
-		BaseLength = Lengths[2];
+		BaseLength = lengths[2];
 		Height = GeoMath::GetVectorLength(vLongY);
 		BaseLengthNeg = GeoMath::LengthBetweenPoints(v2, pointOnBase);
 		BaseLengthPos = GeoMath::LengthBetweenPoints(pointOnBase, v3);
@@ -106,7 +106,7 @@ Facet::Facet(float3 t_v1, float3 t_v2, float3 t_v3)
 	GenerateFacetLimits();
 }
 
-void Facet::MakePixelData(float pixel_length)
+void Facet::MakeFragmentData(float frag_length)
 {
 	/**
 	 * A matrix of pixel areas is created.
@@ -120,43 +120,43 @@ void Facet::MakePixelData(float pixel_length)
 	 * centroid to a point or another pixel can be calculated.
 	 **/
 
-	delta = pixel_length;
-	NumXpntsNegative = ceil(abs(BaseLengthNeg) / delta);
+	delta = frag_length;
+	numXpntsNegative = ceil(abs(BaseLengthNeg) / delta);
 	int numPos = ceil(abs(BaseLengthPos) / delta);
-	NumXpnts = NumXpntsNegative + numPos;
-	NumYpnts = ceil(Height / delta);
+	numXpnts = numXpntsNegative + numPos;
+	numYpnts = ceil(Height / delta);
 
 	// This is a x mid point of the row of pixels
-	float *vX = new float[NumXpnts];
-	for (int i = 0; NumXpnts > i; i++)
+	float *vX = new float[numXpnts];
+	for (int i = 0; numXpnts > i; i++)
 	{
-		if (i < NumXpntsNegative)
+		if (i < numXpntsNegative)
 		{
 			// 0 to numNeg-1,
-			vX[i] = ((-NumXpntsNegative + i) * delta) + delta / 2;
+			vX[i] = ((-numXpntsNegative + i) * delta) + delta / 2;
 		}
 		else
 		{
 			// numNeg to numXpnts-1
-			vX[i] = ((i - NumXpntsNegative) * delta) + delta / 2;
+			vX[i] = ((i - numXpntsNegative) * delta) + delta / 2;
 		}
 	}
 
 	// This is a y mid point of the column of pixels
-	float *vY = new float[NumYpnts];
-	for (int i = 0; NumYpnts > i; i++)
+	float *vY = new float[numYpnts];
+	for (int i = 0; numYpnts > i; i++)
 	{
 		vY[i] = (i * delta) + delta / 2;
 	}
 
-	bool *yxL = new bool[NumYpnts + 1];
-	bool *yxR = new bool[NumYpnts + 1];
+	bool *yxL = new bool[numYpnts + 1];
+	bool *yxR = new bool[numYpnts + 1];
 
-	PixelArea = new float[NumXpnts * NumYpnts];
+	fragArea = new float[numXpnts * numYpnts];
 
-	for (int i = 0; NumXpnts * NumYpnts > i; i++)
+	for (int i = 0; numXpnts * numYpnts > i; i++)
 	{
-		PixelArea[i] = 0;
+		fragArea[i] = 0;
 	}
 
 	float m1 = Height / (-BaseLengthPos);
@@ -165,7 +165,7 @@ void Facet::MakePixelData(float pixel_length)
 	cout << "m1: " << m1 << endl;
 	cout << "m2: " << m2 << endl;
 
-	for (int i = 0; NumXpnts > i; i++)
+	for (int i = 0; numXpnts > i; i++)
 	{
 		float x = vX[i];			// Mid x point
 		float xL = x - (delta / 2); // Left x point (pixel limits)
@@ -181,14 +181,14 @@ void Facet::MakePixelData(float pixel_length)
 
 			// Mark the position in the column that are below (true)
 			// and above (false) the for the left and right of the columns.
-			for (int j = 0; NumYpnts + 1 > j; j++)
+			for (int j = 0; numYpnts + 1 > j; j++)
 			{
 				yxL[j] = delta * j <= yL;
 				yxR[j] = delta * j <= yR;
 			}
 
 			// Traverse the column from the baseline to the top.
-			for (int j = 0; NumYpnts > j; j++)
+			for (int j = 0; numYpnts > j; j++)
 			{
 				int Bottom = j;
 				int Top = j + 1;
@@ -206,7 +206,7 @@ void Facet::MakePixelData(float pixel_length)
 				if (yxL[Bottom] && yxR[Bottom] && yxL[Top] && yxR[Top])
 				{
 					// All Corners are with the boundary
-					PixelArea[j * NumXpnts + i] = delta * delta; // Area
+					fragArea[j * numXpnts + i] = delta * delta; // Area
 					continue;
 				}
 
@@ -227,9 +227,9 @@ void Facet::MakePixelData(float pixel_length)
 						cout << "Error : Pixel area sub is less than 0 or greater than the pixel area" << endl;
 					}
 
-					PixelArea[j * NumXpnts + i] = pixel_area - pixel_area_sub;
+					fragArea[j * numXpnts + i] = pixel_area - pixel_area_sub;
 
-					if (PixelArea[j * NumXpnts + i] < 0 || PixelArea[j * NumXpnts + i] > pixel_area)
+					if (fragArea[j * numXpnts + i] < 0 || fragArea[j * numXpnts + i] > pixel_area)
 					{
 						cout << "Error : Pixel area is less than 0 or greater than the pixel area" << endl;
 					}
@@ -241,7 +241,7 @@ void Facet::MakePixelData(float pixel_length)
 				{
 					// Upper right and upper left out
 
-					PixelArea[j * NumXpnts + i] = ((yL - yR) * delta / 2) + (yR - yB) * delta;
+					fragArea[j * numXpnts + i] = ((yL - yR) * delta / 2) + (yR - yB) * delta;
 					continue;
 				}
 
@@ -252,9 +252,9 @@ void Facet::MakePixelData(float pixel_length)
 					float pixel_area = delta * delta;
 					float x_intersect_pixel_top = ((yT - Height) / m1) - xL;
 					float x_intersect_pixel_bottom = ((yB - Height) / m1) - xL;
-					PixelArea[j * NumXpnts + i] = (x_intersect_pixel_top * delta) + (x_intersect_pixel_bottom - x_intersect_pixel_top) * delta / 2;
+					fragArea[j * numXpnts + i] = (x_intersect_pixel_top * delta) + (x_intersect_pixel_bottom - x_intersect_pixel_top) * delta / 2;
 
-					if (PixelArea[j * NumXpnts + i] < 0 || PixelArea[j * NumXpnts + i] > pixel_area)
+					if (fragArea[j * numXpnts + i] < 0 || fragArea[j * numXpnts + i] > pixel_area)
 					{
 						cout << "xL: " << xL << endl;
 						cout << "xR: " << xR << endl;
@@ -268,7 +268,7 @@ void Facet::MakePixelData(float pixel_length)
 				if (yxL[j] && (!yxR[j]) && (!yxL[j + 1]) && (!yxR[j + 1]))
 				{
 					// Only Lower Left in.
-					PixelArea[j * NumXpnts + i] = (yL - yB) * (((yB - Height) / m1) - xL) / 2;
+					fragArea[j * numXpnts + i] = (yL - yB) * (((yB - Height) / m1) - xL) / 2;
 					continue;
 				}
 			}
@@ -280,14 +280,14 @@ void Facet::MakePixelData(float pixel_length)
 			float yL = m2 * xL + Height;
 			float yR = m2 * xR + Height;
 
-			for (int j = 0; NumYpnts + 1 > j; j++)
+			for (int j = 0; numYpnts + 1 > j; j++)
 			{
 				yxL[j] = delta * j <= yL;
 				yxR[j] = delta * j <= yR;
 			}
 
 			// printf("Pixels along y axis ******************\n");
-			for (int j = 0; NumYpnts > j; j++)
+			for (int j = 0; numYpnts > j; j++)
 			{
 				// if(!yxL[j])
 				//	printf("Lower Left Out\n");
@@ -308,35 +308,35 @@ void Facet::MakePixelData(float pixel_length)
 				if (yxL[j] && yxR[j] && yxL[j + 1] && yxR[j + 1])
 				{
 					// All Corners are with the boundary
-					PixelArea[j * NumXpnts + i] = delta * delta;
+					fragArea[j * numXpnts + i] = delta * delta;
 					continue;
 				}
 
 				if (yxL[j] && yxR[j] && (!yxL[j + 1]) && yxR[j + 1])
 				{
 					// Upper left out
-					PixelArea[j * NumXpnts + i] = delta * delta - (vY[j] + delta / 2 - yL) * (-(xL - ((vY[j] + (delta / 2) - Height) / m2)) / 2);
+					fragArea[j * numXpnts + i] = delta * delta - (vY[j] + delta / 2 - yL) * (-(xL - ((vY[j] + (delta / 2) - Height) / m2)) / 2);
 					continue;
 				}
 
 				if (yxL[j] && yxR[j] && (!yxL[j + 1]) && (!yxR[j + 1]))
 				{
 					// Upper right and upper left out
-					PixelArea[j * NumXpnts + i] = (yR - yL) * delta / 2 + ((yL - (vY[j] - delta / 2)) * delta);
+					fragArea[j * numXpnts + i] = (yR - yL) * delta / 2 + ((yL - (vY[j] - delta / 2)) * delta);
 					continue;
 				}
 
 				if ((!yxL[j]) && yxR[j] && (!yxL[j + 1]) && yxR[j + 1])
 				{
 					// Upper left and lower left out
-					PixelArea[j * NumXpnts + i] = -((vY[j] - (delta / 2) - Height) / m2 - (vY[j] + (delta / 2) - Height) / m2) * delta / 2 - (((vY[j] + (delta / 2) - Height) / m2) - xR) * delta;
+					fragArea[j * numXpnts + i] = -((vY[j] - (delta / 2) - Height) / m2 - (vY[j] + (delta / 2) - Height) / m2) * delta / 2 - (((vY[j] + (delta / 2) - Height) / m2) - xR) * delta;
 					continue;
 				}
 
 				if ((!yxL[j]) && (yxR[j]) && (!yxL[j + 1]) && (!yxR[j + 1]))
 				{
 					// Only Right in.
-					PixelArea[j * NumXpnts + i] = (yR - (vY[j] - delta / 2)) * (-((((vY[j] - delta / 2) - Height) / m2) - xR)) / 2;
+					fragArea[j * numXpnts + i] = (yR - (vY[j] - delta / 2)) * (-((((vY[j] - delta / 2) - Height) / m2) - xR)) / 2;
 					continue;
 				}
 			}
@@ -350,16 +350,16 @@ void Facet::PrintMatrix()
 {
 	std::cout << std::fixed << std::setprecision(4); // Set 2 decimal places
 
-	cout << "Limits x: " << NumXpnts << ", y: " << NumYpnts << endl;
+	cout << "Limits x: " << numXpnts << ", y: " << numYpnts << endl;
 
 	float maxPixel = delta * delta;
 	float total = 0;
-	for (int j = NumYpnts - 1; 0 <= j; j--)
+	for (int j = numYpnts - 1; 0 <= j; j--)
 	{
-		for (int i = 0; NumXpnts > i; i++)
+		for (int i = 0; numXpnts > i; i++)
 		{
-			cout << PixelArea[j * NumXpnts + i] / maxPixel << " ";
-			total += PixelArea[j * NumXpnts + i];
+			cout << fragArea[j * numXpnts + i] / maxPixel << " ";
+			total += fragArea[j * numXpnts + i];
 		}
 		std::cout << "\n";
 	}
@@ -370,5 +370,5 @@ void Facet::PrintMatrix()
 
 void Facet::MakeCuda()
 {
-	allocateCuda();
+	AllocateCuda(Normal, pointOnBase, xAxis, yAxis, fragArea);
 }

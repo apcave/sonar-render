@@ -1,10 +1,10 @@
-#include "CheckGlTes.hpp"
+#include "ModelGl.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-void OpenGlTes::MakeTextureShader()
+void ModelGl::MakeTextureShader()
 {
     if (textureShaderProgram != 0)
     {
@@ -115,13 +115,13 @@ void OpenGlTes::MakeTextureShader()
     textureShaderProgram = shaderProgram;
 }
 
-CheckGlTes::CheckGlTes()
+ModelGl::ModelGl()
 {
 }
 
-CheckGlTes::~CheckGlTes() {}
+ModelGl::~ModelGl() {}
 
-void OpenGlTes::InitOpenGL()
+void ModelGl::InitOpenGL()
 {
     std::cout << "Initializing OpenGL..." << std::endl;
     if (!glfwInit())
@@ -159,11 +159,11 @@ void OpenGlTes::InitOpenGL()
     glLoadMatrixf(glm::value_ptr(view));
 }
 
-void OpenGlTes::Cleanup()
+void ModelGl::Cleanup()
 {
 }
 
-void OpenGlTes::ProcessFrame()
+void ModelGl::ProcessFrame()
 {
     std::cout << "Processing frame... <------------------------" << std::endl;
 
@@ -216,12 +216,10 @@ void OpenGlTes::ProcessFrame()
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projectionMatrix);
     glUniformMatrix4fv(modelViewLoc, 1, GL_FALSE, modelViewMatrix);
 
-    CheckGLError();
-
     int triangleIndex = 0;
     while (!glfwWindowShouldClose(window))
     {
-        for (auto object : objects)
+        for (auto object : targetObjects)
         {
             object->RenderObject(textureUniformLoc);
         }
@@ -237,21 +235,11 @@ void OpenGlTes::ProcessFrame()
     glfwTerminate();
 }
 
-int OpenGlTes::MakeObjectOnGl(std::vector<Facet *> facets)
+int ModelGl::MakeObjectsOnGl()
 {
-    auto Object = new ObjectGl(facets);
-    objects.push_back(Object);
-    return 0;
-}
-
-int OpenGlTesOpenGlTes::MakeTextureOnGl(
-    std::vector<std::vector<double *>> *dev_object_facet_Pr,
-    std::vector<std::vector<double *>> *dev_object_facet_Pi)
-{
-    int numObjects = dev_object_facet_Pr->size();
-    for (int i = 0; i < numObjects; ++i)
+    for (auto object : targetObjects)
     {
-        auto object = objects[i] object->MakeTextureOnGl(dev_object_facet_Pr[i], dev_object_facet_Pi[i]);
+        object->AllocateGl();
     }
     return 0;
 }
