@@ -80,3 +80,13 @@ def make_rectangle(length, width):
     # plate.save('rectangular_plate.stl')
 
     return plate
+
+def load_stl_file(file_path):
+    """Load an STL file and return the mesh object."""
+    try:
+        stl_mesh = mesh.Mesh.from_file(file_path)
+        print(f"STL file '{file_path}' loaded successfully.")
+        return stl_mesh
+    except Exception as e:
+        print(f"Error loading STL file '{file_path}': {e}")
+        return None
