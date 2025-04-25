@@ -1,6 +1,7 @@
 #include <optix.h>
 #include <optix_function_table_definition.h>
 #include <optix_stubs.h>
+
 #include <cuda_runtime.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -230,8 +231,6 @@ int main()
         std::cerr << "OptiX Pipeline Creation Log: " << log << std::endl;
     }
     std::cout << "Pipeline created successfully." << std::endl;
-
-    // OPTIX_CHECK(optixPipelineCreate(context, &pipelineCompileOptions, &pipelineLinkOptions, &raygenProgramGroup, 1, log, &logSize, &pipeline));
 
     // Set up launch parameters
     Params params;

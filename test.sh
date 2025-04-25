@@ -1,2 +1,2 @@
 #!/bin/bash
-python ./testing/load_stl_to_cuda.py
+python ./testing/rect_mono.py

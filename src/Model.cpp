@@ -52,7 +52,9 @@ void Model::MakeFragments()
 
 void Model::RenderCuda()
 {
+    std::cout << "Rendering CUDA..." << std::endl;
     StartCuda();
+    OptiXCol.StartCollision(targetObjects);
 
     SetGlobalParameters(k_wave, frag_length);
 

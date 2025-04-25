@@ -11,7 +11,6 @@ FacetGl::FacetGl()
 void FacetGl::AllocateGl()
 {
     readyToRender = false;
-    std::cout << "CreateTexture for Single-Channel Float Texture" << std::endl;
     if (!glfwGetCurrentContext())
     {
         std::cout << "Error Intializing OpenGL context before creating a texture." << std::endl;
@@ -40,7 +39,6 @@ void FacetGl::AllocateGl()
 
 FacetGl::~FacetGl()
 {
-    return;
     // Unregister the OpenGL texture from CUDA
     if (cudaResource)
     {

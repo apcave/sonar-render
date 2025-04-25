@@ -1,11 +1,11 @@
 #ifndef _MODEL_CUDA
 #define _MODEL_CUDA
+#include "Collision.hpp"
 #include "Facet.hpp"
 #include "ModelGl.hpp"
 #include "dcomplex.h"
 #include "PressurePoint.hpp"
-#include <cuda_runtime.h>
-#include <vector>
+
 using namespace std;
 
 /**
@@ -69,6 +69,9 @@ protected:
     void WriteCudaToGlTexture();
 
     int GetSurfaceScalers();
+
+protected:
+    Collision OptiXCol;
 };
 
 #endif

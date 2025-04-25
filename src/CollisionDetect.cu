@@ -52,42 +52,6 @@ OptixTraversableHandle createGeometry(const std::vector<Triangle> &facets, CUdev
     return gasHandle;
 }
 
-extern "C" __global__ void __raygen__rg()
-{
-    const float3 origin = make_float3(optixGetPayload_0(), optixGetPayload_1(), optixGetPayload_2());
-    const float3 direction = make_float3(optixGetPayload_3(), optixGetPayload_4(), optixGetPayload_5());
-
-    unsigned int hit = 0;
-    optixTrace(
-        params.handle,
-        origin,
-        direction,
-        0.0f,  // Min t
-        1e16f, // Max t
-        0.0f,  // Ray time
-        OptixVisibilityMask(1),
-        OPTIX_RAY_FLAG_NONE,
-        0, // SBT offset
-        1, // SBT stride
-        0, // Miss SBT index
-        hit);
-
-    // Write the result to the output buffer
-    params.output[optixGetLaunchIndex().x] = hit;
-}
-
-extern "C" __global__ void __closesthit__ch()
-{
-    // Mark the ray as hitting geometry
-    optixSetPayload_0(1);
-}
-
-extern "C" __global__ void __miss__ms()
-{
-    // Mark the ray as not hitting any geometry
-    optixSetPayload_0(0);
-}
-
 void checkCollision(OptixTraversableHandle gasHandle, const float3 &pointA, const float3 &pointB)
 {
     // Calculate ray direction

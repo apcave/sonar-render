@@ -86,12 +86,15 @@ int ModelCuda::MakeObjectOnGPU(vector<Facet *> facets)
 
 int ModelCuda::StartCuda()
 {
-    cudaError_t cudaStatus = cudaSetDevice(0);
-    if (cudaStatus != cudaSuccess)
-    {
-        printf("cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
-        return 1;
-    }
+    // cudaDeviceSynchronize();
+    // cudaFree(0);
+    // cudaDeviceReset();
+    // cudaError_t cudaStatus = cudaSetDevice(0);
+    // if (cudaStatus != cudaSuccess)
+    // {
+    //     printf("cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
+    //     return 1;
+    // }
     return 0;
 }
 
@@ -139,13 +142,14 @@ int ModelCuda::StopCuda()
     }
     targetObjects.clear();
 
+    OptiXCol.StopCollision();
+
     return 0;
 }
 
 int ModelCuda::DoCalculations()
 {
 
-    // TestGPU();
     if (ProjectSourcePointsToFacet() != 0)
     {
         printf("ProjectSourcePointsToFacet failed.\n");
@@ -201,8 +205,13 @@ int ModelCuda::GetSurfaceScalers()
 ModelCuda::ModelCuda()
 {
     // Initialize the CUDA device
-    cudaSetDevice(0);
-    cudaDeviceReset();
+    cudaFree(0);
+    cudaError_t cudaStatus = cudaSetDevice(0);
+    if (cudaStatus != cudaSuccess)
+    {
+        printf("cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
+    }
+    OptiXCol.StartOptix();
 }
 
 ModelCuda::~ModelCuda()

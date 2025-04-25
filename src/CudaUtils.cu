@@ -85,3 +85,8 @@ __device__ float GetVectorLength(float3 v1)
 {
     return sqrtf(v1.x * v1.x + v1.y * v1.y + v1.z * v1.z);
 }
+
+__device__ __host__ float3 subtract(const float3 &a, const float3 &b)
+{
+    return make_float3(a.x - b.x, a.y - b.y, a.z - b.z);
+}

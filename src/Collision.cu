@@ -15,7 +15,7 @@ extern "C" __global__ void __raygen__rg()
     const uint3 idx = optixGetLaunchIndex();
     const unsigned int srcIndex = idx.x;
     const unsigned int dstIndex = idx.y;
-    const unsigned int outIndex = srcIndex * params.numScrPoints + dstIndex;
+    const unsigned int outIndex = srcIndex * params.numSrcPoints + dstIndex;
     const float3 p1 = params.vp1[srcIndex];
     const float3 p2 = params.vp2[dstIndex];
 

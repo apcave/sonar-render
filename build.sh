@@ -7,4 +7,4 @@ cmake ../src -DCMAKE_BUILD_TYPE=Release
 rm libcuda_project.so
 make all
 cd ..
-python ./testing/sphere.py
+python ./testing/rect_mono.py
