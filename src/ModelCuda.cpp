@@ -204,6 +204,7 @@ int ModelCuda::GetSurfaceScalers()
 
 ModelCuda::ModelCuda()
 {
+    std::cout << "Made ModelCuda::ModelCuda() object." << std::endl;
     // Initialize the CUDA device
     cudaFree(0);
     cudaError_t cudaStatus = cudaSetDevice(0);

@@ -15,9 +15,9 @@ public:
 	float3 v2;
 	float3 v3;
 	float texCoords[6]; // Texture coordinates for the vertices
+	float3 Centroid;
 
 private:
-	float3 Centroid;
 	float3 Normal;
 	float3 xAxis;
 	float3 yAxis;

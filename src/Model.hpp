@@ -1,7 +1,7 @@
 #ifndef _MODEL
 #define _MODEL
 #include "Facet.hpp"
-#include "PressurePoint.hpp"
+
 #include "ModelCuda.hpp"
 
 #include <vector>
@@ -19,12 +19,6 @@ private:
      * When using a surface the pressure radiates from top of the surface only.
      * Sound doesn't reflect off the source surface.
      */
-    vector<PressurePoint *> sourcePoints;
-
-    /**
-     * Feild points are the output points at where the pressure is measured.
-     */
-    vector<PressurePoint *> feildPoints;
 
     float medium_waveSpeed;
     float frequency;

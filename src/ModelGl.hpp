@@ -1,6 +1,7 @@
 #ifndef _MODEL_GL
 #define _MODEL_GL
 #include "Object.hpp"
+#include "PressurePoint.hpp"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -53,5 +54,8 @@ private:
 protected:
     std::vector<Object *> targetObjects;
     bool usingOpenGL = true;
+
+    std::vector<PressurePoint *> sourcePoints;
+    std::vector<PressurePoint *> feildPoints;
 };
 #endif

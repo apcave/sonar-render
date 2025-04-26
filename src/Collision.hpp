@@ -36,6 +36,7 @@ public:
     void StartOptix();
 
     bool HasCollision(float3 p1, float3 p2);
+    int *DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2);
 
     // bool CheckCollision(float3 p1, float3 p2);
     int StartCollision(std::vector<Object *> &targetObjects);
@@ -44,10 +45,9 @@ public:
 private:
     int MakePipeline();
     int CreateGeometry(const std::vector<Triangle> &facets);
-    int MakeShaderBufferTable();
 
     void FreePrams();
-    void DoCollisions(std::vector<float3> vp1, std::vector<float3> vp2);
+
     std::string readFile(const std::string &filename);
 };
 #endif

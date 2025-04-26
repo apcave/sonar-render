@@ -26,3 +26,21 @@ void Object::MakeFragmentData(float frag_length)
         // facet->PrintMatrix();
     }
 }
+
+std::vector<float3> &Object::GetCentroids()
+{
+    if (centroids.size() == facets.size())
+    {
+        return centroids;
+    }
+    else
+    {
+        centroids.clear();
+        centroids.reserve(facets.size());
+        for (auto &facet : facets)
+        {
+            centroids.push_back(facet->Centroid);
+        }
+    }
+    return centroids;
+}

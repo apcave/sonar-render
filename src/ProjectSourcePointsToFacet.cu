@@ -103,13 +103,37 @@ int ModelCuda::ProjectSourcePointsToFacet()
 {
 
     // Every facet can have a different number of pixels, where n = 1096^0.5 is the maximum number of pixels per facet.
-
+    int *hasColision = 0;
+    std::vector<float3> srcPnts;
     for (int source_point_num = 0; source_point_num < host_num_source_points; source_point_num++)
     {
+        srcPnts.clear();
+        auto srcPnt = sourcePoints[source_point_num];
+        srcPnts.push_back(srcPnt->position);
+
         for (auto object : targetObjects)
         {
+            auto dstPnts = object->GetCentroids();
+
+            printf("Doing collision detection.\n");
+            hasColision = OptiXCol.DoCollisions(srcPnts, dstPnts);
+
+            int facCnt = 0;
             for (auto facet : object->facets)
             {
+                if (hasColision[facCnt] == 1)
+                {
+                    // printf("Collision detected.\n");
+                    facCnt++;
+                    continue;
+                }
+                else
+                {
+                    printf("No collision detected.\n");
+                }
+                printf("Facet: %f, %f, %f\n", facet->Centroid.x, facet->Centroid.y, facet->Centroid.z);
+                printf("Source Point: %f, %f, %f\n", srcPnt->position.x, srcPnt->position.y, srcPnt->position.z);
+
                 dim3 threadsPerBlock(facet->frag_points.x, 1);
                 dim3 numBlocks(facet->frag_points.y, 1);
 
@@ -130,6 +154,12 @@ int ModelCuda::ProjectSourcePointsToFacet()
                     printf("Kernel launch failed: %s\n", cudaGetErrorString(err));
                     return 1;
                 }
+                facCnt++;
+            }
+
+            if (hasColision)
+            {
+                delete[] hasColision;
             }
         }
     }

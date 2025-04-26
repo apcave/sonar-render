@@ -23,13 +23,13 @@ def monostatic_iterated(pnts, object, cp, frequency):
 
     return p_reflect
 
-def results_to_TES(res, range):
+def results_to_TES(res, tartget_range):
     """Convert the results to Target Strength."""
     # Convert the results to numpy array
     res = np.array(res)
     # Calculate the magnitudes
     magnitudes = np.sqrt(res[:, 0]**2 + res[:, 1]**2)
-    atten = 20*np.log10(range)
+    atten = 20*np.log10(tartget_range)
     db_values = 20 * np.log10(magnitudes + 1e-12) + 2 * atten
 
     return db_values

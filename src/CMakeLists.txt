@@ -79,16 +79,26 @@ link_directories(/home/apcave/alex-portfolio/lib)
 # link_directories(/home/apcave/alex-portfolio/NVIDIA-OptiX-SDK-9.0.0-linux64-x86_64/lib64)
 # target_link_libraries(${TARGET_NAME} PRIVATE optix)
 
+
+# add_custom_command(
+#     OUTPUT ${CMAKE_BINARY_DIR}/Collision.optixir
+#     COMMAND ${CMAKE_CUDA_COMPILER}
+#     ARGS -I/home/apcave/alex-portfolio/include -optix-ir ${CMAKE_CURRENT_SOURCE_DIR}/Collision.cu -o ${CMAKE_BINARY_DIR}/Collision.optixir
+#     DEPENDS Collision.cu
+#     COMMENT "Compiling Collision.cu to OptiX IR"
+# )
+
+
 add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/Collision.optixir
+    OUTPUT ${CMAKE_BINARY_DIR}/Collision.ptx
     COMMAND ${CMAKE_CUDA_COMPILER}
-    ARGS -I/home/apcave/alex-portfolio/include -optix-ir ${CMAKE_CURRENT_SOURCE_DIR}/Collision.cu -o ${CMAKE_BINARY_DIR}/Collision.optixir
+    ARGS -I/home/apcave/alex-portfolio/include -ptx ${CMAKE_CURRENT_SOURCE_DIR}/Collision.cu -o ${CMAKE_BINARY_DIR}/Collision.ptx
     DEPENDS Collision.cu
     COMMENT "Compiling Collision.cu to OptiX IR"
 )
 
 # Add a custom target for CollisionIR
-add_custom_target(CollisionIR DEPENDS ${CMAKE_BINARY_DIR}/Collision.optixir)
+add_custom_target(CollisionIR DEPENDS ${CMAKE_BINARY_DIR}/Collision.ptx)
 
 # Ensure CollisionIR is built with cuda_project
 add_dependencies(${TARGET_NAME} CollisionIR)

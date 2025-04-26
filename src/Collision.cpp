@@ -38,6 +38,12 @@ std::string Collision::readFile(const std::string &filename)
 Collision::~Collision()
 {
     StopCollision();
+    if (context != 0)
+    {
+        std::cout << "Destroying context." << std::endl;
+        optixDeviceContextDestroy(context);
+        context = 0;
+    }
 }
 
 int Collision::StopCollision()
@@ -56,32 +62,47 @@ int Collision::StopCollision()
         cudaFree((void *)d_outputBuffer);
         d_outputBuffer = 0;
     }
+    FreePrams();
 
-    if (context != 0)
-    {
-        std::cout << "Destroying context." << std::endl;
-        optixDeviceContextDestroy(context);
-        context = 0;
-    }
     return 0;
 }
 
 void Collision::FreePrams()
 {
+
+    std::cout << "Freeing d_optix_params." << std::endl;
+
+    if (h_optix_params.vp1)
+    {
+        std::cout << "Freeing h_optix_params.vp1." << std::endl;
+        CUDA_CHECK(cudaFree(h_optix_params.vp1));
+        h_optix_params.vp1 = 0;
+    }
+
+    if (h_optix_params.vp2)
+    {
+        std::cout << "Freeing h_optix_params.vp2." << std::endl;
+
+        CUDA_CHECK(cudaFree(h_optix_params.vp2));
+        h_optix_params.vp2 = 0;
+    }
+
+    if (h_optix_params.output)
+    {
+        std::cout << "Freeing h_optix_params.output." << std::endl;
+        CUDA_CHECK(cudaFree(h_optix_params.output));
+        h_optix_params.output = 0;
+    }
+
     if (d_optix_params)
     {
-        cudaFree(h_optix_params.vp1);
-        h_optix_params.vp1 = 0;
-        cudaFree(h_optix_params.vp2);
-        h_optix_params.vp2 = 0;
-        cudaFree(h_optix_params.output);
-        h_optix_params.output = 0;
-        cudaFree((void *)d_optix_params);
+        std::cout << "Freeing d_optix_params." << std::endl;
+        CUDA_CHECK(cudaFree((void *)d_optix_params));
         d_optix_params = 0;
     }
 }
 
-void Collision::DoCollisions(std::vector<float3> vp1, std::vector<float3> vp2)
+int *Collision::DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2)
 {
     FreePrams();
     int numSrc = vp1.size();
@@ -89,17 +110,35 @@ void Collision::DoCollisions(std::vector<float3> vp1, std::vector<float3> vp2)
 
     h_optix_params.handle = gasHandle;
     h_optix_params.numSrcPoints = numSrc;
-    cudaMalloc((void **)&(h_optix_params.vp1), numSrc * sizeof(float3));
-    cudaMemcpy(h_optix_params.vp1, vp1.data(), numSrc * sizeof(float3), cudaMemcpyHostToDevice);
-    cudaMalloc((void **)&(h_optix_params.vp2), numDst * sizeof(float3));
-    cudaMemcpy(h_optix_params.vp2, vp2.data(), numDst * sizeof(float3), cudaMemcpyHostToDevice);
-    cudaMalloc((void **)&(h_optix_params.output), numDst * sizeof(int));
-    cudaMemset(h_optix_params.output, 0, numDst * sizeof(int));
 
-    cudaMalloc((void **)&d_optix_params, sizeof(Params));
-    cudaMemcpy((void *)d_optix_params, &h_optix_params, sizeof(Params), cudaMemcpyHostToDevice);
+    size_t numBytes = numSrc * sizeof(float3) + numDst * sizeof(float3) + numDst * numSrc * sizeof(int) + sizeof(Params);
+    CUDA_CHECK(cudaMalloc((void **)&(h_optix_params.vp1), numSrc * sizeof(float3)));
+    CUDA_CHECK(cudaMemcpy(h_optix_params.vp1, vp1.data(), numSrc * sizeof(float3), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMalloc((void **)&(h_optix_params.vp2), numDst * sizeof(float3)));
+    CUDA_CHECK(cudaMemcpy(h_optix_params.vp2, vp2.data(), numDst * sizeof(float3), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMalloc((void **)&(h_optix_params.output), numDst * numSrc * sizeof(int)));
+    CUDA_CHECK(cudaMemset(h_optix_params.output, 0, numDst * sizeof(int)));
 
-    optixLaunch(
+    CUDA_CHECK(cudaMalloc((void **)&d_optix_params, sizeof(Params)));
+    CUDA_CHECK(cudaMemcpy((void *)d_optix_params, &h_optix_params, sizeof(Params), cudaMemcpyHostToDevice));
+
+    std::cout << "SBT Raygen Record: " << sbt.raygenRecord << std::endl;
+    std::cout << "SBT Miss Record Base: " << sbt.missRecordBase << std::endl;
+    std::cout << "SBT Hitgroup Record Base: " << sbt.hitgroupRecordBase << std::endl;
+
+    std::cout << "Params.handle: " << h_optix_params.handle << std::endl;
+    std::cout << "Params.numSrcPoints: " << h_optix_params.numSrcPoints << std::endl;
+    std::cout << "Params.vp1: " << h_optix_params.vp1 << std::endl;
+    std::cout << "Params.vp2: " << h_optix_params.vp2 << std::endl;
+    std::cout << "Params.output: " << h_optix_params.output << std::endl;
+
+    std::cout << "Number of source points: " << numSrc << std::endl;
+    std::cout << "Number of destination points: " << numDst << std::endl;
+
+    std::cout << "pipeline : " << pipeline << std::endl;
+
+    std::cout << "Launching Collision Program...\n";
+    OPTIX_CHECK(optixLaunch(
         pipeline,
         0,
         d_optix_params,
@@ -107,7 +146,34 @@ void Collision::DoCollisions(std::vector<float3> vp1, std::vector<float3> vp2)
         &sbt,
         numSrc,
         numDst,
-        1);
+        1));
+    std::cout << "Launched Collision Program.\n";
+    cudaDeviceSynchronize();
+
+    int *hasCollided = new int[numSrc * numDst];
+    cudaMemcpy(hasCollided, h_optix_params.output, numSrc * numDst * sizeof(int), cudaMemcpyDeviceToHost);
+
+    std::cout << "Collision results:" << std::endl;
+    for (int i = 0; i < numSrc; i++)
+    {
+        for (int j = 0; j < numDst; j++)
+        {
+            // std::cout << hasCollided[i * numDst + j] << std::endl;
+            if (hasCollided[i * numDst + j])
+            {
+                std::cout << " 1";
+            }
+            else
+            {
+                std::cout << " 0";
+            }
+        }
+        std::cout << std::endl;
+    }
+    std::cout << "Done with collision results." << std::endl;
+    // delete[] hasCollided;
+    std::cout << "hasCollided." << std::endl;
+    return hasCollided;
 }
 
 bool Collision::HasCollision(float3 p1, float3 p2)
@@ -120,7 +186,10 @@ bool Collision::HasCollision(float3 p1, float3 p2)
 
 void Collision::StartOptix()
 {
+    std::cout << "Collision::StartOptix()" << std::endl;
     OPTIX_CHECK(optixInit());
+    OPTIX_CHECK(optixDeviceContextCreate(0, 0, &context));
+    MakePipeline();
 }
 
 Collision::Collision()
@@ -135,7 +204,6 @@ Collision::Collision()
 int Collision::CreateGeometry(const std::vector<Triangle> &facets)
 {
     std::cout << "Collision Creating Geometry object." << std::endl;
-    OPTIX_CHECK(optixDeviceContextCreate(0, 0, &context));
 
     // Check maximum trace depth
     unsigned int maxTraceDepth = 0;
@@ -154,7 +222,7 @@ int Collision::CreateGeometry(const std::vector<Triangle> &facets)
     buildInput.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
     buildInput.triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
     buildInput.triangleArray.vertexStrideInBytes = sizeof(float3);
-    buildInput.triangleArray.numVertices = 3;
+    buildInput.triangleArray.numVertices = 3 * facets.size();
     buildInput.triangleArray.vertexBuffers = &d_vertices;
     buildInput.triangleArray.indexFormat = OPTIX_INDICES_FORMAT_NONE;
     buildInput.triangleArray.numIndexTriplets = 0;
@@ -194,69 +262,17 @@ int Collision::CreateGeometry(const std::vector<Triangle> &facets)
     std::cout << "Output buffer address: " << d_outputBuffer << std::endl;
     std::cout << "d_vertices buffer address: " << d_vertices << std::endl;
 
-    // OPTIX_CHECK(optixAccelBuild(context, 0, &accelOptions, &buildInput, 1, d_tempBuffer,
-    //                             gasBufferSizes.tempSizeInBytes, d_outputBuffer, gasBufferSizes.outputSizeInBytes,
-    //                             &gasHandle, NULL, 0));
+    OPTIX_CHECK(optixAccelBuild(context, 0, &accelOptions, &buildInput, 1, d_tempBuffer,
+                                gasBufferSizes.tempSizeInBytes, d_outputBuffer, gasBufferSizes.outputSizeInBytes,
+                                &gasHandle, NULL, 0));
 
     std::cout << "Made the gasHandle." << std::endl;
     cudaFree((void *)d_tempBuffer);
 
     std::cout << "Made the gasHandle." << std::endl;
     std::cout << "Vertices copied to d_vertices successfully." << std::endl;
-    return 0;
-}
 
-int Collision::MakeShaderBufferTable()
-{
-    // The SBT sets up program to run to define what rays are render, and what to do if a hit or miss occurs.
-    // This in not being used in this application.
-
-    // Declare and allocate memory for SBT records
-    //     CUdeviceptr raygenRecord;
-    //     CUdeviceptr missRecord;
-    //     CUdeviceptr hitgroupRecord;
-
-    //     // Ensure RaygenRecord, HitgroupRecord, raygenProgramGroup, and hitgroupProgramGroup are defined
-    //     struct RaygenRecord {
-    //         char header[OPTIX_SBT_RECORD_HEADER_SIZE];
-    //     };
-
-    //     struct HitgroupRecord {
-    //         char header[OPTIX_SBT_RECORD_HEADER_SIZE];
-    //     };
-
-    //     extern OptixProgramGroup raygenProgramGroup;
-    //     extern OptixProgramGroup hitgroupProgramGroup;
-
-    // // Allocate memory for the raygen record
-    // size_t raygenRecordSize = sizeof(RaygenRecord);
-    // cudaMalloc(reinterpret_cast<void **>(&raygenRecord), raygenRecordSize);
-    // RaygenRecord rgRecord = {};
-    // rgRecord.header = optixSbtRecordPackHeader(raygenProgramGroup);
-    // cudaMemcpy(reinterpret_cast<void *>(raygenRecord), &rgRecord, raygenRecordSize, cudaMemcpyHostToDevice);
-
-    // // Allocate memory for the miss record
-    // size_t missRecordSize = sizeof(MissRecord);
-    // cudaMalloc(reinterpret_cast<void **>(&missRecord), missRecordSize);
-    // MissRecord msRecord = {};
-    // msRecord.header = optixSbtRecordPackHeader(missProgramGroup);
-    // cudaMemcpy(reinterpret_cast<void *>(missRecord), &msRecord, missRecordSize, cudaMemcpyHostToDevice);
-
-    // // Allocate memory for the hitgroup record
-    // size_t hitgroupRecordSize = sizeof(HitgroupRecord);
-    // cudaMalloc(reinterpret_cast<void **>(&hitgroupRecord), hitgroupRecordSize);
-    // HitgroupRecord hgRecord = {};
-    // hgRecord.header = optixSbtRecordPackHeader(hitgroupProgramGroup);
-    // cudaMemcpy(reinterpret_cast<void *>(hitgroupRecord), &hgRecord, hitgroupRecordSize, cudaMemcpyHostToDevice);
-
-    // // Set up the SBT
-    // sbt.raygenRecord = raygenRecord;
-    // sbt.missRecordBase = missRecord;
-    // sbt.missRecordStrideInBytes = sizeof(MissRecord);
-    // sbt.missRecordCount = 1;
-    // sbt.hitgroupRecordBase = hitgroupRecord;
-    // sbt.hitgroupRecordStrideInBytes = sizeof(HitgroupRecord);
-    // sbt.hitgroupRecordCount = 1;
+    // MakePipeline();
 
     return 0;
 }
@@ -264,59 +280,150 @@ int Collision::MakeShaderBufferTable()
 int Collision::MakePipeline()
 {
     // Create pipeline
-    // OptixPipeline pipeline;
-    // OptixPipelineCompileOptions pipelineCompileOptions = {};
-    // pipelineCompileOptions.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_GAS;
-    // pipelineCompileOptions.numPayloadValues = 1;
-    // pipelineCompileOptions.pipelineLaunchParamsVariableName = "params";
+    OptixPipelineCompileOptions pipelineCompileOptions = {};
+    pipelineCompileOptions.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_GAS;
+    pipelineCompileOptions.numPayloadValues = 1;
+    pipelineCompileOptions.pipelineLaunchParamsVariableName = "params";
 
-    // OptixPipelineLinkOptions pipelineLinkOptions = {};
-    // pipelineLinkOptions.maxTraceDepth = 1;
+    OptixPipelineLinkOptions pipelineLinkOptions = {};
+    pipelineLinkOptions.maxTraceDepth = 1;
+    pipelineLinkOptions.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
 
-    // OptixModule module;
-    // OptixModuleCompileOptions moduleCompileOptions = {};
-    // char log[2048];
-    // size_t logSize = sizeof(log);
+    OptixModule module;
+    OptixModuleCompileOptions moduleCompileOptions = {};
+    char log[2048];
+    size_t logSize = sizeof(log);
 
-    // std::string device_programs = readFile("./device_programs.ptx");
-    // const char *dev_prog = device_programs.c_str();
-    // size_t dev_prog_sz = device_programs.size();
+    std::string device_programs = readFile("./build/Collision.ptx");
+    const char *dev_prog = device_programs.c_str();
+    size_t dev_prog_sz = device_programs.size();
 
-    // OPTIX_CHECK(optixModuleCreateFromPTX(context, &moduleCompileOptions, &pipelineCompileOptions,
-    //                                      dev_prog, dev_prog_sz, log, &logSize, &module));
+    std::cout << "Program size: " << dev_prog_sz << std::endl;
 
-    // std::cout << "Module created successfully." << std::endl;
+    log[0] = '\0';         // Clear the log buffer
+    logSize = sizeof(log); // Reset the log size
+    OPTIX_CHECK(optixModuleCreateFromPTX(context, &moduleCompileOptions, &pipelineCompileOptions,
+                                         dev_prog, dev_prog_sz, log, &logSize, &module));
 
-    // OptixProgramGroup raygenProgramGroup;
-    // OptixProgramGroupDesc raygenDesc = {};
-    // raygenDesc.kind = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
-    // raygenDesc.raygen.module = module;
-    // raygenDesc.raygen.entryFunctionName = "__raygen__rg";
+    if (logSize > 0)
+    {
+        std::cout << "Log Size : " << logSize << std::endl;
 
-    // OptixProgramGroupOptions programGroupOptions = {};
-    // OPTIX_CHECK(optixProgramGroupCreate(context, &raygenDesc, 1, &programGroupOptions, log, &logSize, &raygenProgramGroup));
+        std::cerr << "OptiX Pipeline Creation Log: " << log << std::endl;
+    }
 
-    // OptixProgramGroup missProgramGroup;
-    // OptixProgramGroupDesc missDesc = {};
-    // missDesc.kind = OPTIX_PROGRAM_GROUP_KIND_MISS;
-    // missDesc.miss.module = module;                  // Use the same module as the raygen program
-    // missDesc.miss.entryFunctionName = "__miss__ms"; // Name of the miss program in PTX
+    std::cout << "Module created successfully." << std::endl;
 
-    // OPTIX_CHECK(optixProgramGroupCreate(context, &missDesc, 1, &programGroupOptions, log, &logSize, &missProgramGroup));
-    // std::cout << "Miss program group created successfully." << std::endl;
+    OptixProgramGroup raygenProgramGroup;
+    OptixProgramGroupDesc raygenDesc = {};
+    raygenDesc.kind = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
+    raygenDesc.raygen.module = module;
+    raygenDesc.raygen.entryFunctionName = "__raygen__rg";
 
-    // OptixProgramGroup hitgroupProgramGroup;
-    // OptixProgramGroupDesc hitgroupDesc = {};
-    // hitgroupDesc.kind = OPTIX_PROGRAM_GROUP_KIND_HITGROUP;
-    // hitgroupDesc.hitgroup.moduleCH = module;                        // Closest-hit program module
-    // hitgroupDesc.hitgroup.entryFunctionNameCH = "__closesthit__ch"; // Closest-hit program in PTX
-    // hitgroupDesc.hitgroup.moduleAH = nullptr;                       // No any-hit program
-    // hitgroupDesc.hitgroup.entryFunctionNameAH = nullptr;            // No any-hit program
-    // hitgroupDesc.hitgroup.moduleIS = nullptr;                       // No intersection program
-    // hitgroupDesc.hitgroup.entryFunctionNameIS = nullptr;            // No intersection program
+    OptixProgramGroupOptions programGroupOptions = {};
 
-    // OPTIX_CHECK(optixProgramGroupCreate(context, &hitgroupDesc, 1, &programGroupOptions, log, &logSize, &hitgroupProgramGroup));
-    // std::cout << "Hit group program group created successfully." << std::endl;
+    log[0] = '\0';         // Clear the log buffer
+    logSize = sizeof(log); // Reset the log size
+    OPTIX_CHECK(optixProgramGroupCreate(context, &raygenDesc, 1, &programGroupOptions, log, &logSize, &raygenProgramGroup));
+
+    if (logSize > 0)
+    {
+
+        std::cerr << "OptiX Pipeline Creation Log: " << log << std::endl;
+    }
+
+    OptixProgramGroup missProgramGroup;
+    OptixProgramGroupDesc missDesc = {};
+    missDesc.kind = OPTIX_PROGRAM_GROUP_KIND_MISS;
+    missDesc.miss.module = module;                  // Use the same module as the raygen program
+    missDesc.miss.entryFunctionName = "__miss__ms"; // Name of the miss program in PTX
+
+    log[0] = '\0';         // Clear the log buffer
+    logSize = sizeof(log); // Reset the log size
+    OPTIX_CHECK(optixProgramGroupCreate(context, &missDesc, 1, &programGroupOptions, log, &logSize, &missProgramGroup));
+    std::cout << "Miss program group created successfully." << std::endl;
+
+    if (logSize > 0)
+    {
+        std::cerr << "OptiX Pipeline Creation Log: " << log << std::endl;
+    }
+
+    OptixProgramGroup hitgroupProgramGroup;
+    OptixProgramGroupDesc hitgroupDesc = {};
+    hitgroupDesc.kind = OPTIX_PROGRAM_GROUP_KIND_HITGROUP;
+    hitgroupDesc.hitgroup.moduleCH = module;                        // Closest-hit program module
+    hitgroupDesc.hitgroup.entryFunctionNameCH = "__closesthit__ch"; // Closest-hit program in PTX
+    hitgroupDesc.hitgroup.moduleAH = nullptr;                       // No any-hit program
+    hitgroupDesc.hitgroup.entryFunctionNameAH = nullptr;            // No any-hit program
+    hitgroupDesc.hitgroup.moduleIS = nullptr;                       // No intersection program
+    hitgroupDesc.hitgroup.entryFunctionNameIS = nullptr;            // No intersection program
+
+    log[0] = '\0';         // Clear the log buffer
+    logSize = sizeof(log); // Reset the log size
+    OPTIX_CHECK(optixProgramGroupCreate(context, &hitgroupDesc, 1, &programGroupOptions, log, &logSize, &hitgroupProgramGroup));
+    std::cout << "Hit group program group created successfully." << std::endl;
+
+    if (logSize > 0)
+    {
+        std::cerr << "OptiX Pipeline Creation Log: " << log << std::endl;
+    }
+
+    std::cout << "Raygen program group created successfully." << std::endl;
+    struct RaygenRecord
+    {
+        char header[OPTIX_SBT_RECORD_HEADER_SIZE];
+    };
+    RaygenRecord rgRecord = {};
+    OPTIX_CHECK(optixSbtRecordPackHeader(raygenProgramGroup, &rgRecord));
+
+    CUdeviceptr raygenRecord;
+    cudaMalloc((void **)&raygenRecord, sizeof(RaygenRecord));
+
+    // Copy the ray generation record from the host to the device
+    cudaMemcpy((void *)raygenRecord, &rgRecord, sizeof(RaygenRecord), cudaMemcpyHostToDevice);
+
+    sbt.raygenRecord = raygenRecord;
+
+    struct MissRecord
+    {
+        char header[OPTIX_SBT_RECORD_HEADER_SIZE];
+    };
+    MissRecord msRecord = {};
+    OPTIX_CHECK(optixSbtRecordPackHeader(missProgramGroup, &msRecord));
+    CUdeviceptr missRecord;
+    cudaMalloc((void **)&missRecord, sizeof(MissRecord));
+    cudaMemcpy((void *)missRecord, &msRecord, sizeof(MissRecord), cudaMemcpyHostToDevice);
+    sbt.missRecordBase = missRecord;
+    sbt.missRecordStrideInBytes = sizeof(MissRecord);
+    sbt.missRecordCount = 1;
+
+    struct HitgroupRecord
+    {
+        char header[OPTIX_SBT_RECORD_HEADER_SIZE];
+    };
+    HitgroupRecord hgRecord = {};
+    OPTIX_CHECK(optixSbtRecordPackHeader(hitgroupProgramGroup, &hgRecord));
+    CUdeviceptr hitgroupRecord;
+    cudaMalloc((void **)&hitgroupRecord, sizeof(HitgroupRecord));
+    cudaMemcpy((void *)hitgroupRecord, &hgRecord, sizeof(HitgroupRecord), cudaMemcpyHostToDevice);
+    sbt.hitgroupRecordBase = hitgroupRecord;
+    sbt.hitgroupRecordStrideInBytes = sizeof(HitgroupRecord);
+    sbt.hitgroupRecordCount = 1;
+
+    std::cout << "yah..." << std::endl;
+    std::cout << "Made shader binding table." << std::endl;
+
+    OptixProgramGroup programGroups[] = {raygenProgramGroup, missProgramGroup, hitgroupProgramGroup};
+    log[0] = '\0';         // Clear the log buffer
+    logSize = sizeof(log); // Reset the log size
+    OPTIX_CHECK(optixPipelineCreate(context, &pipelineCompileOptions, &pipelineLinkOptions, programGroups, 3, log, &logSize, &pipeline));
+
+    if (logSize > 0)
+    {
+        std::cout << "Log Size : " << logSize << std::endl;
+        std::cerr << "OptiX Pipeline Creation Log: " << log << std::endl;
+    }
+    std::cout << "Pipeline created successfully." << std::endl;
 
     return 0;
 }
@@ -345,5 +452,6 @@ int Collision::StartCollision(std::vector<Object *> &targetObjects)
         }
     }
     CreateGeometry(facets);
+
     return 0;
 }
