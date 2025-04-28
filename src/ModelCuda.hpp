@@ -71,7 +71,7 @@ protected:
     int GetSurfaceScalers();
 
 protected:
-    // Collision OptiXCol;
+    Collision optiXCol;
 };
 
 #endif

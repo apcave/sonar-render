@@ -236,7 +236,7 @@ ModelCuda::ModelCuda()
     {
         printf("cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
     }
-    // OptiXCol.StartOptix();
+    optiXCol.StartOptix();
 }
 
 ModelCuda::~ModelCuda()

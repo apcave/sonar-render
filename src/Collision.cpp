@@ -306,11 +306,12 @@ int Collision::MakePipeline()
         char header[OPTIX_SBT_RECORD_HEADER_SIZE];
     };
     RaygenRecord rgRecord = {};
+
     OPTIX_CHECK(optixSbtRecordPackHeader(raygenProgramGroup, &rgRecord));
 
     CUdeviceptr raygenRecord;
     cudaMalloc((void **)&raygenRecord, sizeof(RaygenRecord));
-
+    return 0;
     // Copy the ray generation record from the host to the device
     cudaMemcpy((void *)raygenRecord, &rgRecord, sizeof(RaygenRecord), cudaMemcpyHostToDevice);
 
@@ -321,6 +322,7 @@ int Collision::MakePipeline()
         char header[OPTIX_SBT_RECORD_HEADER_SIZE];
     };
     MissRecord msRecord = {};
+    return 0;
     OPTIX_CHECK(optixSbtRecordPackHeader(missProgramGroup, &msRecord));
     CUdeviceptr missRecord;
     cudaMalloc((void **)&missRecord, sizeof(MissRecord));
@@ -328,7 +330,7 @@ int Collision::MakePipeline()
     sbt.missRecordBase = missRecord;
     sbt.missRecordStrideInBytes = sizeof(MissRecord);
     sbt.missRecordCount = 1;
-
+    return 0;
     struct HitgroupRecord
     {
         char header[OPTIX_SBT_RECORD_HEADER_SIZE];
