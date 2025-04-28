@@ -26,21 +26,21 @@ class ModelCuda : public ModelGl
 protected:
     // Global parameters.
     // Complex wave number.
-    dcomplex *dev_k_wave = nullptr;
+    dcomplex *dev_k_wave = 0;
     // Pixel length and width.
-    float *dev_frag_delta = nullptr;
+    float *dev_frag_delta = 0;
 
     // Used for scaling the textures.
-    float *dev_frag_stats = nullptr;
+    float *dev_frag_stats = 0;
     float host_frag_stats[3];
 
     int host_num_source_points;
-    float3 *dev_source_points_position = nullptr;   // constant
-    dcomplex *dev_source_points_pressure = nullptr; // constant
+    float3 *dev_source_points_position = 0;   // constant
+    dcomplex *dev_source_points_pressure = 0; // constant
 
     int host_num_field_points;
-    float3 *dev_field_points_position = nullptr;   // constant
-    dcomplex *dev_field_points_pressure = nullptr; // constant
+    float3 *dev_field_points_position = 0;   // constant
+    dcomplex *dev_field_points_pressure = 0; // constant
 
 public:
     ModelCuda();

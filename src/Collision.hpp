@@ -30,6 +30,13 @@ private:
     CUdeviceptr d_outputBuffer = 0;
     CUdeviceptr d_vertices = 0;
 
+    int *hasCollided = 0;
+
+    CUdeviceptr raygenRecord = 0;
+    CUdeviceptr missRecord = 0;
+    CUdeviceptr hitgroupRecord = 0;
+    CUdeviceptr d_tempBuffer = 0;
+
 public:
     Collision();
     ~Collision();
@@ -48,9 +55,8 @@ private:
     int CreateGeometry(const std::vector<Triangle> &facets);
 
     void FreePrams();
+    void FreeGeometry();
 
     std::string readFile(const std::string &filename);
-
-    CUdeviceptr raygenRecord;
 };
 #endif

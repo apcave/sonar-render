@@ -97,15 +97,15 @@ int ModelCuda::MakeObjectOnGPU(vector<Facet *> facets)
 
 int ModelCuda::StartCuda()
 {
-    // cudaDeviceSynchronize();
-    // cudaFree(0);
-    // cudaDeviceReset();
-    // cudaError_t cudaStatus = cudaSetDevice(0);
-    // if (cudaStatus != cudaSuccess)
-    // {
-    //     printf("cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
-    //     return 1;
-    // }
+    cudaDeviceSynchronize();
+    cudaFree(0);
+    cudaDeviceReset();
+    cudaError_t cudaStatus = cudaSetDevice(0);
+    if (cudaStatus != cudaSuccess)
+    {
+        printf("cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
+        return 1;
+    }
     return 0;
 }
 
@@ -154,7 +154,13 @@ int ModelCuda::StopCuda()
     }
     targetObjects.clear();
 
-    // OptiXCol.StopCollision();
+    for (auto object : fieldObjects)
+    {
+        delete object;
+    }
+    fieldObjects.clear();
+
+    optiXCol.StopCollision();
 
     return 0;
 }
@@ -170,14 +176,14 @@ int ModelCuda::DoCalculations()
 
     std::cout << "Source Points to field." << std::endl;
     // The field surfaces include the incident and scattered waves.
-    // if (ProjectSourcePointsToFacet(fieldObjects) != 0)
-    // {
-    //     printf("Project from source points to field object.\n");
-    //     return 1;
-    // }
+    if (ProjectSourcePointsToFacet(fieldObjects) != 0)
+    {
+        printf("Project from source points to field object.\n");
+        return 1;
+    }
 
     std::cout << "Projecting from target to field surface." << std::endl;
-    // ProjectFromFacetsToFacets(targetObjects, fieldObjects, false);
+    ProjectFromFacetsToFacets(targetObjects, fieldObjects, false);
     //  std::cout << "Done projecting from target to field surface." << std::endl;
 
     // for (int i = 0; i < 0; i++)
@@ -240,14 +246,14 @@ int ModelCuda::GetSurfaceScalers()
 
 ModelCuda::ModelCuda()
 {
-    std::cout << "Made ModelCuda::ModelCuda() object." << std::endl;
-    // Initialize the CUDA device
-    cudaFree(0);
-    cudaError_t cudaStatus = cudaSetDevice(0);
-    if (cudaStatus != cudaSuccess)
-    {
-        printf("cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
-    }
+    // std::cout << "Made ModelCuda::ModelCuda() object." << std::endl;
+    // // Initialize the CUDA device
+    // cudaFree(0);
+    // cudaError_t cudaStatus = cudaSetDevice(0);
+    // if (cudaStatus != cudaSuccess)
+    // {
+    //     printf("cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
+    // }
 }
 
 ModelCuda::~ModelCuda()

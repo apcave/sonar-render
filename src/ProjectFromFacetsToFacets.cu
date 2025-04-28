@@ -167,7 +167,7 @@ int ModelCuda::ProjectFromFacetsToFacets(std::vector<Object *> &scrObjects, std:
         {
             auto dstPnts = dstOb->GetCentroids();
             printf("Doing collision detection.\n");
-            // int *hasCollision = OptiXCol.DoCollisions(srcPnts, dstPnts);
+            int *hasCollision = optiXCol.DoCollisions(srcPnts, dstPnts);
             int numDst = dstPnts.size();
 
             for (int srcCnt = 0; numScr > srcCnt; srcCnt++)
@@ -176,11 +176,11 @@ int ModelCuda::ProjectFromFacetsToFacets(std::vector<Object *> &scrObjects, std:
                 {
                     printf("NumSrcFacets: %d, scrNum %d, NumDstFacets: %d, dstNum %d\n", numScr, srcCnt, numDst, dstCnt);
 
-                    // if (hasCollision[srcCnt * numDst + dstCnt] == 1)
-                    // {
-                    //     printf("Collision detected.\n");
-                    //     continue;
-                    // }
+                    if (hasCollision[srcCnt * numDst + dstCnt] == 1)
+                    {
+                        printf("Collision detected.\n");
+                        continue;
+                    }
                     printf("Running Projection.\n");
                     auto srcFacet = srcOb->facets[srcCnt];
                     auto dstFacet = dstOb->facets[dstCnt];
@@ -203,13 +203,12 @@ int ModelCuda::ProjectFromFacetsToFacets(std::vector<Object *> &scrObjects, std:
                     if (err != cudaSuccess)
                     {
                         printf("Kernel launch failed: %s\n", cudaGetErrorString(err));
+                        cudaDeviceSynchronize();
                         return 1;
                     }
                 }
                 cudaDeviceSynchronize();
             }
-
-            //            delete[] hasCollision;
         }
     }
 

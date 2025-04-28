@@ -331,10 +331,12 @@ void Facet::MakeFragmentData(float frag_length)
 			}
 		}
 	}
+	delete[] vX;
+	delete[] vY;
 	delete[] yxL;
 	delete[] yxR;
-	yxL = nullptr;
-	yxR = nullptr;
+	// yxL = nullptr;
+	// yxR = nullptr;
 }
 
 void Facet::PrintAreaMatrix()

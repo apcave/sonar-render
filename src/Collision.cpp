@@ -24,41 +24,81 @@ std::string Collision::readFile(const std::string &filename)
 
 Collision::~Collision()
 {
-    StopCollision();
-    if (context != 0)
+    // if (raygenRecord)
+    // {
+    //     std::cout << "Destroying raygenRecord." << std::endl;
+    //     cudaFree((void *)raygenRecord);
+    //     raygenRecord = 0;
+    // }
+
+    // if (missRecord)
+    // {
+    //     std::cout << "Destroying missRecord." << std::endl;
+    //     cudaFree((void *)missRecord);
+    //     missRecord = 0;
+    // }
+
+    // if (hitgroupRecord)
+    // {
+    //     std::cout << "Destroying hitgroupRecord." << std::endl;
+    //     cudaFree((void *)hitgroupRecord);
+    //     hitgroupRecord = 0;
+    // }
+
+    if (context)
     {
         std::cout << "Destroying context." << std::endl;
-        optixDeviceContextDestroy(context);
+        OPTIX_CHECK(optixDeviceContextDestroy(context));
         context = 0;
     }
+
+    std::cout << "Deleted Collision." << std::endl;
 }
 
 int Collision::StopCollision()
 {
-    std::cout << "Memory testing TODO: add free for collision detection." << std::endl;
-    return 0;
+    return 1;
+    std::cout << "Stopped Collision." << std::endl;
     std::cout << "Stopping Collision." << std::endl;
-    if (d_vertices != 0)
+
+    if (hasCollided)
+    {
+        std::cout << "Freeing hasCollided." << std::endl;
+        delete[] hasCollided;
+        hasCollided = 0;
+    }
+
+    FreePrams();
+    return 0;
+}
+
+void Collision::FreeGeometry()
+{
+    if (d_vertices)
     {
         std::cout << "Freeing d_vertices." << std::endl;
         cudaFree((void *)d_vertices);
         d_vertices = 0;
     }
 
-    if (d_outputBuffer != 0)
+    if (d_outputBuffer)
     {
         std::cout << "Freeing d_outputBuffer." << std::endl;
         cudaFree((void *)d_outputBuffer);
         d_outputBuffer = 0;
     }
-    FreePrams();
 
-    return 0;
+    if (d_tempBuffer != 0)
+    {
+        std::cout << "Freeing d_tempBuffer." << std::endl;
+        cudaFree((void *)d_tempBuffer);
+        d_tempBuffer = 0;
+    }
 }
-
 void Collision::FreePrams()
 {
     return;
+
     if (h_optix_params.vp1)
     {
         CUDA_CHECK(cudaFree(h_optix_params.vp1));
@@ -86,10 +126,16 @@ void Collision::FreePrams()
 
 int *Collision::DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2)
 {
+    if (hasCollided != 0)
+    {
+        std::cout << "Freeing hasCollided." << std::endl;
+        delete[] hasCollided;
+        hasCollided = 0;
+    }
+
     // FreePrams();
     int numSrc = vp1.size();
     int numDst = vp2.size();
-    int *hasCollided;
 
     h_optix_params.handle = gasHandle;
     h_optix_params.numDstPoints = numDst;
@@ -101,7 +147,7 @@ int *Collision::DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2)
     CUDA_CHECK(cudaMalloc((void **)&(h_optix_params.vp2), numDst * sizeof(float3)));
     CUDA_CHECK(cudaMemcpy(h_optix_params.vp2, vp2.data(), numDst * sizeof(float3), cudaMemcpyHostToDevice));
     CUDA_CHECK(cudaMalloc((void **)&(h_optix_params.output), numDst * numSrc * sizeof(int)));
-    CUDA_CHECK(cudaMemset(h_optix_params.output, 0, numDst * sizeof(int)));
+    CUDA_CHECK(cudaMemset(h_optix_params.output, 0, numDst * numSrc * sizeof(int)));
 
     CUDA_CHECK(cudaMalloc((void **)&d_optix_params, sizeof(Params)));
     CUDA_CHECK(cudaMemcpy((void *)d_optix_params, &h_optix_params, sizeof(Params), cudaMemcpyHostToDevice));
@@ -159,22 +205,12 @@ bool Collision::HasCollision(float3 p1, float3 p2)
 void Collision::StartOptix()
 {
     std::cout << "Collision::StartOptix()" << std::endl;
-    // OPTIX_CHECK(optixInit());
-    // OPTIX_CHECK(optixDeviceContextCreate(0, 0, &context));
-    struct RaygenRecord
+    if (context == 0)
     {
-        char header[OPTIX_SBT_RECORD_HEADER_SIZE];
-    };
-    RaygenRecord rgRecord = {};
-
-    // OPTIX_CHECK(optixSbtRecordPackHeader(raygenProgramGroup, &rgRecord));
-
-    // CUdeviceptr raygenRecord;
-    CUDA_CHECK(cudaMalloc((void **)&raygenRecord, sizeof(RaygenRecord)));
-    std::cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Memory Error Created >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    return;
-
-    // MakePipeline();
+        OPTIX_CHECK(optixInit());
+        OPTIX_CHECK(optixDeviceContextCreate(0, 0, &context));
+        MakePipeline();
+    }
 }
 
 Collision::Collision()
@@ -185,6 +221,26 @@ Collision::Collision()
 // Function to load facets into OptiX
 int Collision::CreateGeometry(const std::vector<Triangle> &facets)
 {
+    // if (d_vertices != 0)
+    // {
+    //     std::cout << "Freeing d_vertices." << std::endl;
+    //     cudaFree((void *)d_vertices);
+    //     d_vertices = 0;
+    // }
+
+    // if (d_outputBuffer != 0)
+    // {
+    //     std::cout << "Freeing d_outputBuffer." << std::endl;
+    //     cudaFree((void *)d_outputBuffer);
+    //     d_outputBuffer = 0;
+    // }
+
+    // if (d_tempBuffer != 0)
+    // {
+    //     std::cout << "Freeing d_tempBuffer." << std::endl;
+    //     cudaFree((void *)d_tempBuffer);
+    //     d_tempBuffer = 0;
+    // }
 
     // Check maximum trace depth
     unsigned int maxTraceDepth = 0;
@@ -220,7 +276,6 @@ int Collision::CreateGeometry(const std::vector<Triangle> &facets)
     OptixAccelBufferSizes gasBufferSizes;
     OPTIX_CHECK(optixAccelComputeMemoryUsage(context, &accelOptions, &buildInput, 1, &gasBufferSizes));
 
-    CUdeviceptr d_tempBuffer = 0;
     CUDA_CHECK(cudaMalloc((void **)&d_tempBuffer, gasBufferSizes.tempSizeInBytes));
     CUDA_CHECK(cudaMalloc((void **)&d_outputBuffer, gasBufferSizes.outputSizeInBytes));
 
@@ -228,7 +283,7 @@ int Collision::CreateGeometry(const std::vector<Triangle> &facets)
                                 gasBufferSizes.tempSizeInBytes, d_outputBuffer, gasBufferSizes.outputSizeInBytes,
                                 &gasHandle, NULL, 0));
 
-    cudaFree((void *)d_tempBuffer);
+    // CUDA_CHECK(cudaFree((void *)d_tempBuffer));
     return 0;
 }
 
@@ -255,7 +310,7 @@ int Collision::MakePipeline()
 
     log[0] = '\0';         // Clear the log buffer
     logSize = sizeof(log); // Reset the log size
-    // OPTIX_CHECK(optixModuleCreateFromPTX(context, &moduleCompileOptions, &pipelineCompileOptions, dev_prog, dev_prog_sz, log, &logSize, &module));
+    OPTIX_CHECK(optixModuleCreateFromPTX(context, &moduleCompileOptions, &pipelineCompileOptions, dev_prog, dev_prog_sz, log, &logSize, &module));
 
     // if (logSize > 0)
     // {
@@ -274,7 +329,7 @@ int Collision::MakePipeline()
 
     log[0] = '\0';         // Clear the log buffer
     logSize = sizeof(log); // Reset the log size
-    // OPTIX_CHECK(optixProgramGroupCreate(context, &raygenDesc, 1, &programGroupOptions, log, &logSize, &raygenProgramGroup));
+    OPTIX_CHECK(optixProgramGroupCreate(context, &raygenDesc, 1, &programGroupOptions, log, &logSize, &raygenProgramGroup));
 
     // if (logSize > 0)
     // {
@@ -290,7 +345,7 @@ int Collision::MakePipeline()
 
     log[0] = '\0';         // Clear the log buffer
     logSize = sizeof(log); // Reset the log size
-    // OPTIX_CHECK(optixProgramGroupCreate(context, &missDesc, 1, &programGroupOptions, log, &logSize, &missProgramGroup));
+    OPTIX_CHECK(optixProgramGroupCreate(context, &missDesc, 1, &programGroupOptions, log, &logSize, &missProgramGroup));
 
     // if (logSize > 0)
     // {
@@ -309,7 +364,7 @@ int Collision::MakePipeline()
 
     log[0] = '\0';         // Clear the log buffer
     logSize = sizeof(log); // Reset the log size
-    // OPTIX_CHECK(optixProgramGroupCreate(context, &hitgroupDesc, 1, &programGroupOptions, log, &logSize, &hitgroupProgramGroup));
+    OPTIX_CHECK(optixProgramGroupCreate(context, &hitgroupDesc, 1, &programGroupOptions, log, &logSize, &hitgroupProgramGroup));
 
     // if (logSize > 0)
     // {
@@ -324,10 +379,8 @@ int Collision::MakePipeline()
 
     // OPTIX_CHECK(optixSbtRecordPackHeader(raygenProgramGroup, &rgRecord));
 
-    CUdeviceptr raygenRecord;
     CUDA_CHECK(cudaMalloc((void **)&raygenRecord, sizeof(RaygenRecord)));
-    std::cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Memory Error Created >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    return 0;
+
     // Copy the ray generation record from the host to the device
     cudaMemcpy((void *)raygenRecord, &rgRecord, sizeof(RaygenRecord), cudaMemcpyHostToDevice);
 
@@ -338,22 +391,21 @@ int Collision::MakePipeline()
         char header[OPTIX_SBT_RECORD_HEADER_SIZE];
     };
     MissRecord msRecord = {};
-    return 0;
     OPTIX_CHECK(optixSbtRecordPackHeader(missProgramGroup, &msRecord));
-    CUdeviceptr missRecord;
+
     cudaMalloc((void **)&missRecord, sizeof(MissRecord));
     cudaMemcpy((void *)missRecord, &msRecord, sizeof(MissRecord), cudaMemcpyHostToDevice);
     sbt.missRecordBase = missRecord;
     sbt.missRecordStrideInBytes = sizeof(MissRecord);
     sbt.missRecordCount = 1;
-    return 0;
+
     struct HitgroupRecord
     {
         char header[OPTIX_SBT_RECORD_HEADER_SIZE];
     };
     HitgroupRecord hgRecord = {};
     OPTIX_CHECK(optixSbtRecordPackHeader(hitgroupProgramGroup, &hgRecord));
-    CUdeviceptr hitgroupRecord;
+
     cudaMalloc((void **)&hitgroupRecord, sizeof(HitgroupRecord));
     cudaMemcpy((void *)hitgroupRecord, &hgRecord, sizeof(HitgroupRecord), cudaMemcpyHostToDevice);
     sbt.hitgroupRecordBase = hitgroupRecord;
@@ -380,11 +432,12 @@ int Collision::StartCollision(std::vector<Object *> &targetObjects)
 {
     if (!hasStarted)
     {
+        std::cout << "Starting OptiX...***********************************************" << std::endl;
         StartOptix();
         hasStarted = true;
     }
     std::cout << "Starting Collision....." << OPTIX_SBT_RECORD_HEADER_SIZE << std::endl;
-    return 0;
+
     int numFacets = 0;
     for (auto object : targetObjects)
     {

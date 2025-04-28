@@ -52,11 +52,15 @@ void FacetCuda::AllocateCuda(float3 &normal,
 
         // Allocate device memory for the initial pressure data
         cudaMalloc((void **)&dev_Pr_initial, numXpnts * numYpnts * sizeof(double));
+        cudaMemset(dev_Pr_initial, 0, numXpnts * numYpnts * sizeof(double));
         cudaMalloc((void **)&dev_Pi_initial, numXpnts * numYpnts * sizeof(double));
+        cudaMemset(dev_Pi_initial, 0, numXpnts * numYpnts * sizeof(double));
 
         // Allocate device memory for the result pressure data
         cudaMalloc((void **)&dev_Pr_result, numXpnts * numYpnts * sizeof(double));
+        cudaMemset(dev_Pr_result, 0, numXpnts * numYpnts * sizeof(double));
         cudaMalloc((void **)&dev_Pi_result, numXpnts * numYpnts * sizeof(double));
+        cudaMemset(dev_Pi_result, 0, numXpnts * numYpnts * sizeof(double));
     }
     cudaMemcpy(dev_data, &host_facet, sizeof(dev_facet), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_frag_area, frag_area, numXpnts * numYpnts * sizeof(float), cudaMemcpyHostToDevice);
@@ -127,4 +131,5 @@ void FacetCuda::PrintMatrix()
         }
         printf("\n");
     }
+    delete[] host_Pr;
 }

@@ -43,7 +43,7 @@ FacetGl::~FacetGl()
     if (cudaResource)
     {
         cudaGraphicsUnregisterResource(cudaResource);
-        cudaResource = nullptr;
+        cudaResource = 0;
     }
 
     // Delete the OpenGL texture

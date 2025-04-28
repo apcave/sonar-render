@@ -119,17 +119,17 @@ int ModelCuda::ProjectSourcePointsToFacet(std::vector<Object *> &target)
             auto dstPnts = object->GetCentroids();
 
             printf("Doing collision detection.\n");
-            // hasColision = OptiXCol.DoCollisions(srcPnts, dstPnts);
+            hasColision = optiXCol.DoCollisions(srcPnts, dstPnts);
             int numDst = dstPnts.size();
             int dstCnt = 0;
             for (auto facet : object->facets)
             {
-                // if (hasColision[srcCnt * numDst + dstCnt] == 1)
-                // {
-                //     // printf("Collision detected.\n");
-                //     dstCnt++;
-                //     continue;
-                // }
+                if (hasColision[srcCnt * numDst + dstCnt] == 1)
+                {
+                    // printf("Collision detected.\n");
+                    dstCnt++;
+                    continue;
+                }
                 printf("Facet: %f, %f, %f\n", facet->Centroid.x, facet->Centroid.y, facet->Centroid.z);
                 // printf("Source Point: %f, %f, %f\n", srcPnt->position.x, srcPnt->position.y, srcPnt->position.z);
 
@@ -154,11 +154,6 @@ int ModelCuda::ProjectSourcePointsToFacet(std::vector<Object *> &target)
                     return 1;
                 }
                 dstCnt++;
-            }
-
-            if (hasColision)
-            {
-                delete[] hasColision;
             }
         }
     }

@@ -133,6 +133,9 @@ plt.grid(True)
 plt.legend()
 plt.show()
 
-api.render_openGL()
+print("<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>")
+api.TearDownCuda()
+print("<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>")
+#api.render_openGL()
 
 

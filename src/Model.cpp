@@ -62,10 +62,10 @@ void Model::MakeFragments()
         object->MakeFragmentData(frag_length);
     }
 
-    // for (auto object : fieldObjects)
-    // {
-    //     object->MakeFragmentData(frag_length);
-    // }
+    for (auto object : fieldObjects)
+    {
+        object->MakeFragmentData(frag_length);
+    }
 }
 
 void Model::RenderCuda()
@@ -81,10 +81,10 @@ void Model::RenderCuda()
         object->MakeCudaObjects();
     }
 
-    // for (auto object : fieldObjects)
-    // {
-    //     object->MakeCudaObjects();
-    // }
+    for (auto object : fieldObjects)
+    {
+        object->MakeCudaObjects();
+    }
 
     MakeSourcePointsOnGPU(sourcePoints);
     MakeFieldPointsOnGPU(fieldPoints);
@@ -117,7 +117,16 @@ void Model::RenderOpenGL()
 
 void Model::TearDownModel()
 {
+    for (auto pnt : sourcePoints)
+    {
+        delete pnt;
+    }
     sourcePoints.clear();
+
+    for (auto pnt : fieldPoints)
+    {
+        delete pnt;
+    }
     fieldPoints.clear();
     StopCuda();
 }
