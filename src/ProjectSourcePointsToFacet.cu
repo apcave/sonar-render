@@ -40,13 +40,13 @@ __global__ void ProjectSourcePointToFacetKernel(
 
     int index = yPnt * NumXpnts + xPnt;
 
-    // float A_i = frag_area[index];
+    float A_i = frag_area[index];
 
-    // if (A_i == 0)
-    // {
-    //     // printf("facets_PixelArea is zero\n");
-    //     return;
-    // }
+    if (A_i == 0)
+    {
+        // printf("facets_PixelArea is zero\n");
+        return;
+    }
 
     float3 pg_i = source_points_position[source_point_num];
     dcomplex source_pressure = source_points_pressure[source_point_num];
@@ -119,17 +119,17 @@ int ModelCuda::ProjectSourcePointsToFacet(std::vector<Object *> &target)
             auto dstPnts = object->GetCentroids();
 
             printf("Doing collision detection.\n");
-            hasColision = OptiXCol.DoCollisions(srcPnts, dstPnts);
+            // hasColision = OptiXCol.DoCollisions(srcPnts, dstPnts);
             int numDst = dstPnts.size();
             int dstCnt = 0;
             for (auto facet : object->facets)
             {
-                if (hasColision[srcCnt * numDst + dstCnt] == 1)
-                {
-                    // printf("Collision detected.\n");
-                    dstCnt++;
-                    continue;
-                }
+                // if (hasColision[srcCnt * numDst + dstCnt] == 1)
+                // {
+                //     // printf("Collision detected.\n");
+                //     dstCnt++;
+                //     continue;
+                // }
                 printf("Facet: %f, %f, %f\n", facet->Centroid.x, facet->Centroid.y, facet->Centroid.z);
                 // printf("Source Point: %f, %f, %f\n", srcPnt->position.x, srcPnt->position.y, srcPnt->position.z);
 

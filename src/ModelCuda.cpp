@@ -142,7 +142,7 @@ int ModelCuda::StopCuda()
     }
     targetObjects.clear();
 
-    OptiXCol.StopCollision();
+    // OptiXCol.StopCollision();
 
     return 0;
 }
@@ -236,7 +236,7 @@ ModelCuda::ModelCuda()
     {
         printf("cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
     }
-    OptiXCol.StartOptix();
+    // OptiXCol.StartOptix();
 }
 
 ModelCuda::~ModelCuda()

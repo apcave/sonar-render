@@ -81,7 +81,7 @@ __global__ void ProjectFacetToFieldPointKernel(
 
     if (sc < 0)
     {
-        printf("Normal doesn't align, not adding to field point.\n");
+        // printf("Normal doesn't align, not adding to field point.\n");
         return;
     }
 
