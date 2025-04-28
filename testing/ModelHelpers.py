@@ -13,7 +13,7 @@ def monostatic_iterated(pnts, object, cp, frequency):
     p_reflect = []
     for pnt in pnts:
         api.set_initial_conditions(cp, frequency, 0.0)
-        api.load_stl_mesh_to_cuda(object)        
+        api.load_stl_mesh_to_cuda(object,0)        
         api.load_points_to_cuda([pnt], isSource=True)
         api.load_points_to_cuda([pnt], isSource=False)
         api.render_cuda()

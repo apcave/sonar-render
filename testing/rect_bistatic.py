@@ -64,22 +64,28 @@ a = 3.0
 b = 2.0
 cp = 1480.0
 frequency = 10e3
-range = 4000
+target_range = 4000
 angle_i = 60.0
 target = geo.make_rectangle(a,b)
+api.load_stl_mesh_to_cuda(target, 0)
+
+field_surface = geo.make_rectangle(10,10, False)
+for i in range(5):
+    field_surface = geo.halve_facets(field_surface)
+#api.load_stl_mesh_to_cuda(field_surface, 2)
 
 #stl_mesh = mesh.Mesh.from_file('./testing/rectangular_plate.stl')
 angle_i = [angle_i]
-source_pnts= geo.generate_field_points(range, angle_i)
-angle_i = [-angle_i[0]]
+source_pnts= geo.generate_field_points(target_range, angle_i)
+
 angles = np.linspace(-180, 180, 360, endpoint=False)
-field_pnts= geo.generate_field_points(range, angles)
+field_pnts= geo.generate_field_points(target_range, angles)
 
 
 api.load_points_to_cuda(source_pnts, isSource=True)
 api.load_points_to_cuda(field_pnts, isSource=False)
 api.set_initial_conditions(cp, frequency, 0.0)
-api.load_stl_mesh_to_cuda(target)
+
 api.render_cuda()
 field_vals = api.GetFieldPoints(len(field_pnts))
 api.TearDownCuda()
@@ -105,7 +111,7 @@ print("range >> 2*D^2/lambda, ",range," >> ",2*D*D/wavelength)
 TES = 20 * np.log10(A / (2*wavelength))
 # TES = 20*np.log10((k*A)/(4*np.pi))
 
-atten = 20*np.log10(range)
+atten = 20*np.log10(target_range)
 print('Attenuation = ', atten)
 
 index = np.where(angles == 0)[0][0] 
@@ -127,5 +133,6 @@ plt.grid(True)
 plt.legend()
 plt.show()
 
+api.render_openGL()
 
 

@@ -52,10 +52,12 @@ private:
     int window_height = 600;
 
 protected:
-    std::vector<Object *> targetObjects;
     bool usingOpenGL = true;
+    std::vector<Object *> targetObjects;
+    std::vector<Object *> fieldObjects;
+    std::vector<Object *> sourceObjects;
 
     std::vector<PressurePoint *> sourcePoints;
-    std::vector<PressurePoint *> feildPoints;
+    std::vector<PressurePoint *> fieldPoints;
 };
 #endif

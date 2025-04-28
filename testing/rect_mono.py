@@ -43,7 +43,6 @@ def do_monostatic_rotation():
     angles = np.linspace(0, 90, 91, endpoint=False)
     pnts = geo.generate_field_points(target_range, angles)
     res = mh.monostatic_iterated(pnts, target, cp, frequency)
-
     tes = mh.results_to_TES(res, target_range)
     tes_ana = mono_rectangle_tes(a,b,wavelength,target_range, angles)
 
@@ -62,5 +61,6 @@ def do_monostatic_rotation():
     return error
 
 do_monostatic_rotation()
+# api.render_openGL()
 
 

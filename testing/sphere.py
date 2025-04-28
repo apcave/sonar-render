@@ -19,10 +19,16 @@ import math
 a = 3.0
 b = 2.0
 cp = 1480.0
-frequency = 1e3
+frequency = 4e3
 target_range = 4000
 angle_i = 0.0
 target = geo.load_stl_file("./testing/sphere_1m_radius.stl")
+field_surface = geo.make_rectangle(10,10, False)
+
+for i in range(5):
+    field_surface = geo.halve_facets(field_surface)
+
+
 
 angle_i = [0]
 source_pnts= geo.generate_field_points(target_range, angle_i)
@@ -33,7 +39,9 @@ field_pnts= geo.generate_field_points(target_range, angles)
 api.load_points_to_cuda(source_pnts, isSource=True)
 api.load_points_to_cuda(field_pnts, isSource=False)
 api.set_initial_conditions(cp, frequency, 0.0)
-api.load_stl_mesh_to_cuda(target)
+api.load_stl_mesh_to_cuda(target, 0) # 0 is for target object.
+api.load_stl_mesh_to_cuda(field_surface, 2) # 1 is for field surface.
+
 api.render_cuda()
 field_vals = api.GetFieldPoints(len(field_pnts))
 

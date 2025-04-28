@@ -1,6 +1,8 @@
 #ifndef _OPEN_GL_FACET
 #define _OPEN_GL_FACET
 
+#include "Globals.h"
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <cuda_runtime.h>
@@ -42,5 +44,7 @@ protected:
     cudaSurfaceObject_t surface;
     cudaGraphicsResource *cudaResource = nullptr;
     bool readyToRender;
+
+    ObjectType objectType = OBJECT_TYPE_TARGET;
 };
 #endif

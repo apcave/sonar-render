@@ -27,6 +27,7 @@ public:
 
     void WriteSurface(float *dev_frag_stats);
     void GetSurfaceScalers(float *dev_frag_stats);
+    void PrintMatrix();
 
 private:
     // Area of the fragment.

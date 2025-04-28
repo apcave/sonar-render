@@ -92,8 +92,9 @@ void Facet::CalculateCentroid()
 	Centroid.z = (v1.z + v2.z + v3.z) / 3.0f;
 }
 
-Facet::Facet(float3 t_v1, float3 t_v2, float3 t_v3)
+Facet::Facet(float3 t_v1, float3 t_v2, float3 t_v3, ObjectType type)
 {
+	objectType = type;
 	v1 = t_v1;
 	v2 = t_v2;
 	v3 = t_v3;
@@ -336,7 +337,7 @@ void Facet::MakeFragmentData(float frag_length)
 	yxR = nullptr;
 }
 
-void Facet::PrintMatrix()
+void Facet::PrintAreaMatrix()
 {
 	std::cout << std::fixed << std::setprecision(4); // Set 2 decimal places
 

@@ -10,7 +10,7 @@ using namespace std;
 
 Model modelTes;
 
-extern "C" void load_geometry(float *v1, int num_vertices);
+// extern "C" void load_geometry(float *v1, int num_vertices, int objectType);
 extern "C" void load_field_points(float *v1, int num_feild_points);
 extern "C" void load_source_points(float *v1, int num_source_points);
 extern "C" void set_initial_conditions(float cp, float frequency, float attenuation, float density);
@@ -24,9 +24,11 @@ extern "C" void set_initial_conditions(float cp, float frequency, float attenuat
     modelTes.set_inital_conditions(cp, frequency, attenuation, density);
 };
 
-extern "C" void load_geometry(float *v1, int num_vertices)
+extern "C" void load_geometry(float *v1, int num_vertices, int objectType)
 {
-    auto object = new Object();
+
+    auto ot = safeConvertToEnum(objectType);
+    auto object = new Object(ot);
 
     for (int i = 0; i < num_vertices; ++i)
     {

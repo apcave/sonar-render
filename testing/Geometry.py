@@ -45,21 +45,32 @@ def generate_field_points(radius, angles):
     """Generate field points in the x-z plane at 1-degree spacing."""
     field_points = []
     for i in angles:
-        angle = math.radians(i+90)  # Convert degrees to radians
-        x = radius * math.cos(angle)
-        z = radius * math.sin(angle)
+        angle = math.radians(i)  # Convert degrees to radians
+        x = radius * math.sin(angle)
+        z = radius * math.cos(angle)
         y = 0.0  # y-coordinate is 0 in the x-z plane
         field_points.append([x, y, z])
     return field_points
 
-def make_rectangle(length, width):
+def make_rectangle(length, width, xy_plane=True):
     # Define the vertices of the rectangular plate
-    vertices = np.array([
-        [-length/2, -width/2, 0.0],  # Vertex 0
-        [ length/2, -width/2, 0.0],  # Vertex 1
-        [ length/2, width/2, 0.0],  # Vertex 2
-        [-length/2, width/2, 0.0],  # Vertex 3
-    ])
+
+
+    if xy_plane:
+        vertices = np.array([
+            [-length/2, -width/2, 0.0],  # Vertex 0
+            [ length/2, -width/2, 0.0],  # Vertex 1
+            [ length/2, width/2, 0.0],  # Vertex 2
+            [-length/2, width/2, 0.0],  # Vertex 3
+        ])
+    else:
+        # Alternatively, define the vertices in the x-z plane
+        vertices = np.array([
+            [-length/2, 0.0, -width/2],  # Vertex 0
+            [ length/2, 0.0, -width/2],  # Vertex 1
+            [ length/2, 0.0, width/2],   # Vertex 2
+            [-length/2, 0.0, width/2],   # Vertex 3
+        ])
 
     # Define the two triangular facets using the vertices
     # Each row represents a triangle (3 vertices)
@@ -90,3 +101,44 @@ def load_stl_file(file_path):
     except Exception as e:
         print(f"Error loading STL file '{file_path}': {e}")
         return None
+    
+
+def halve_facets(stl_mesh):
+    """Halve all facets in an STL mesh while maintaining normals."""
+    # Create a list to store the new facets
+    new_vectors = []
+    new_normals = []
+
+    for i in range(len(stl_mesh.vectors)):
+        # Get the vertices of the current triangle
+        v1, v2, v3 = stl_mesh.vectors[i]
+
+        # Calculate the midpoints of each edge
+        mid12 = (v1 + v2) / 2
+        mid23 = (v2 + v3) / 2
+        mid31 = (v3 + v1) / 2
+
+        # Create two new triangles using the midpoints
+        # Triangle 1: v1, mid12, mid31
+        new_vectors.append([v1, mid12, mid31])
+        # Triangle 2: mid12, v2, mid23
+        new_vectors.append([mid12, v2, mid23])
+        # Triangle 3: mid23, v3, mid31
+        new_vectors.append([mid23, v3, mid31])
+        # Triangle 4: mid12, mid23, mid31
+        new_vectors.append([mid12, mid23, mid31])
+
+        # Use the original normal for all new triangles
+        normal = stl_mesh.normals[i]
+        new_normals.extend([normal, normal, normal, normal])
+
+    # Convert the new vectors and normals to numpy arrays
+    new_vectors = np.array(new_vectors)
+    new_normals = np.array(new_normals)
+
+    # Create a new mesh with the new facets
+    new_mesh = mesh.Mesh(np.zeros(new_vectors.shape[0], dtype=mesh.Mesh.dtype))
+    new_mesh.vectors = new_vectors
+    new_mesh.normals = new_normals
+
+    return new_mesh    

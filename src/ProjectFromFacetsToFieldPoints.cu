@@ -81,7 +81,7 @@ __global__ void ProjectFacetToFieldPointKernel(
 
     if (sc < 0)
     {
-        // printf("Normal doesn't align, not adding to field point.\n");
+        printf("Normal doesn't align, not adding to field point.\n");
         return;
     }
 
@@ -130,9 +130,13 @@ int ModelCuda::ProjectFromFacetsToFieldPoints()
 
     for (auto object : targetObjects)
     {
-        for (auto facet : object->facets)
+        int numSrc = object->facets.size();
+        for (int srcCnt = 0; numSrc > srcCnt; srcCnt++)
         {
-            for (int field_point_num = 0; field_point_num < host_num_field_points; field_point_num++)
+
+            auto facet = object->facets[srcCnt];
+
+            for (int dstCnt = 0; dstCnt < host_num_field_points; dstCnt++)
             {
                 dim3 threadsPerBlock(facet->frag_points.x, 1);
                 dim3 numBlocks(facet->frag_points.y, 1);
@@ -140,10 +144,12 @@ int ModelCuda::ProjectFromFacetsToFieldPoints()
                 // printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
                 // printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
 
+                printf("Projecting facet %d to field point %d.\n", srcCnt, dstCnt);
+
                 ProjectFacetToFieldPointKernel<<<numBlocks, threadsPerBlock>>>(
                     dev_k_wave,
                     dev_frag_delta,
-                    field_point_num,
+                    dstCnt,
                     dev_field_points_position,
                     dev_field_points_pressure,
                     facet->dev_data,
@@ -159,6 +165,7 @@ int ModelCuda::ProjectFromFacetsToFieldPoints()
                 }
             }
         }
+        // object->PrintSurfacePressure();
     }
     // More testing is required on large models to see how CUDA manages the cores.
     cudaDeviceSynchronize();

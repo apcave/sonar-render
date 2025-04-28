@@ -149,21 +149,33 @@ int ModelCuda::StopCuda()
 
 int ModelCuda::DoCalculations()
 {
-
-    if (ProjectSourcePointsToFacet() != 0)
+    std::cout << "Source Points to target." << std::endl;
+    if (ProjectSourcePointsToFacet(targetObjects) != 0)
     {
-        printf("ProjectSourcePointsToFacet failed.\n");
+        printf("Project from source points to target object.\n");
         return 1;
     }
 
-    for (int i = 0; i < 0; i++)
-    {
-        if (ProjectFromFacetsToFacets() != 0)
-        {
-            printf("ProjectFromFacetsToFacets failed.\n");
-            return 1;
-        }
-    }
+    std::cout << "Source Points to field." << std::endl;
+    // The field surfaces include the incident and scattered waves.
+    // if (ProjectSourcePointsToFacet(fieldObjects) != 0)
+    // {
+    //     printf("Project from source points to field object.\n");
+    //     return 1;
+    // }
+
+    std::cout << "Projecting from target to field surface." << std::endl;
+    // ProjectFromFacetsToFacets(targetObjects, fieldObjects, false);
+    //  std::cout << "Done projecting from target to field surface." << std::endl;
+
+    // for (int i = 0; i < 0; i++)
+    // {
+    //     if (ProjectFromFacetsToFacets() != 0)
+    //     {
+    //         printf("ProjectFromFacetsToFacets failed.\n");
+    //         return 1;
+    //     }
+    // }
 
     if (ProjectFromFacetsToFieldPoints() != 0)
     {
@@ -187,6 +199,12 @@ void ModelCuda::WriteCudaToGlTexture()
     {
         object->WriteSurfaceToGlTexture(dev_frag_stats);
     }
+
+    for (auto object : fieldObjects)
+    {
+        std::cout << "Writing field object to OpenGL texture." << std::endl;
+        object->WriteSurfaceToGlTexture(dev_frag_stats);
+    }
 }
 
 int ModelCuda::GetSurfaceScalers()
@@ -199,6 +217,12 @@ int ModelCuda::GetSurfaceScalers()
     {
         object->GetSurfaceScalers(dev_frag_stats);
     }
+
+    for (auto object : fieldObjects)
+    {
+        object->GetSurfaceScalers(dev_frag_stats);
+    }
+
     return 1;
 }
 

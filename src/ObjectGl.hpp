@@ -1,6 +1,7 @@
 #ifndef _OBJECT_GL
 #define _OBJECT_GL
 
+#include "Globals.h"
 #include "Facet.hpp"
 
 #include <vector>
@@ -27,5 +28,8 @@ private:
 private:
     GLuint vbo = 0;
     GLuint vao = 0;
+
+public:
+    ObjectType objectType = OBJECT_TYPE_TARGET;
 };
 #endif

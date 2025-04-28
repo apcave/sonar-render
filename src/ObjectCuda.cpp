@@ -33,3 +33,11 @@ void ObjectCuda::MakeCudaObjects()
         facet->MakeCuda();
     }
 }
+
+void ObjectCuda::PrintSurfacePressure()
+{
+    for (auto facet : facets)
+    {
+        facet->PrintMatrix();
+    }
+}

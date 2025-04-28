@@ -1,7 +1,8 @@
 #include "Object.hpp"
 
-Object::Object()
+Object::Object(ObjectType type)
 {
+    objectType = type;
 }
 
 Object::~Object()
@@ -12,7 +13,7 @@ void Object::AddFacet(float3 v1, float3 v2, float3 v3)
 {
     // Add the facet to the target object
     // This is a placeholder for the actual implementation
-    auto facet = new Facet(v1, v2, v3);
+    auto facet = new Facet(v1, v2, v3, objectType);
     facets.push_back(facet);
 }
 

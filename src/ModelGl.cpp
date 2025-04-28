@@ -224,6 +224,11 @@ void ModelGl::ProcessFrame()
             object->RenderObject(textureUniformLoc);
         }
 
+        for (auto object : fieldObjects)
+        {
+            object->RenderObject(textureUniformLoc);
+        }
+
         // Swap buffers and poll events
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -237,9 +242,17 @@ void ModelGl::ProcessFrame()
 
 int ModelGl::MakeObjectsOnGl()
 {
+    std::cout << "TODO: Add Objects without Textures." << std::endl;
     for (auto object : targetObjects)
     {
         object->AllocateGl();
     }
+
+    for (auto object : fieldObjects)
+    {
+        std::cout << "Allocating OpenGL for field object." << std::endl;
+        object->AllocateGl();
+    }
+
     return 0;
 }

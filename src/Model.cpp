@@ -5,7 +5,7 @@ void Model::addFeildPoint(float3 p1)
     // Add the field point to the model
     // This is a placeholder for the actual implementation
     auto fieldPoint = new PressurePoint(p1);
-    feildPoints.push_back(fieldPoint);
+    fieldPoints.push_back(fieldPoint);
 
     // printf("Field Point: %f %f %f\n", fieldPoint->position.x, fieldPoint->position.y, fieldPoint->position.z);
 }
@@ -25,7 +25,20 @@ void Model::addTargetObject(Object *object)
 {
     // Add the target object to the model
     // This is a placeholder for the actual implementation
-    targetObjects.push_back(object);
+    switch (object->objectType)
+    {
+    case OBJECT_TYPE_TARGET:
+        targetObjects.push_back(object);
+        break;
+    case OBJECT_TYPE_SOURCE:
+        sourceObjects.push_back(object);
+        break;
+    case OBJECT_TYPE_FIELD:
+        fieldObjects.push_back(object);
+        break;
+    default:
+        break;
+    }
 }
 
 void Model::set_inital_conditions(float cp, float t_frequency, float attenuation, float t_density)
@@ -48,6 +61,11 @@ void Model::MakeFragments()
     {
         object->MakeFragmentData(frag_length);
     }
+
+    for (auto object : fieldObjects)
+    {
+        object->MakeFragmentData(frag_length);
+    }
 }
 
 void Model::RenderCuda()
@@ -63,8 +81,13 @@ void Model::RenderCuda()
         object->MakeCudaObjects();
     }
 
+    // for (auto object : fieldObjects)
+    // {
+    //     object->MakeCudaObjects();
+    // }
+
     MakeSourcePointsOnGPU(sourcePoints);
-    MakeFieldPointsOnGPU(feildPoints);
+    MakeFieldPointsOnGPU(fieldPoints);
 
     DoCalculations();
 }
@@ -95,6 +118,6 @@ void Model::RenderOpenGL()
 void Model::TearDownModel()
 {
     sourcePoints.clear();
-    feildPoints.clear();
+    fieldPoints.clear();
     StopCuda();
 }

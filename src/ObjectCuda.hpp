@@ -11,6 +11,7 @@ public:
     void MakeCudaObjects();
     void GetSurfaceScalers(float *dev_frag_stats);
     void WriteSurfaceToGlTexture(float *dev_frag_stats);
+    void PrintSurfacePressure();
 };
 
 #endif

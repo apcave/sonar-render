@@ -8,7 +8,7 @@ typedef struct
     int *output;                   // Output buffer for results
     float3 *vp1;                   // Source Position
     float3 *vp2;                   // Destination Position (1024 max)
-    int numSrcPoints;              // Number of source points
+    int numDstPoints;              // Number of source points
 } Params;
 
 #endif

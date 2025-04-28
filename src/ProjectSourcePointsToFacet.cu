@@ -40,13 +40,13 @@ __global__ void ProjectSourcePointToFacetKernel(
 
     int index = yPnt * NumXpnts + xPnt;
 
-    float A_i = frag_area[index];
+    // float A_i = frag_area[index];
 
-    if (A_i == 0)
-    {
-        // printf("facets_PixelArea is zero\n");
-        return;
-    }
+    // if (A_i == 0)
+    // {
+    //     // printf("facets_PixelArea is zero\n");
+    //     return;
+    // }
 
     float3 pg_i = source_points_position[source_point_num];
     dcomplex source_pressure = source_points_pressure[source_point_num];
@@ -99,40 +99,39 @@ __global__ void ProjectSourcePointToFacetKernel(
     atomicAddDouble(&Pi_facet[index], R.i);
 }
 
-int ModelCuda::ProjectSourcePointsToFacet()
+int ModelCuda::ProjectSourcePointsToFacet(std::vector<Object *> &target)
 {
-
+    printf("Projecting source points to facets.\n");
     // Every facet can have a different number of pixels, where n = 1096^0.5 is the maximum number of pixels per facet.
     int *hasColision = 0;
     std::vector<float3> srcPnts;
-    for (int source_point_num = 0; source_point_num < host_num_source_points; source_point_num++)
+    int numScr = sourcePoints.size();
+    printf("number of source points: %d\n", numScr);
+    for (int srcCnt = 0; numScr > srcCnt; srcCnt++)
     {
+        printf("Doing source point %d of %d.\n", srcCnt, numScr);
         srcPnts.clear();
-        auto srcPnt = sourcePoints[source_point_num];
+        auto srcPnt = sourcePoints[srcCnt];
         srcPnts.push_back(srcPnt->position);
 
-        for (auto object : targetObjects)
+        for (auto object : target)
         {
             auto dstPnts = object->GetCentroids();
 
             printf("Doing collision detection.\n");
             hasColision = OptiXCol.DoCollisions(srcPnts, dstPnts);
-
-            int facCnt = 0;
+            int numDst = dstPnts.size();
+            int dstCnt = 0;
             for (auto facet : object->facets)
             {
-                if (hasColision[facCnt] == 1)
+                if (hasColision[srcCnt * numDst + dstCnt] == 1)
                 {
                     // printf("Collision detected.\n");
-                    facCnt++;
+                    dstCnt++;
                     continue;
                 }
-                else
-                {
-                    printf("No collision detected.\n");
-                }
                 printf("Facet: %f, %f, %f\n", facet->Centroid.x, facet->Centroid.y, facet->Centroid.z);
-                printf("Source Point: %f, %f, %f\n", srcPnt->position.x, srcPnt->position.y, srcPnt->position.z);
+                // printf("Source Point: %f, %f, %f\n", srcPnt->position.x, srcPnt->position.y, srcPnt->position.z);
 
                 dim3 threadsPerBlock(facet->frag_points.x, 1);
                 dim3 numBlocks(facet->frag_points.y, 1);
@@ -140,7 +139,7 @@ int ModelCuda::ProjectSourcePointsToFacet()
                 ProjectSourcePointToFacetKernel<<<numBlocks, threadsPerBlock>>>(
                     dev_k_wave,
                     dev_frag_delta,
-                    source_point_num,
+                    srcCnt,
                     dev_source_points_position,
                     dev_source_points_pressure,
                     facet->dev_data,
@@ -151,10 +150,10 @@ int ModelCuda::ProjectSourcePointsToFacet()
                 cudaError_t err = cudaGetLastError();
                 if (err != cudaSuccess)
                 {
-                    printf("Kernel launch failed: %s\n", cudaGetErrorString(err));
+                    printf("Point to Facet Kernel launch failed: %s\n", cudaGetErrorString(err));
                     return 1;
                 }
-                facCnt++;
+                dstCnt++;
             }
 
             if (hasColision)

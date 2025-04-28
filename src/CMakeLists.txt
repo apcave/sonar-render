@@ -32,7 +32,7 @@ set(CPP_SRC
     ObjectCuda.cpp
     ObjectGl.cpp
     Collision.cpp
-
+    Globals.cpp
 )
 
 # Apply -optix-ir only to specific files

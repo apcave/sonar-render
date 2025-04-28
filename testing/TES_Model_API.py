@@ -27,11 +27,11 @@ def load_points_to_cuda(points, isSource=False):
         cpp_lib.load_field_points(v0_ptr, num_points)
 
 
-def load_stl_mesh_to_cuda(stl_mesh, isSource=False):
+def load_stl_mesh_to_cuda(stl_mesh, object_type):
     """Loads a geometry that can be a source or a target to the CUDA library."""
 
     # Define the function signature in the shared library
-    cpp_lib.load_geometry.argtypes = [ctypes.POINTER(ctypes.c_float), ctypes.c_int]
+    cpp_lib.load_geometry.argtypes = [ctypes.POINTER(ctypes.c_float), ctypes.c_int, ctypes.c_int]
     cpp_lib.load_geometry.restype = None
 
 
@@ -40,7 +40,7 @@ def load_stl_mesh_to_cuda(stl_mesh, isSource=False):
     # Pass the array to C++
     v0_ptr = flattened.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
  
-    cpp_lib.load_geometry(v0_ptr, num_facets)
+    cpp_lib.load_geometry(v0_ptr, num_facets, object_type)
 
 def render_cuda():
     """Pixelate the facets of the STL mesh."""

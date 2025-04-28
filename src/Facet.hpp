@@ -2,6 +2,7 @@
 #define _FacetData
 
 #include "FacetCuda.hpp"
+#include "Globals.h"
 
 #include <iostream>
 #include "GeoMath.h"
@@ -38,11 +39,11 @@ private:
 	float delta;
 
 public:
-	Facet(float3 t_v1, float3 t_v2, float3 t_v3);
+	Facet(float3 t_v1, float3 t_v2, float3 t_v3, ObjectType type);
 	~Facet();
 
 public:
-	void PrintMatrix();
+	void PrintAreaMatrix();
 	void MakeCuda();
 
 	void CompressPixels();

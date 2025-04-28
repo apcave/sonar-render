@@ -14,65 +14,44 @@
  */
 __global__ void ProjectFromFacetsToFacetsKernel(
     dcomplex *k_wave,
-    float *pixel_delta,
-    int facet_num_A,
-    int facet_num_B,
-    int3 *facet_Points,
-    float3 *base_points,
-    float3 *facets_xaxis,
-    float3 *facets_yaxis,
-    float **facets_PixelArea,
-    double *Pr_acc_A,
-    double *Pi_acc_A,
-    double *Pr_acc_B,
-    double *Pi_acc_B,
-
-    double *Pr_ini_A,
-    double *Pi_ini_A,
-    double *Pr_ini_B,
-    double *Pi_ini_B,
-
-    double *Pr_res_A,
-    double *Pi_res_A,
-    double *Pr_res_B,
-    double *Pi_res_B)
+    float *frag_delta,
+    dev_facet *src_facet_data,
+    float *src_frag_area,
+    double *src_Pr_facet,
+    double *src_Pi_facet,
+    dev_facet *dst_facet_data,
+    float *dst_frag_area,
+    double *dst_Pr_facet,
+    double *dst_Pi_facet)
 {
-
     dcomplex k = *k_wave;
-    float delta = *pixel_delta;
+    float delta = *frag_delta;
 
     // Kernel code to project point to point
-    // printf("ThreadIdx.x: %d, ThreadIdx.y: %d, blockIdx.x: %d, blockDim.x: %d\n", threadIdx.x, threadIdx.y, blockIdx.x, blockDim.x);
-    int xPnt_A = threadIdx.x;
-    int yPnt_A = blockIdx.x;
+    // printf("ThreadIdx.x: %d, ThreadIdx.y: %d, blockIdx.x: %d, blockIdx.y: %d\n", threadIdx.x, threadIdx.y, blockIdx.x, blockIdx.y);
 
-    int xPnt_B = blockIdx.y;
-    int yPnt_B = blockIdx.z;
+    int xPnt_A = threadIdx.x;
+    int yPnt_A = threadIdx.y;
+
+    int xPnt_B = blockIdx.x;
+    int yPnt_B = blockIdx.y;
 
     // To keep calculation even do not do a double projection when the two facets are the same.
     // bool skipReciprosity = facet_num_A == facet_num_B;
 
-    // Do not do self projection the radius is zero.
-    if (facet_num_A == facet_num_B && xPnt_A == xPnt_B && yPnt_A == yPnt_B)
-    {
-        return;
-    }
+    int NumXpnts_A = src_facet_data->frag_points.x;
+    int NumXpntsNegative_A = src_facet_data->frag_points.z;
 
-    int NumXpnts_A = facet_Points[facet_num_A].x;
-    int NumXpntsNegative_A = facet_Points[facet_num_A].z;
-
-    int NumXpnts_B = facet_Points[facet_num_B].x;
-    int NumXpntsNegative_B = facet_Points[facet_num_B].z;
+    int NumXpnts_B = dst_facet_data->frag_points.x;
+    int NumXpntsNegative_B = dst_facet_data->frag_points.z;
 
     int index_A = yPnt_A * NumXpnts_A + xPnt_A;
     int index_B = yPnt_B * NumXpnts_B + xPnt_B;
 
-    float pixel_area_A = facets_PixelArea[facet_num_A][index_A];
-    float pixel_area_B = facets_PixelArea[facet_num_B][index_B];
-    if (pixel_area_A == 0 || pixel_area_B == 0)
-    {
-        return;
-    }
+    // Always calculate the pressure even if the destination area is zero.
+    // It doesn't take extra time and can be used for the texture.
+    float A_i = src_frag_area[index_A];
+    // float pixel_area_B = dst_frag_area[index_B];
 
     // This is the x offset from the base point to the approximate centriod of the pixel.
     float xoffset_A = delta * (xPnt_A - NumXpntsNegative_A) + delta / 2; // This value can be negative.
@@ -81,11 +60,11 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     float yoffset_A = delta * yPnt_A + delta / 2;
     float yoffset_B = delta * yPnt_B + delta / 2;
 
-    float3 xAxis_A = facets_xaxis[facet_num_A];
-    float3 xAxis_B = facets_xaxis[facet_num_B];
+    float3 xAxis_A = src_facet_data->xAxis;
+    float3 xAxis_B = dst_facet_data->xAxis;
 
-    float3 yAxis_A = facets_yaxis[facet_num_A];
-    float3 yAxis_B = facets_yaxis[facet_num_B];
+    float3 yAxis_A = src_facet_data->yAxis;
+    float3 yAxis_B = dst_facet_data->yAxis;
 
     xAxis_A.x = xoffset_A * xAxis_A.x;
     xAxis_A.y = xoffset_A * xAxis_A.y;
@@ -103,97 +82,63 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     yAxis_B.y = yoffset_B * yAxis_B.y;
     yAxis_B.z = yoffset_B * yAxis_B.z;
 
-    float3 facet_base_A = base_points[facet_num_A];
-    float3 PAg; // Point A global reference.
-    PAg.x = xAxis_A.x + yAxis_A.x + facet_base_A.x;
-    PAg.y = xAxis_A.y + yAxis_A.y + facet_base_A.y;
-    PAg.z = xAxis_A.z + yAxis_A.z + facet_base_A.z;
+    float3 facet_base_A = src_facet_data->base_point;
+    float3 r_i; // Point A global reference.
+    r_i.x = xAxis_A.x + yAxis_A.x + facet_base_A.x;
+    r_i.y = xAxis_A.y + yAxis_A.y + facet_base_A.y;
+    r_i.z = xAxis_A.z + yAxis_A.z + facet_base_A.z;
 
-    float3 facet_base_B = base_points[facet_num_B];
-    float3 PBg;
-    PBg.x = xAxis_B.x + yAxis_B.x + facet_base_B.x;
-    PBg.y = xAxis_B.y + yAxis_B.y + facet_base_B.y;
-    PBg.z = xAxis_B.z + yAxis_B.z + facet_base_B.z;
+    float3 facet_base_B = dst_facet_data->base_point;
+    float3 r_j;
+    r_j.x = xAxis_B.x + yAxis_B.x + facet_base_B.x;
+    r_j.y = xAxis_B.y + yAxis_B.y + facet_base_B.y;
+    r_j.z = xAxis_B.z + yAxis_B.z + facet_base_B.z;
 
-    dcomplex PA_press;
-    PA_press.r = Pr_acc_A[index_A];
-    PA_press.i = Pi_acc_A[index_A];
-    ;
+    dcomplex p_i;
+    p_i.r = src_Pr_facet[index_A];
+    p_i.i = src_Pi_facet[index_A];
 
-    dcomplex PB_press;
-    PB_press.r = Pr_acc_B[index_B];
-    PB_press.i = Pi_acc_B[index_B];
-    ;
+    float3 vr_ij = MakeVector(r_i, r_j);
+    float r_ij = GetVectorLength(vr_ij);
+    float3 ur_ij = DivideVector(vr_ij, r_ij);
 
-    // The distance from the source point to the facet point.
-    float r_AB = sqrtf((PAg.x - PBg.x) * (PAg.x - PBg.x) + (PAg.y - PBg.y) * (PAg.y - PBg.y) + (PAg.z - PBg.z) * (PAg.z - PBg.z));
+    float3 n = src_facet_data->normal;
+    double sc = (double)DotProduct(ur_ij, n);
 
-    // printf("Distance from pixel to field point: %f\n", r_sf);
+    if (sc < 0)
+    {
+        // printf("Normal doesn't align, not adding to field point.\n");
+        return;
+    }
 
-    // P2 = P2*exp(-i*k*r_sf)
     dcomplex i = devComplex(0, 1);
-    dcomplex var = devCmul(i, k);
-    var = devRCmul(r_AB, var);
-    var = devCexp(var);                                // This has phase and attenuation.
-    dcomplex delta_Press_atB = devCmul(var, PA_press); // This includes the orginal pressure.
-    dcomplex delta_Press_atA = devCmul(var, PB_press);
+    dcomplex ik = devCmul(i, k);
+    dcomplex exp_ikr = devRCmul(r_ij, ik);
+    exp_ikr = devCexp(exp_ikr); // This has phase and attenuation.
 
-    // Area1 = Pressure the 1Pa over 1m^2
-    // Area2 = 4 * PI * r_sf * r_sf
-    // atten_spread = Area1 / Area2 <--- important for other projections.
-    // Intergral Area Terms and half spherical spread.
-    float att_spread_AB = pixel_area_A * pow(pixel_area_A / (2 * M_PI * r_AB * r_AB), 0.5);
-    float att_spread_BA = pixel_area_B * pow(pixel_area_B / (2 * M_PI * r_AB * r_AB), 0.5);
+    double p = -1 / (4 * PI);
+    dcomplex Gt = devRCmul(p, exp_ikr);
 
-    // float att_spread_AB = pixel_area_A * pixel_area_B / r_AB;
-    // float att_spread_BA = pixel_area_A * pixel_area_B / r_AB;
+    dcomplex dG_dr_a = devRCmul(1 / r_ij, ik); // First term.
+    double dG_dr_b = 1 / (r_ij * r_ij);        // Second term often ignored useful for near field.
+    dcomplex dG_dr = dG_dr_a;
+    dG_dr.r += dG_dr_b;
+    dG_dr = devCmul(dG_dr, Gt); // This is the derivative of the Greens function.
 
-    if (att_spread_AB > 1.0)
+    dcomplex result = devRCmul(A_i * sc, dG_dr); // Area term for the integral.
+    result = devCmul(result, p_i);               // This includes the original pressure.
+
+    if (devCabs(result) > 1.0)
     {
-        printf("att_spread_AB: %f\n", att_spread_AB);
-        att_spread_AB = 1.0;
-    }
-    if (att_spread_BA > 1.0)
-    {
-        printf("att_spread_BA: %f\n", att_spread_BA);
-        att_spread_BA = 1.0;
-    }
-
-    delta_Press_atA = devRCmul(att_spread_BA, delta_Press_atA);
-    delta_Press_atB = devRCmul(att_spread_AB, delta_Press_atB);
-    // printf("Spherical spread: %f\n", att_spread);
-
-    if (devCabs(delta_Press_atB) > 1.0)
-    {
-        printf("Pressure is too large to add to field point.\n");
-        printf("r_AB: %f\n", r_AB);
-        printf("source_pressure: %e, %e\n", PA_press.r, PA_press.i);
-        printf("Spherical spread: %e\n", att_spread_AB);
-        printf("Pressure add to field point prior to spreading: %e, %e\n", delta_Press_atB.r, delta_Press_atB.i);
+        printf("Pressure is too large to add to surface point.\n");
+        printf("r_ij: %f\n", r_ij);
+        printf("source_pressure: %e, %e\n", p_i.r, p_i.i);
+        // printf("Spherical spread: %e\n", realTerms);
+        printf("Pressure to field point prior to spreading: %e, %e\n", result.r, result.i);
         return;
     }
-
-    if (devCabs(delta_Press_atA) > 1.0)
-    {
-        printf("Pressure is too large to add to field point.\n");
-        printf("r_AB: %f\n", r_AB);
-        printf("source_pressure: %e, %e\n", PB_press.r, PB_press.i);
-        printf("Spherical spread: %e\n", att_spread_AB);
-        printf("Pressure add to field point prior to spreading: %e, %e\n", delta_Press_atA.r, delta_Press_atA.i);
-        return;
-    }
-
-    // printf("Pressure added to field point: %f, %f\n", var.r, var.i);
-
-    atomicAddDouble(&Pr_acc_A[index_A], delta_Press_atA.r);
-    atomicAddDouble(&Pi_acc_A[index_A], delta_Press_atA.i);
-    atomicAddDouble(&Pr_acc_B[index_B], delta_Press_atB.r);
-    atomicAddDouble(&Pi_acc_B[index_B], delta_Press_atB.i);
-
-    atomicAddDouble(&Pr_res_A[index_A], delta_Press_atA.r);
-    atomicAddDouble(&Pi_res_A[index_A], delta_Press_atA.i);
-    atomicAddDouble(&Pr_res_B[index_B], delta_Press_atB.r);
-    atomicAddDouble(&Pi_res_B[index_B], delta_Press_atB.i);
+    atomicAddDouble(&(dst_Pr_facet[index_B]), result.r);
+    atomicAddDouble(&(dst_Pi_facet[index_B]), result.i);
 }
 
 /**
@@ -211,104 +156,62 @@ __global__ void ProjectFromFacetsToFacetsKernel(
  * The pressure transmitted get smaller and smaller and is acculutated every step.
  * So there is an upper bound on the accumulated pressure.
  */
-int ModelCuda::ProjectFromFacetsToFacets()
+int ModelCuda::ProjectFromFacetsToFacets(std::vector<Object *> &scrObjects, std::vector<Object *> &dstObjects, bool reciprocity)
 {
-    // // TODO: Restrict the pixel maxtrix to 1024 pixels.
-    // printf("ProjectFromFacetsToFacets .......\n");
+    for (auto srcOb : scrObjects)
+    {
+        auto srcPnts = srcOb->GetCentroids();
+        int numScr = srcPnts.size();
 
-    // cudaDeviceProp prop;
-    // cudaGetDeviceProperties(&prop, 0); // Query device 0
-    // printf("Max threads per block: %d\n", prop.maxThreadsPerBlock);
+        for (auto dstOb : dstObjects)
+        {
+            auto dstPnts = dstOb->GetCentroids();
+            printf("Doing collision detection.\n");
+            int *hasCollision = OptiXCol.DoCollisions(srcPnts, dstPnts);
+            int numDst = dstPnts.size();
 
-    // for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
-    // {
-    //     for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
-    //     {
-    //         int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
-    //         int buff_sz = h_Facets_points.x * h_Facets_points.y * sizeof(double);
-    //         cudaMemcpy((*dev_object_facet_InitialPr)[object_num][facet_num], dev_object_facet_Pr[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
-    //         cudaMemcpy((*dev_object_facet_InitialPi)[object_num][facet_num], dev_object_facet_Pi[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
-    //     }
-    // }
+            for (int srcCnt = 0; numScr > srcCnt; srcCnt++)
+            {
+                for (int dstCnt = 0; numDst > dstCnt; dstCnt++)
+                {
+                    printf("NumSrcFacets: %d, scrNum %d, NumDstFacets: %d, dstNum %d\n", numScr, srcCnt, numDst, dstCnt);
 
-    // for (int object_num_a = 0; object_num_a < host_object_num_facets.size(); object_num_a++)
-    // {
-    //     for (int facet_num_a = 0; facet_num_a < host_object_num_facets[object_num_a]; facet_num_a++)
-    //     {
-    //         for (int object_num_b = 0; object_num_b < host_object_num_facets.size(); object_num_b++)
-    //         {
-    //             for (int facet_num_b = 0; facet_num_b < host_object_num_facets[object_num_b]; facet_num_b++)
-    //             {
-    //                 // printf("Facet A: %d, %d <<--->> Facet B: %d, %d\n", object_num_a, facet_num_a, object_num_b, facet_num_b);
+                    if (hasCollision[srcCnt * numDst + dstCnt] == 1)
+                    {
+                        printf("Collision detected.\n");
+                        continue;
+                    }
+                    printf("Running Projection.\n");
+                    auto srcFacet = srcOb->facets[srcCnt];
+                    auto dstFacet = dstOb->facets[dstCnt];
 
-    //                 int3 h_Facets_a_points = host_Object_Facets_points[object_num_a][facet_num_a];
-    //                 int3 h_Facets_b_points = host_Object_Facets_points[object_num_b][facet_num_b];
+                    dim3 threadsPerBlock(srcFacet->frag_points.x, srcFacet->frag_points.y);
+                    dim3 numBlocks(dstFacet->frag_points.x, dstFacet->frag_points.y, 1);
 
-    //                 dim3 threadsPerBlock(h_Facets_a_points.x, 1);
-    //                 dim3 numBlocks(h_Facets_a_points.y, h_Facets_b_points.x, h_Facets_b_points.y);
+                    ProjectFromFacetsToFacetsKernel<<<numBlocks, threadsPerBlock>>>(
+                        dev_k_wave,
+                        dev_frag_delta,
+                        srcFacet->dev_data,
+                        srcFacet->dev_frag_area,
+                        srcFacet->dev_Pr,
+                        srcFacet->dev_Pi,
+                        dstFacet->dev_data,
+                        dstFacet->dev_frag_area,
+                        dstFacet->dev_Pr,
+                        dstFacet->dev_Pi);
+                    cudaError_t err = cudaGetLastError();
+                    if (err != cudaSuccess)
+                    {
+                        printf("Kernel launch failed: %s\n", cudaGetErrorString(err));
+                        return 1;
+                    }
+                }
+                cudaDeviceSynchronize();
+            }
 
-    //                 // printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
-    //                 //   printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
+            delete[] hasCollision;
+        }
+    }
 
-    //                 ProjectFromFacetsToFacetsKernel<<<numBlocks, threadsPerBlock>>>(
-    //                     dev_k_wave,
-    //                     dev_pixel_delta,
-    //                     facet_num_a,
-    //                     facet_num_b,
-    //                     dev_Object_Facets_points[0],
-    //                     dev_Object_base_points[0],
-    //                     dev_Object_Facets_xAxis[0],
-    //                     dev_Object_Facets_yAxis[0],
-    //                     dev_Object_Facets_PixelArea[0],
-    //                     dev_object_facet_Pr[0][facet_num_a],
-    //                     dev_object_facet_Pi[0][facet_num_a],
-    //                     dev_object_facet_Pr[0][facet_num_b],
-    //                     dev_object_facet_Pi[0][facet_num_b],
-    //                     (*dev_object_facet_InitialPr)[object_num_a][facet_num_a],
-    //                     (*dev_object_facet_InitialPi)[object_num_a][facet_num_a],
-    //                     (*dev_object_facet_InitialPr)[object_num_b][facet_num_b],
-    //                     (*dev_object_facet_InitialPi)[object_num_b][facet_num_b],
-    //                     (*dev_object_facet_ResultPr)[object_num_a][facet_num_a],
-    //                     (*dev_object_facet_ResultPi)[object_num_a][facet_num_a],
-    //                     (*dev_object_facet_ResultPr)[object_num_b][facet_num_b],
-    //                     (*dev_object_facet_ResultPi)[object_num_b][facet_num_b]);
-
-    //                 cudaError_t err = cudaGetLastError();
-    //                 if (err != cudaSuccess)
-    //                 {
-    //                     printf("Kernel launch failed: %s\n", cudaGetErrorString(err));
-    //                     return 1;
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
-    // cudaDeviceSynchronize();
-
-    // // Swap the results and the initial pressure.
-    // std::vector<std::vector<double *>> *tmp = dev_object_facet_InitialPr;
-    // dev_object_facet_InitialPr = dev_object_facet_ResultPr;
-    // dev_object_facet_ResultPr = tmp;
-
-    // tmp = dev_object_facet_InitialPi;
-    // dev_object_facet_InitialPi = dev_object_facet_ResultPi;
-    // dev_object_facet_ResultPi = tmp;
-
-    // // One mutex per facet, locks it so only one thread can write to the surface at a time.
-    // for (int object_num = 0; object_num < host_object_num_facets.size(); object_num++)
-    // {
-    //     for (int facet_num = 0; facet_num < host_object_num_facets[object_num]; facet_num++)
-    //     {
-    //         int3 h_Facets_points = host_Object_Facets_points[object_num][facet_num];
-    //         int buff_sz = h_Facets_points.x * h_Facets_points.y * sizeof(double);
-    //         cudaMemset((*dev_object_facet_ResultPr)[object_num][facet_num], 0, buff_sz);
-    //         cudaMemset((*dev_object_facet_ResultPi)[object_num][facet_num], 0, buff_sz);
-
-    //         // cudaMemcpy(dev_object_facet_Pr[object_num][facet_num], (*dev_object_facet_InitialPi)[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
-    //         // cudaMemcpy(dev_object_facet_Pi[object_num][facet_num], (*dev_object_facet_InitialPi)[object_num][facet_num], buff_sz, cudaMemcpyHostToHost);
-    //     }
-    // }
-
-    return 0;
+        return 0;
 }

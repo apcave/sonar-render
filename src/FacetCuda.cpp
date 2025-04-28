@@ -1,4 +1,5 @@
 #include "FacetCuda.hpp"
+#include <iostream>
 
 FacetCuda::FacetCuda()
 {
@@ -23,21 +24,38 @@ void FacetCuda::AllocateCuda(float3 &normal,
 
     cudaMalloc((void **)&dev_data, sizeof(dev_facet));
 
-    // Allocate device memory for the pressure data
-    cudaMalloc((void **)&dev_Pr, numXpnts * numYpnts * sizeof(double));
-    cudaMalloc((void **)&dev_Pi, numXpnts * numYpnts * sizeof(double));
+    // If the object is a source the surface pressure fixed to 1 across the surface.
+
+    if (objectType == OBJECT_TYPE_FIELD)
+    {
+        std::cout << "FacetCuda: AllocateCuda: Field object." << std::endl;
+        std::cout << "Number of fragment points: " << numXpnts * numYpnts << std::endl;
+    }
+
+    if (objectType == OBJECT_TYPE_TARGET || objectType == OBJECT_TYPE_FIELD)
+    {
+        // These buffers are used to store surface pressure values.
+
+        // Allocate device memory for the initial pressure data
+        cudaMalloc((void **)&dev_Pr, numXpnts * numYpnts * sizeof(double));
+        cudaMalloc((void **)&dev_Pi, numXpnts * numYpnts * sizeof(double));
+    }
 
     // Allocate device memory for the fragment area
     cudaMalloc((void **)&dev_frag_area, numXpnts * numYpnts * sizeof(float));
 
-    // Allocate device memory for the initial pressure data
-    cudaMalloc((void **)&dev_Pr_initial, numXpnts * numYpnts * sizeof(double));
-    cudaMalloc((void **)&dev_Pi_initial, numXpnts * numYpnts * sizeof(double));
+    if (objectType = OBJECT_TYPE_TARGET)
+    {
+        // These buffers are used for the facet to facet calculations.
 
-    // Allocate device memory for the result pressure data
-    cudaMalloc((void **)&dev_Pr_result, numXpnts * numYpnts * sizeof(double));
-    cudaMalloc((void **)&dev_Pi_result, numXpnts * numYpnts * sizeof(double));
+        // Allocate device memory for the initial pressure data
+        cudaMalloc((void **)&dev_Pr_initial, numXpnts * numYpnts * sizeof(double));
+        cudaMalloc((void **)&dev_Pi_initial, numXpnts * numYpnts * sizeof(double));
 
+        // Allocate device memory for the result pressure data
+        cudaMalloc((void **)&dev_Pr_result, numXpnts * numYpnts * sizeof(double));
+        cudaMalloc((void **)&dev_Pi_result, numXpnts * numYpnts * sizeof(double));
+    }
     cudaMemcpy(dev_data, &host_facet, sizeof(dev_facet), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_frag_area, frag_area, numXpnts * numYpnts * sizeof(float), cudaMemcpyHostToDevice);
 }
@@ -75,5 +93,28 @@ FacetCuda::~FacetCuda()
     if (dev_Pi_result)
     {
         cudaFree(dev_Pi_result);
+    }
+}
+
+void FacetCuda::PrintMatrix()
+{
+    if (dev_Pr == nullptr)
+    {
+        std::cout << "FacetCuda: PrintMatrix(): dev_Pr is null." << std::endl;
+        return;
+    }
+    std::cout << "FacetCuda: PrintMatrix()" << std::endl;
+    std::cout << "Number of fragment points: " << numXpnts * numYpnts << std::endl;
+
+    double *host_Pr = new double[numXpnts * numYpnts];
+    cudaMemcpy(host_Pr, dev_Pr, numXpnts * numYpnts * sizeof(double), cudaMemcpyDeviceToHost);
+
+    for (int j = numYpnts - 1; j >= 0; j--)
+    {
+        for (int i = 0; i < numXpnts; i++)
+        {
+            printf("%.3e ", host_Pr[j * numXpnts + i]);
+        }
+        printf("\n");
     }
 }

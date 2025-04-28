@@ -1,5 +1,5 @@
 #include "FacetGl.hpp"
-
+#include "OptiX/Exception.h"
 #include <iostream>
 #include <vector>
 
@@ -58,14 +58,21 @@ void FacetGl::MapToCuda()
 {
     readyToRender = false;
 
-    // Map the OpenGL texture to CUDA
-    cudaError_t err;
-    err = cudaGraphicsGLRegisterImage(&cudaResource, textureID, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsWriteDiscard);
-    if (err != cudaSuccess)
+    if (!glIsTexture(textureID))
     {
-        printf("cudaGraphicsGLRegisterImage failed: %s\n", cudaGetErrorString(err));
+        std::cout << "Texture ID " << textureID << " is not valid." << std::endl;
         return;
     }
+
+    if (cudaResource)
+    {
+        std::cout << "Error cudaResource not null." << std::endl;
+        return;
+    }
+
+    // Map the OpenGL texture to CUDA
+    cudaError_t err;
+    CUDA_CHECK(cudaGraphicsGLRegisterImage(&cudaResource, textureID, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsWriteDiscard));
 
     err = cudaGraphicsMapResources(1, &cudaResource, 0);
     if (err != cudaSuccess)
