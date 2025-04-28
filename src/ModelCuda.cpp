@@ -40,6 +40,12 @@ int ModelCuda::MakeSourcePointsOnGPU(vector<PressurePoint *> source_points)
         position[i] = source_points[i]->position;
         pressure[i] = source_points[i]->pressure;
     }
+
+    if (dev_source_points_position || dev_source_points_pressure)
+    {
+        throw std::runtime_error("Source points already allocated on GPU.");
+    }
+
     // Allocate memory for the source points on the device
     cudaMalloc(&dev_source_points_position, host_num_source_points * sizeof(float3));
     cudaMemcpy(dev_source_points_position, position, host_num_source_points * sizeof(float3), cudaMemcpyHostToDevice);
@@ -62,6 +68,11 @@ int ModelCuda::MakeFieldPointsOnGPU(vector<PressurePoint *> field_points)
     {
         position[i] = field_points[i]->position;
         pressure[i] = field_points[i]->pressure;
+    }
+
+    if (dev_field_points_position || dev_field_points_pressure)
+    {
+        throw std::runtime_error("Field points already allocated on GPU.");
     }
     // Allocate memory for the source points on the device
     cudaMalloc(&dev_field_points_position, host_num_field_points * sizeof(float3));
@@ -100,40 +111,41 @@ int ModelCuda::StartCuda()
 
 int ModelCuda::StopCuda()
 {
+    std::cout << "Stopping CUDA..." << std::endl;
     if (dev_k_wave)
     {
         cudaFree(dev_k_wave);
-        dev_k_wave = nullptr;
+        dev_k_wave = 0;
     }
     if (dev_frag_delta)
     {
         cudaFree(dev_frag_delta);
-        dev_frag_delta = nullptr;
+        dev_frag_delta = 0;
     }
     if (dev_frag_stats)
     {
         cudaFree(dev_frag_stats);
-        dev_frag_stats = nullptr;
+        dev_frag_stats = 0;
     }
     if (dev_source_points_position)
     {
         cudaFree(dev_source_points_position);
-        dev_source_points_position = nullptr;
+        dev_source_points_position = 0;
     }
     if (dev_source_points_pressure)
     {
         cudaFree(dev_source_points_pressure);
-        dev_source_points_pressure = nullptr;
+        dev_source_points_pressure = 0;
     }
     if (dev_field_points_position)
     {
         cudaFree(dev_field_points_position);
-        dev_field_points_position = nullptr;
+        dev_field_points_position = 0;
     }
     if (dev_field_points_pressure)
     {
         cudaFree(dev_field_points_pressure);
-        dev_field_points_pressure = nullptr;
+        dev_field_points_pressure = 0;
     }
 
     for (auto object : targetObjects)
@@ -236,7 +248,6 @@ ModelCuda::ModelCuda()
     {
         printf("cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
     }
-    optiXCol.StartOptix();
 }
 
 ModelCuda::~ModelCuda()

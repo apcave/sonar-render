@@ -33,7 +33,6 @@ private:
 public:
     Collision();
     ~Collision();
-    void StartOptix();
 
     bool HasCollision(float3 p1, float3 p2);
     int *DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2);
@@ -43,11 +42,15 @@ public:
     int StopCollision();
 
 private:
+    void StartOptix();
+    bool hasStarted = false;
     int MakePipeline();
     int CreateGeometry(const std::vector<Triangle> &facets);
 
     void FreePrams();
 
     std::string readFile(const std::string &filename);
+
+    CUdeviceptr raygenRecord;
 };
 #endif

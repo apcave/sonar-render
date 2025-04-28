@@ -38,7 +38,9 @@ void FacetCuda::AllocateCuda(float3 &normal,
 
         // Allocate device memory for the initial pressure data
         cudaMalloc((void **)&dev_Pr, numXpnts * numYpnts * sizeof(double));
+        cudaMemset(dev_Pr, 0, numXpnts * numYpnts * sizeof(double));
         cudaMalloc((void **)&dev_Pi, numXpnts * numYpnts * sizeof(double));
+        cudaMemset(dev_Pi, 0, numXpnts * numYpnts * sizeof(double));
     }
 
     // Allocate device memory for the fragment area
@@ -65,34 +67,42 @@ FacetCuda::~FacetCuda()
     if (dev_frag_area)
     {
         cudaFree(dev_frag_area);
+        dev_frag_area = 0;
     }
     if (dev_data)
     {
         cudaFree(dev_data);
+        dev_data = 0;
     }
     if (dev_Pr)
     {
         cudaFree(dev_Pr);
+        dev_Pr = 0;
     }
     if (dev_Pi)
     {
         cudaFree(dev_Pi);
+        dev_Pi = 0;
     }
     if (dev_Pr_initial)
     {
         cudaFree(dev_Pr_initial);
+        dev_Pr_initial = 0;
     }
     if (dev_Pi_initial)
     {
         cudaFree(dev_Pi_initial);
+        dev_Pi_initial = 0;
     }
     if (dev_Pr_result)
     {
         cudaFree(dev_Pr_result);
+        dev_Pr_result = 0;
     }
     if (dev_Pi_result)
     {
         cudaFree(dev_Pi_result);
+        dev_Pi_result = 0;
     }
 }
 

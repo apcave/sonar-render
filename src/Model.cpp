@@ -62,17 +62,17 @@ void Model::MakeFragments()
         object->MakeFragmentData(frag_length);
     }
 
-    for (auto object : fieldObjects)
-    {
-        object->MakeFragmentData(frag_length);
-    }
+    // for (auto object : fieldObjects)
+    // {
+    //     object->MakeFragmentData(frag_length);
+    // }
 }
 
 void Model::RenderCuda()
 {
     std::cout << "Rendering CUDA..." << std::endl;
     StartCuda();
-    // OptiXCol.StartCollision(targetObjects);
+    optiXCol.StartCollision(targetObjects);
 
     SetGlobalParameters(k_wave, frag_length);
 

@@ -31,21 +31,21 @@ public:
 
 private:
     // Area of the fragment.
-    float *dev_frag_area = nullptr;
-    dev_facet *dev_data = nullptr;
+    float *dev_frag_area = 0;
+    dev_facet *dev_data = 0;
     int3 frag_points;
 
 private:
     // Presure on the surface.
-    double *dev_Pr = nullptr;
-    double *dev_Pi = nullptr;
+    double *dev_Pr = 0;
+    double *dev_Pi = 0;
 
     // Working buffers for facet to facet calculations.
-    double *dev_Pr_initial = nullptr;
-    double *dev_Pi_initial = nullptr;
+    double *dev_Pr_initial = 0;
+    double *dev_Pi_initial = 0;
 
-    double *dev_Pr_result = nullptr;
-    double *dev_Pi_result = nullptr;
+    double *dev_Pr_result = 0;
+    double *dev_Pi_result = 0;
 
     friend class ModelCuda;
 };

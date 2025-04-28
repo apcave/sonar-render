@@ -35,6 +35,8 @@ Collision::~Collision()
 
 int Collision::StopCollision()
 {
+    std::cout << "Memory testing TODO: add free for collision detection." << std::endl;
+    return 0;
     std::cout << "Stopping Collision." << std::endl;
     if (d_vertices != 0)
     {
@@ -56,6 +58,7 @@ int Collision::StopCollision()
 
 void Collision::FreePrams()
 {
+    return;
     if (h_optix_params.vp1)
     {
         CUDA_CHECK(cudaFree(h_optix_params.vp1));
@@ -156,9 +159,22 @@ bool Collision::HasCollision(float3 p1, float3 p2)
 void Collision::StartOptix()
 {
     std::cout << "Collision::StartOptix()" << std::endl;
-    OPTIX_CHECK(optixInit());
-    OPTIX_CHECK(optixDeviceContextCreate(0, 0, &context));
-    MakePipeline();
+    // OPTIX_CHECK(optixInit());
+    // OPTIX_CHECK(optixDeviceContextCreate(0, 0, &context));
+    struct RaygenRecord
+    {
+        char header[OPTIX_SBT_RECORD_HEADER_SIZE];
+    };
+    RaygenRecord rgRecord = {};
+
+    // OPTIX_CHECK(optixSbtRecordPackHeader(raygenProgramGroup, &rgRecord));
+
+    // CUdeviceptr raygenRecord;
+    CUDA_CHECK(cudaMalloc((void **)&raygenRecord, sizeof(RaygenRecord)));
+    std::cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Memory Error Created >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    return;
+
+    // MakePipeline();
 }
 
 Collision::Collision()
@@ -239,8 +255,7 @@ int Collision::MakePipeline()
 
     log[0] = '\0';         // Clear the log buffer
     logSize = sizeof(log); // Reset the log size
-    OPTIX_CHECK(optixModuleCreateFromPTX(context, &moduleCompileOptions, &pipelineCompileOptions,
-                                         dev_prog, dev_prog_sz, log, &logSize, &module));
+    // OPTIX_CHECK(optixModuleCreateFromPTX(context, &moduleCompileOptions, &pipelineCompileOptions, dev_prog, dev_prog_sz, log, &logSize, &module));
 
     // if (logSize > 0)
     // {
@@ -259,7 +274,7 @@ int Collision::MakePipeline()
 
     log[0] = '\0';         // Clear the log buffer
     logSize = sizeof(log); // Reset the log size
-    OPTIX_CHECK(optixProgramGroupCreate(context, &raygenDesc, 1, &programGroupOptions, log, &logSize, &raygenProgramGroup));
+    // OPTIX_CHECK(optixProgramGroupCreate(context, &raygenDesc, 1, &programGroupOptions, log, &logSize, &raygenProgramGroup));
 
     // if (logSize > 0)
     // {
@@ -275,7 +290,7 @@ int Collision::MakePipeline()
 
     log[0] = '\0';         // Clear the log buffer
     logSize = sizeof(log); // Reset the log size
-    OPTIX_CHECK(optixProgramGroupCreate(context, &missDesc, 1, &programGroupOptions, log, &logSize, &missProgramGroup));
+    // OPTIX_CHECK(optixProgramGroupCreate(context, &missDesc, 1, &programGroupOptions, log, &logSize, &missProgramGroup));
 
     // if (logSize > 0)
     // {
@@ -294,7 +309,7 @@ int Collision::MakePipeline()
 
     log[0] = '\0';         // Clear the log buffer
     logSize = sizeof(log); // Reset the log size
-    OPTIX_CHECK(optixProgramGroupCreate(context, &hitgroupDesc, 1, &programGroupOptions, log, &logSize, &hitgroupProgramGroup));
+    // OPTIX_CHECK(optixProgramGroupCreate(context, &hitgroupDesc, 1, &programGroupOptions, log, &logSize, &hitgroupProgramGroup));
 
     // if (logSize > 0)
     // {
@@ -307,10 +322,11 @@ int Collision::MakePipeline()
     };
     RaygenRecord rgRecord = {};
 
-    OPTIX_CHECK(optixSbtRecordPackHeader(raygenProgramGroup, &rgRecord));
+    // OPTIX_CHECK(optixSbtRecordPackHeader(raygenProgramGroup, &rgRecord));
 
     CUdeviceptr raygenRecord;
-    cudaMalloc((void **)&raygenRecord, sizeof(RaygenRecord));
+    CUDA_CHECK(cudaMalloc((void **)&raygenRecord, sizeof(RaygenRecord)));
+    std::cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Memory Error Created >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     return 0;
     // Copy the ray generation record from the host to the device
     cudaMemcpy((void *)raygenRecord, &rgRecord, sizeof(RaygenRecord), cudaMemcpyHostToDevice);
@@ -362,6 +378,13 @@ int Collision::MakePipeline()
  */
 int Collision::StartCollision(std::vector<Object *> &targetObjects)
 {
+    if (!hasStarted)
+    {
+        StartOptix();
+        hasStarted = true;
+    }
+    std::cout << "Starting Collision....." << OPTIX_SBT_RECORD_HEADER_SIZE << std::endl;
+    return 0;
     int numFacets = 0;
     for (auto object : targetObjects)
     {
