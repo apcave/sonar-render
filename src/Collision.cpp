@@ -24,43 +24,10 @@ std::string Collision::readFile(const std::string &filename)
 
 Collision::~Collision()
 {
-    // if (raygenRecord)
-    // {
-    //     std::cout << "Destroying raygenRecord." << std::endl;
-    //     cudaFree((void *)raygenRecord);
-    //     raygenRecord = 0;
-    // }
-
-    // if (missRecord)
-    // {
-    //     std::cout << "Destroying missRecord." << std::endl;
-    //     cudaFree((void *)missRecord);
-    //     missRecord = 0;
-    // }
-
-    // if (hitgroupRecord)
-    // {
-    //     std::cout << "Destroying hitgroupRecord." << std::endl;
-    //     cudaFree((void *)hitgroupRecord);
-    //     hitgroupRecord = 0;
-    // }
-
-    if (context)
-    {
-        std::cout << "Destroying context." << std::endl;
-        OPTIX_CHECK(optixDeviceContextDestroy(context));
-        context = 0;
-    }
-
-    std::cout << "Deleted Collision." << std::endl;
 }
 
-int Collision::StopCollision()
+int Collision::TearDown()
 {
-    return 1;
-    std::cout << "Stopped Collision." << std::endl;
-    std::cout << "Stopping Collision." << std::endl;
-
     if (hasCollided)
     {
         std::cout << "Freeing hasCollided." << std::endl;
@@ -69,7 +36,46 @@ int Collision::StopCollision()
     }
 
     FreePrams();
+    FreeGeometry();
+    FreePipeline();
+    if (context)
+    {
+        std::cout << "Destroying context." << std::endl;
+
+        // This cannot be called from the destructor!
+        OPTIX_CHECK(optixDeviceContextDestroy(context));
+        context = 0;
+    }
+    hasStarted = false;
+
+    std::cout << "Deleted Collision." << std::endl;
     return 0;
+}
+
+void Collision::FreePipeline()
+{
+    if (raygenRecord)
+    {
+        std::cout << "Destroying raygenRecord." << std::endl;
+        cudaFree((void *)raygenRecord);
+        raygenRecord = 0;
+    }
+
+    if (missRecord)
+    {
+        std::cout << "Destroying missRecord." << std::endl;
+        cudaFree((void *)missRecord);
+        missRecord = 0;
+    }
+
+    if (hitgroupRecord)
+    {
+        std::cout << "Destroying hitgroupRecord." << std::endl;
+        cudaFree((void *)hitgroupRecord);
+        hitgroupRecord = 0;
+    }
+
+    return;
 }
 
 void Collision::FreeGeometry()
@@ -97,8 +103,6 @@ void Collision::FreeGeometry()
 }
 void Collision::FreePrams()
 {
-    return;
-
     if (h_optix_params.vp1)
     {
         CUDA_CHECK(cudaFree(h_optix_params.vp1));
@@ -126,7 +130,7 @@ void Collision::FreePrams()
 
 int *Collision::DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2)
 {
-    if (hasCollided != 0)
+    if (hasCollided)
     {
         std::cout << "Freeing hasCollided." << std::endl;
         delete[] hasCollided;
@@ -136,6 +140,7 @@ int *Collision::DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2)
     // FreePrams();
     int numSrc = vp1.size();
     int numDst = vp2.size();
+    hasCollided = new int[numSrc * numDst];
 
     h_optix_params.handle = gasHandle;
     h_optix_params.numDstPoints = numDst;
@@ -152,6 +157,9 @@ int *Collision::DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2)
     CUDA_CHECK(cudaMalloc((void **)&d_optix_params, sizeof(Params)));
     CUDA_CHECK(cudaMemcpy((void *)d_optix_params, &h_optix_params, sizeof(Params), cudaMemcpyHostToDevice));
 
+    std::cout << "GAS handle: " << h_optix_params.handle << std::endl;
+    std::cout << "pipeline: " << pipeline << std::endl;
+
     // std::cout << "Launching Collision Program...\n";
     OPTIX_CHECK(optixLaunch(
         pipeline,
@@ -165,26 +173,25 @@ int *Collision::DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2)
     std::cout << "Launched Collision Program.\n";
     cudaDeviceSynchronize();
 
-    hasCollided = new int[numSrc * numDst];
     cudaMemcpy(hasCollided, h_optix_params.output, numSrc * numDst * sizeof(int), cudaMemcpyDeviceToHost);
 
-    // std::cout << "Collision results:" << std::endl;
-    // for (int i = 0; i < numSrc; i++)
-    // {
-    //     for (int j = 0; j < numDst; j++)
-    //     {
-    //         // std::cout << hasCollided[i * numDst + j] << std::endl;
-    //         if (hasCollided[i * numDst + j])
-    //         {
-    //             std::cout << " 1";
-    //         }
-    //         else
-    //         {
-    //             std::cout << " 0";
-    //         }
-    //     }
-    //     std::cout << std::endl;
-    // }
+    std::cout << "Collision results:" << std::endl;
+    for (int i = 0; i < numSrc; i++)
+    {
+        for (int j = 0; j < numDst; j++)
+        {
+            // std::cout << hasCollided[i * numDst + j] << std::endl;
+            if (hasCollided[i * numDst + j])
+            {
+                std::cout << " 1";
+            }
+            else
+            {
+                std::cout << " 0";
+            }
+        }
+        std::cout << std::endl;
+    }
     std::cout << "Done with collision results." << std::endl;
     // // delete[] hasCollided;
     // std::cout << "hasCollided." << std::endl;
@@ -205,12 +212,50 @@ bool Collision::HasCollision(float3 p1, float3 p2)
 void Collision::StartOptix()
 {
     std::cout << "Collision::StartOptix()" << std::endl;
+    TearDown();
     if (context == 0)
     {
+        std::cout << "Making Context." << std::endl;
         OPTIX_CHECK(optixInit());
         OPTIX_CHECK(optixDeviceContextCreate(0, 0, &context));
         MakePipeline();
     }
+}
+
+/**
+ * @brief Pack all the facets into OptiX.
+ */
+int Collision::StartCollision(std::vector<Object *> &targetObjects)
+{
+    if (!hasStarted)
+    {
+        std::cout << "Starting OptiX...***********************************************" << std::endl;
+        StartOptix();
+        hasStarted = true;
+    }
+
+    int numFacets = 0;
+    for (auto object : targetObjects)
+    {
+        // Create geometry for each object
+        numFacets += object->facets.size();
+    }
+
+    std::vector<Triangle> facets(numFacets);
+    int i = 0;
+    for (auto object : targetObjects)
+    {
+        for (auto facet : object->facets)
+        {
+            facets[i].v0 = facet->v1;
+            facets[i].v1 = facet->v2;
+            facets[i].v2 = facet->v3;
+            i++;
+        }
+    }
+    CreateGeometry(facets);
+
+    return 0;
 }
 
 Collision::Collision()
@@ -221,26 +266,8 @@ Collision::Collision()
 // Function to load facets into OptiX
 int Collision::CreateGeometry(const std::vector<Triangle> &facets)
 {
-    // if (d_vertices != 0)
-    // {
-    //     std::cout << "Freeing d_vertices." << std::endl;
-    //     cudaFree((void *)d_vertices);
-    //     d_vertices = 0;
-    // }
-
-    // if (d_outputBuffer != 0)
-    // {
-    //     std::cout << "Freeing d_outputBuffer." << std::endl;
-    //     cudaFree((void *)d_outputBuffer);
-    //     d_outputBuffer = 0;
-    // }
-
-    // if (d_tempBuffer != 0)
-    // {
-    //     std::cout << "Freeing d_tempBuffer." << std::endl;
-    //     cudaFree((void *)d_tempBuffer);
-    //     d_tempBuffer = 0;
-    // }
+    std::cout << "Creating Geometry. <---------------------" << std::endl;
+    FreeGeometry();
 
     // Check maximum trace depth
     unsigned int maxTraceDepth = 0;
@@ -250,6 +277,7 @@ int Collision::CreateGeometry(const std::vector<Triangle> &facets)
     size_t verticesSize = facets.size() * 3 * sizeof(float3);
     CUDA_CHECK(cudaMalloc((void **)&d_vertices, verticesSize));
     CUDA_CHECK(cudaMemcpy((void *)d_vertices, facets.data(), verticesSize, cudaMemcpyHostToDevice));
+    std::cout << "Creating Geometry. num verteces: " << facets.size() << std::endl;
 
     CUdeviceptr d_indices = 0;
     OptixBuildInput buildInput = {};
@@ -284,6 +312,7 @@ int Collision::CreateGeometry(const std::vector<Triangle> &facets)
                                 &gasHandle, NULL, 0));
 
     // CUDA_CHECK(cudaFree((void *)d_tempBuffer));
+    std::cout << "Created GAS handle: " << gasHandle << std::endl;
     return 0;
 }
 
@@ -312,12 +341,10 @@ int Collision::MakePipeline()
     logSize = sizeof(log); // Reset the log size
     OPTIX_CHECK(optixModuleCreateFromPTX(context, &moduleCompileOptions, &pipelineCompileOptions, dev_prog, dev_prog_sz, log, &logSize, &module));
 
-    // if (logSize > 0)
-    // {
-    //     std::cerr << "OptiX Pipeline Creation Log: " << log << std::endl;
-    // }
-
-    std::cout << "Module created successfully." << std::endl;
+    if (logSize > 0)
+    {
+        std::cerr << "Load PTX file Log: " << log << std::endl;
+    }
 
     OptixProgramGroup raygenProgramGroup;
     OptixProgramGroupDesc raygenDesc = {};
@@ -366,10 +393,10 @@ int Collision::MakePipeline()
     logSize = sizeof(log); // Reset the log size
     OPTIX_CHECK(optixProgramGroupCreate(context, &hitgroupDesc, 1, &programGroupOptions, log, &logSize, &hitgroupProgramGroup));
 
-    // if (logSize > 0)
-    // {
-    //     std::cerr << "OptiX Pipeline Creation Log: " << log << std::endl;
-    // }
+    if (logSize > 0)
+    {
+        std::cerr << "OptiX Pipeline Creation Log: " << log << std::endl;
+    }
 
     struct RaygenRecord
     {
@@ -417,46 +444,11 @@ int Collision::MakePipeline()
     logSize = sizeof(log); // Reset the log size
     OPTIX_CHECK(optixPipelineCreate(context, &pipelineCompileOptions, &pipelineLinkOptions, programGroups, 3, log, &logSize, &pipeline));
 
-    // if (logSize > 0)
-    // {
-    //     std::cerr << "OptiX Pipeline Creation Log: " << log << std::endl;
-    // }
-
-    return 0;
-}
-
-/**
- * @brief Pack all the facets into OptiX.
- */
-int Collision::StartCollision(std::vector<Object *> &targetObjects)
-{
-    if (!hasStarted)
+    if (logSize > 0)
     {
-        std::cout << "Starting OptiX...***********************************************" << std::endl;
-        StartOptix();
-        hasStarted = true;
+        std::cerr << "OptiX Pipeline Creation Log: " << log << std::endl;
     }
-    std::cout << "Starting Collision....." << OPTIX_SBT_RECORD_HEADER_SIZE << std::endl;
 
-    int numFacets = 0;
-    for (auto object : targetObjects)
-    {
-        // Create geometry for each object
-        numFacets += object->facets.size();
-    }
-    std::vector<Triangle> facets(numFacets);
-    int i = 0;
-    for (auto object : targetObjects)
-    {
-        for (auto facet : object->facets)
-        {
-            facets[i].v0 = facet->v1;
-            facets[i].v1 = facet->v2;
-            facets[i].v2 = facet->v3;
-            i++;
-        }
-    }
-    CreateGeometry(facets);
-
+    std::cout << "Created pipeline successfully. pipeline" << pipeline << std::endl;
     return 0;
 }

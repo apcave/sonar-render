@@ -144,7 +144,7 @@ int ModelCuda::ProjectFromFacetsToFieldPoints()
                 // printf("ThreadsPerBlock.x: %d, threadsPerBlock.y: %d\n", threadsPerBlock.x, threadsPerBlock.y);
                 // printf("numBlocks.x: %d, numBlocks.y: %d\n", numBlocks.x, numBlocks.y);
 
-                printf("Projecting facet %d to field point %d.\n", srcCnt, dstCnt);
+                // printf("Projecting facet %d to field point %d.\n", srcCnt, dstCnt);
 
                 ProjectFacetToFieldPointKernel<<<numBlocks, threadsPerBlock>>>(
                     dev_k_wave,

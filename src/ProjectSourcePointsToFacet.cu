@@ -107,30 +107,34 @@ int ModelCuda::ProjectSourcePointsToFacet(std::vector<Object *> &target)
     std::vector<float3> srcPnts;
     int numScr = sourcePoints.size();
     printf("number of source points: %d\n", numScr);
+
     for (int srcCnt = 0; numScr > srcCnt; srcCnt++)
     {
-        printf("Doing source point %d of %d.\n", srcCnt, numScr);
-        srcPnts.clear();
         auto srcPnt = sourcePoints[srcCnt];
         srcPnts.push_back(srcPnt->position);
+    }
 
-        for (auto object : target)
+    for (auto object : target)
+    {
+        auto dstPnts = object->GetCentroids();
+        hasColision = optiXCol.DoCollisions(srcPnts, dstPnts);
+
+        for (int srcCnt = 0; numScr > srcCnt; srcCnt++)
         {
-            auto dstPnts = object->GetCentroids();
+            auto srcPnt = sourcePoints[srcCnt];
 
-            printf("Doing collision detection.\n");
-            hasColision = optiXCol.DoCollisions(srcPnts, dstPnts);
             int numDst = dstPnts.size();
-            int dstCnt = 0;
-            for (auto facet : object->facets)
+            for (int dstCnt = 0; numDst > dstCnt; dstCnt++)
             {
+                auto facet = object->facets[dstCnt];
+                // printf("Doing collision detection for source point %d of %d.\n", srcCnt, numScr);
+
                 if (hasColision[srcCnt * numDst + dstCnt] == 1)
                 {
                     // printf("Collision detected.\n");
-                    dstCnt++;
                     continue;
                 }
-                printf("Facet: %f, %f, %f\n", facet->Centroid.x, facet->Centroid.y, facet->Centroid.z);
+                // printf("Facet: %f, %f, %f\n", facet->Centroid.x, facet->Centroid.y, facet->Centroid.z);
                 // printf("Source Point: %f, %f, %f\n", srcPnt->position.x, srcPnt->position.y, srcPnt->position.z);
 
                 dim3 threadsPerBlock(facet->frag_points.x, 1);
@@ -153,7 +157,6 @@ int ModelCuda::ProjectSourcePointsToFacet(std::vector<Object *> &target)
                     printf("Point to Facet Kernel launch failed: %s\n", cudaGetErrorString(err));
                     return 1;
                 }
-                dstCnt++;
             }
         }
     }

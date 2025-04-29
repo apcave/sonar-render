@@ -160,8 +160,6 @@ int ModelCuda::StopCuda()
     }
     fieldObjects.clear();
 
-    optiXCol.StopCollision();
-
     return 0;
 }
 
@@ -258,5 +256,6 @@ ModelCuda::ModelCuda()
 
 ModelCuda::~ModelCuda()
 {
+    std::cout << "Cleaning up ModelCuda..." << std::endl;
     StopCuda();
 }

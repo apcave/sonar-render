@@ -26,12 +26,6 @@ void FacetCuda::AllocateCuda(float3 &normal,
 
     // If the object is a source the surface pressure fixed to 1 across the surface.
 
-    if (objectType == OBJECT_TYPE_FIELD)
-    {
-        std::cout << "FacetCuda: AllocateCuda: Field object." << std::endl;
-        std::cout << "Number of fragment points: " << numXpnts * numYpnts << std::endl;
-    }
-
     if (objectType == OBJECT_TYPE_TARGET || objectType == OBJECT_TYPE_FIELD)
     {
         // These buffers are used to store surface pressure values.

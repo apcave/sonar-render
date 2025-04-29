@@ -134,8 +134,9 @@ plt.legend()
 plt.show()
 
 print("<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>")
-api.TearDownCuda()
+
 print("<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>")
-#api.render_openGL()
+api.render_openGL()
+api.TearDownCuda()
 
 

@@ -46,7 +46,7 @@ public:
 
     // bool CheckCollision(float3 p1, float3 p2);
     int StartCollision(std::vector<Object *> &targetObjects);
-    int StopCollision();
+    int TearDown();
 
 private:
     void StartOptix();
@@ -56,6 +56,7 @@ private:
 
     void FreePrams();
     void FreeGeometry();
+    void FreePipeline();
 
     std::string readFile(const std::string &filename);
 };

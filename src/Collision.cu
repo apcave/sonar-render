@@ -32,8 +32,8 @@ extern "C" __global__ void __raygen__rg()
     const float epsilon = 1e-3f;
 
     // printf("p1: %f, %f, %f, p2: %f, %f, %f\n", p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
-    // printf("Ray origin: (%f, %f, %f), direction: (%f, %f, %f), tmin: %f, tmax: %f\n",
-    //       p1.x, p1.y, p1.z, direction.x, direction.y, direction.z, 0.0f, length - epsilon);
+    //  printf("Ray origin: (%f, %f, %f), direction: (%f, %f, %f), tmin: %f, tmax: %f\n",
+    //        p1.x, p1.y, p1.z, direction.x, direction.y, direction.z, 0.0f, length - epsilon);
 
     unsigned int hit = 0;
     optixTrace(
@@ -54,6 +54,7 @@ extern "C" __global__ void __raygen__rg()
     // printf("outIndex: %u, srcIndex: %u, dstIndex: %u\n", outIndex, srcIndex, dstIndex);
     // printf("Hit: %d, out index %d\n", hit, outIndex);
     params.output[outIndex] = hit;
+    params.output[outIndex] = 1;
 }
 
 extern "C" __global__ void __closesthit__ch()

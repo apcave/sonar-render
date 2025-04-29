@@ -60,6 +60,8 @@ target_link_libraries(${TARGET_NAME} PRIVATE
     cudart
 )
 
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -g -G")
+
 # Set compiler options for the shared library
 target_compile_options(${TARGET_NAME} PRIVATE
     $<$<COMPILE_LANGUAGE:CUDA>:>

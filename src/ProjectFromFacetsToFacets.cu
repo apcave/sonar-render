@@ -158,6 +158,7 @@ __global__ void ProjectFromFacetsToFacetsKernel(
  */
 int ModelCuda::ProjectFromFacetsToFacets(std::vector<Object *> &scrObjects, std::vector<Object *> &dstObjects, bool reciprocity)
 {
+    return 1;
     for (auto srcOb : scrObjects)
     {
         auto srcPnts = srcOb->GetCentroids();
@@ -172,16 +173,15 @@ int ModelCuda::ProjectFromFacetsToFacets(std::vector<Object *> &scrObjects, std:
 
             for (int srcCnt = 0; numScr > srcCnt; srcCnt++)
             {
+                printf("Doing source point %d\n", srcCnt);
                 for (int dstCnt = 0; numDst > dstCnt; dstCnt++)
                 {
-                    printf("NumSrcFacets: %d, scrNum %d, NumDstFacets: %d, dstNum %d\n", numScr, srcCnt, numDst, dstCnt);
+                    // printf("NumSrcFacets: %d, scrNum %d, NumDstFacets: %d, dstNum %d\n", numScr, srcCnt, numDst, dstCnt);
 
                     if (hasCollision[srcCnt * numDst + dstCnt] == 1)
                     {
-                        printf("Collision detected.\n");
                         continue;
-                    }
-                    printf("Running Projection.\n");
+                    };
                     auto srcFacet = srcOb->facets[srcCnt];
                     auto dstFacet = dstOb->facets[dstCnt];
 
@@ -207,10 +207,10 @@ int ModelCuda::ProjectFromFacetsToFacets(std::vector<Object *> &scrObjects, std:
                         return 1;
                     }
                 }
-                cudaDeviceSynchronize();
+                // cudaDeviceSynchronize();
             }
         }
     }
-
+    cudaDeviceSynchronize();
     return 0;
 }
