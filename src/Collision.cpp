@@ -159,7 +159,8 @@ int *Collision::DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2)
 
     std::cout << "GAS handle: " << h_optix_params.handle << std::endl;
     std::cout << "pipeline: " << pipeline << std::endl;
-
+    std::cout << "numSrc: " << numSrc << std::endl;
+    std::cout << "numDst: " << numDst << std::endl;
     // std::cout << "Launching Collision Program...\n";
     OPTIX_CHECK(optixLaunch(
         pipeline,
@@ -171,8 +172,13 @@ int *Collision::DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2)
         numDst,
         1));
     std::cout << "Launched Collision Program.\n";
-    cudaDeviceSynchronize();
 
+    cudaDeviceSynchronize();
+    cudaError_t err = cudaGetLastError();
+    // if (err != cudaSuccess)
+    //{
+    std::cerr << "CUDA Error: " << cudaGetErrorString(err) << std::endl;
+    //}
     cudaMemcpy(hasCollided, h_optix_params.output, numSrc * numDst * sizeof(int), cudaMemcpyDeviceToHost);
 
     std::cout << "Collision results:" << std::endl;
@@ -336,6 +342,7 @@ int Collision::MakePipeline()
     std::string device_programs = readFile("./build/Collision.ptx");
     const char *dev_prog = device_programs.c_str();
     size_t dev_prog_sz = device_programs.size();
+    std::cout << "Device program size: " << dev_prog_sz << std::endl;
 
     log[0] = '\0';         // Clear the log buffer
     logSize = sizeof(log); // Reset the log size
@@ -358,11 +365,10 @@ int Collision::MakePipeline()
     logSize = sizeof(log); // Reset the log size
     OPTIX_CHECK(optixProgramGroupCreate(context, &raygenDesc, 1, &programGroupOptions, log, &logSize, &raygenProgramGroup));
 
-    // if (logSize > 0)
-    // {
-
-    //     std::cerr << "OptiX Pipeline Creation Log: " << log << std::endl;
-    // }
+    if (logSize > 0)
+    {
+        std::cerr << "__raygen__rg Creation Log: " << log << std::endl;
+    }
 
     OptixProgramGroup missProgramGroup;
     OptixProgramGroupDesc missDesc = {};
@@ -374,10 +380,10 @@ int Collision::MakePipeline()
     logSize = sizeof(log); // Reset the log size
     OPTIX_CHECK(optixProgramGroupCreate(context, &missDesc, 1, &programGroupOptions, log, &logSize, &missProgramGroup));
 
-    // if (logSize > 0)
-    // {
-    //     std::cerr << "OptiX Pipeline Creation Log: " << log << std::endl;
-    // }
+    if (logSize > 0)
+    {
+        std::cerr << "__miss__ms Creation Log: " << log << std::endl;
+    }
 
     OptixProgramGroup hitgroupProgramGroup;
     OptixProgramGroupDesc hitgroupDesc = {};
@@ -395,7 +401,7 @@ int Collision::MakePipeline()
 
     if (logSize > 0)
     {
-        std::cerr << "OptiX Pipeline Creation Log: " << log << std::endl;
+        std::cerr << "__closesthit__ch Creation Log: " << log << std::endl;
     }
 
     struct RaygenRecord

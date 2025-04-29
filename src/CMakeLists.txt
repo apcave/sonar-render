@@ -60,7 +60,7 @@ target_link_libraries(${TARGET_NAME} PRIVATE
     cudart
 )
 
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -g -G")
+#set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -g -G")
 
 # Set compiler options for the shared library
 target_compile_options(${TARGET_NAME} PRIVATE
@@ -94,7 +94,7 @@ link_directories(/home/apcave/alex-portfolio/lib)
 add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/Collision.ptx
     COMMAND ${CMAKE_CUDA_COMPILER}
-    ARGS -I/home/apcave/alex-portfolio/include -ptx ${CMAKE_CURRENT_SOURCE_DIR}/Collision.cu -o ${CMAKE_BINARY_DIR}/Collision.ptx
+    ARGS -I/home/apcave/alex-portfolio/include -g -G -ptx ${CMAKE_CURRENT_SOURCE_DIR}/Collision.cu -o ${CMAKE_BINARY_DIR}/Collision.ptx
     DEPENDS Collision.cu
     COMMENT "Compiling Collision.cu to OptiX IR"
 )
