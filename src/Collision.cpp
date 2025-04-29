@@ -324,6 +324,11 @@ int Collision::CreateGeometry(const std::vector<Triangle> &facets)
 
 int Collision::MakePipeline()
 {
+    // Check maximum trace depth
+    unsigned int maxTraceDepth = 0;
+    OPTIX_CHECK(optixDeviceContextGetProperty(context, OPTIX_DEVICE_PROPERTY_LIMIT_MAX_TRACE_DEPTH, &maxTraceDepth, sizeof(maxTraceDepth)));
+    std::cout << "Maximum trace depth: " << maxTraceDepth << std::endl;
+
     // Create pipeline
     OptixPipelineCompileOptions pipelineCompileOptions = {};
     pipelineCompileOptions.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_GAS;
@@ -410,7 +415,7 @@ int Collision::MakePipeline()
     };
     RaygenRecord rgRecord = {};
 
-    // OPTIX_CHECK(optixSbtRecordPackHeader(raygenProgramGroup, &rgRecord));
+    OPTIX_CHECK(optixSbtRecordPackHeader(raygenProgramGroup, &rgRecord));
 
     CUDA_CHECK(cudaMalloc((void **)&raygenRecord, sizeof(RaygenRecord)));
 
