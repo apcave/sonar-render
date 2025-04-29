@@ -48,8 +48,8 @@ private:
     void PrintTextures();
 
 private:
-    int window_width = 800 * 2;
-    int window_height = 600 * 2;
+    int window_width = 800 * 3;
+    int window_height = 600 * 3;
 
 protected:
     bool usingOpenGL = true;

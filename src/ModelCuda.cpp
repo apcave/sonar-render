@@ -181,7 +181,7 @@ int ModelCuda::DoCalculations()
     }
 
     // std::cout << "Projecting from target to field surface." << std::endl;
-    // ProjectFromFacetsToFacets(targetObjects, fieldObjects, false);
+    ProjectFromFacetsToFacets(targetObjects, fieldObjects, false);
     //    std::cout << "Done projecting from target to field surface." << std::endl;
 
     // for (int i = 0; i < 0; i++)

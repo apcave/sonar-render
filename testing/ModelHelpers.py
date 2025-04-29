@@ -19,7 +19,8 @@ def monostatic_iterated(pnts, object, cp, frequency):
         api.render_cuda()
         field_vals = api.GetFieldPoints(1)
         p_reflect.append([float(field_vals[0][0]), float(field_vals[0][1])])
-        api.TearDownCuda()
+        print("<<<<<<<<<-------------------->>>>")
+        # api.TearDownCuda()
 
     return p_reflect
 

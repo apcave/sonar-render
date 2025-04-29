@@ -6,6 +6,39 @@
 
 #include <cuda_runtime.h>
 
+__device__ __always_inline float4 hsv2rgb(float h, float s, float v)
+{
+    float c = v * s;
+    float x = c * (1.0 - abs(fmod(h * 6.0, 2.0) - 1.0));
+    float m = v - c;
+    float alpha = 1.0;
+
+    if (h < 1.0 / 6.0)
+    {
+        return make_float4(c + m, x + m, 0.0 + m, alpha);
+    }
+    else if (h < 2.0 / 6.0)
+    {
+        return make_float4(x + m, c + m, 0.0 + m, alpha);
+    }
+    else if (h < 3.0 / 6.0)
+    {
+        return make_float4(0.0 + m, c + m, x + m, alpha);
+    }
+    else if (h < 4.0 / 6.0)
+    {
+        return make_float4(0.0 + m, x + m, c + m, alpha);
+    }
+    else if (h < 5.0 / 6.0)
+    {
+        return make_float4(x + m, 0.0 + m, c + m, alpha);
+    }
+    else
+    {
+        return make_float4(c + m, 0.0 + m, x + m, alpha);
+    }
+}
+
 __global__ void MakeSurface(double *Pr, double *Pi, cudaSurfaceObject_t surface, int maxXpnt, float *stats)
 {
     int xPnt = threadIdx.x;
@@ -17,10 +50,11 @@ __global__ void MakeSurface(double *Pr, double *Pi, cudaSurfaceObject_t surface,
 
     float mag = abs(p) / stats[0];
     float phase = (atan2(p.imag(), p.real()) + M_PI) / (2.0f * M_PI);
-    float2 value = make_float2(mag, phase);
+
+    float4 value = hsv2rgb(phase, 0.8, mag);
 
     // value = (float)yPnt / (float)maxXpnt;
-    surf2Dwrite(value, surface, xPnt * sizeof(float2), yPnt);
+    surf2Dwrite(value, surface, xPnt * sizeof(float4), yPnt);
 
     // printf("Write surface: %f, %f, %f\n", value, stats[0], stats[1]);
 }
