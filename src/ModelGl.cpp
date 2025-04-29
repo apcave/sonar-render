@@ -39,18 +39,39 @@ void ModelGl::MakeTextureShader()
 
             uniform sampler2D inputTexture;
 
+            // Function to convert HSV to RGB
+            vec3 hsv2rgb(float h, float s, float v) {
+                float c = v * s;
+                float x = c * (1.0 - abs(mod(h * 6.0, 2.0) - 1.0));
+                float m = v - c;
+
+                vec3 rgb;
+                if (h < 1.0 / 6.0) {
+                    rgb = vec3(c, x, 0.0);
+                } else if (h < 2.0 / 6.0) {
+                    rgb = vec3(x, c, 0.0);
+                } else if (h < 3.0 / 6.0) {
+                    rgb = vec3(0.0, c, x);
+                } else if (h < 4.0 / 6.0) {
+                    rgb = vec3(0.0, x, c);
+                } else if (h < 5.0 / 6.0) {
+                    rgb = vec3(x, 0.0, c);
+                } else {
+                    rgb = vec3(c, 0.0, x);
+                }
+
+                return rgb + m;
+            }
+
             void main()
             {
                 // Extract u and v from TexCoords
-                //float u = TexCoords.x;
-                //float v = TexCoords.y;
+                vec2 p = clamp(texture(inputTexture, TexCoords).rg,0,1);
+                float magNorm   = p.x;
+                float phaseNorm = p.y;                
+                vec3 rgbColor = hsv2rgb(phaseNorm, 0.8, magNorm); // Full saturation and brightness
 
-                // Use u and v to create a gradient
-                // FragColor = vec4(TexCoords, 0.0, 1.0); // Red = u, Green = v, Blue = 0, Alpha = 1
-                FragColor = vec4(texture(inputTexture, TexCoords).r,
-                                 0.0,
-                                 1.0 - texture(inputTexture, TexCoords).r,
-                                 1.0); // Red = u, Green = v, Blue = 0, Alpha = 1
+                FragColor = vec4(rgbColor, 1); // Set the fragment color
             }
     )";
     GLint success;

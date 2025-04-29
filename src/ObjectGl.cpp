@@ -100,7 +100,7 @@ void ObjectGl::RenderObject(GLint textureUniformLoc)
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, facGL->textureID);
         glUniform1i(textureUniformLoc, 0);
-
+        // facGL->PrintOpenGlTexture();
         // glUseProgram(0);
         glDrawArrays(GL_TRIANGLES, facetCnt * 3, 3); // Render 3 vertices for the facet
 

@@ -27,6 +27,7 @@ private:
     float k;
     dcomplex k_wave;
     float resolution_factor = 7.5;
+    // float resolution_factor = 9.0;
     float frag_length;
     float density;
 

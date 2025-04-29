@@ -32,7 +32,7 @@ __global__ void ProjectSourcePointToFacetKernel(
     // Kernel code to project point to point
     // printf("ThreadIdx.x: %d, ThreadIdx.y: %d, blockIdx.x: %d, blockDim.x: %d\n", threadIdx.x, threadIdx.y, blockIdx.x, blockDim.x);
     int xPnt = threadIdx.x;
-    int yPnt = blockIdx.x;
+    int yPnt = threadIdx.y;
 
     int NumXpnts = facet_data->frag_points.x;
     // int NumYpnts = facet_Points[facet_num].y;
@@ -40,13 +40,13 @@ __global__ void ProjectSourcePointToFacetKernel(
 
     int index = yPnt * NumXpnts + xPnt;
 
-    float A_i = frag_area[index];
+    // float A_i = frag_area[index];
 
-    if (A_i == 0)
-    {
-        // printf("facets_PixelArea is zero\n");
-        return;
-    }
+    // if (A_i == 0)
+    // {
+    //     // printf("facets_PixelArea is zero\n");
+    //     return;
+    // }
 
     float3 pg_i = source_points_position[source_point_num];
     dcomplex source_pressure = source_points_pressure[source_point_num];
@@ -137,8 +137,8 @@ int ModelCuda::ProjectSourcePointsToFacet(std::vector<Object *> &target)
                 // printf("Facet: %f, %f, %f\n", facet->Centroid.x, facet->Centroid.y, facet->Centroid.z);
                 // printf("Source Point: %f, %f, %f\n", srcPnt->position.x, srcPnt->position.y, srcPnt->position.z);
 
-                dim3 threadsPerBlock(facet->frag_points.x, 1);
-                dim3 numBlocks(facet->frag_points.y, 1);
+                dim3 threadsPerBlock(facet->frag_points.x, facet->frag_points.y);
+                dim3 numBlocks(1, 1);
 
                 ProjectSourcePointToFacetKernel<<<numBlocks, threadsPerBlock>>>(
                     dev_k_wave,

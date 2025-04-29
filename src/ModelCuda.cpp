@@ -174,15 +174,15 @@ int ModelCuda::DoCalculations()
 
     std::cout << "Source Points to field." << std::endl;
     // The field surfaces include the incident and scattered waves.
-    // if (ProjectSourcePointsToFacet(fieldObjects) != 0)
-    // {
-    //     printf("Project from source points to field object.\n");
-    //     return 1;
-    // }
+    if (ProjectSourcePointsToFacet(fieldObjects) != 0)
+    {
+        printf("Project from source points to field object.\n");
+        return 1;
+    }
 
-    std::cout << "Projecting from target to field surface." << std::endl;
-    ProjectFromFacetsToFacets(targetObjects, fieldObjects, false);
-    //   std::cout << "Done projecting from target to field surface." << std::endl;
+    // std::cout << "Projecting from target to field surface." << std::endl;
+    // ProjectFromFacetsToFacets(targetObjects, fieldObjects, false);
+    //    std::cout << "Done projecting from target to field surface." << std::endl;
 
     // for (int i = 0; i < 0; i++)
     // {

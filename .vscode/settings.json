@@ -54,7 +54,10 @@
         "typeinfo": "cpp",
         "set": "cpp",
         "bitset": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "optional": "cpp",
+        "ratio": "cpp",
+        "variant": "cpp"
     },
     "[cpp]": {
         "editor.defaultFormatter": "ms-vscode.cpptools"

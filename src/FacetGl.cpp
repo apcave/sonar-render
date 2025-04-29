@@ -24,8 +24,7 @@ void FacetGl::AllocateGl()
     glBindTexture(GL_TEXTURE_2D, textureID);
 
     // Allocate memory for a single-channel float texture
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, numXpnts, numYpnts, 0, GL_RED, GL_FLOAT, NULL);
-
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, numXpnts, numYpnts, 0, GL_RG, GL_FLOAT, NULL);
     // Set texture filtering parameters
     // Set texture parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
