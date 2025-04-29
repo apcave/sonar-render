@@ -62,7 +62,6 @@ extern "C" __global__ void __raygen__rg()
 
 extern "C" __global__ void __closesthit__ch()
 {
-    printf("Hitt!\n");
     // Mark the ray as hitting geometry
     optixSetPayload_0(1);
 }

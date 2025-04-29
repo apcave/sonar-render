@@ -160,7 +160,7 @@ int ModelCuda::ProjectFromFacetsToFieldPoints()
                 cudaError_t err = cudaGetLastError();
                 if (err != cudaSuccess)
                 {
-                    printf("Kernel launch failed: %s\n", cudaGetErrorString(err));
+                    printf("ProjectFromFacetsToFieldPoints, Kernel launch failed: %s\n", cudaGetErrorString(err));
                     return 1;
                 }
             }

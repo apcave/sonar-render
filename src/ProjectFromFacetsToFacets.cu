@@ -158,7 +158,6 @@ __global__ void ProjectFromFacetsToFacetsKernel(
  */
 int ModelCuda::ProjectFromFacetsToFacets(std::vector<Object *> &scrObjects, std::vector<Object *> &dstObjects, bool reciprocity)
 {
-    return 1;
     for (auto srcOb : scrObjects)
     {
         auto srcPnts = srcOb->GetCentroids();
@@ -176,7 +175,7 @@ int ModelCuda::ProjectFromFacetsToFacets(std::vector<Object *> &scrObjects, std:
                 printf("Doing source point %d\n", srcCnt);
                 for (int dstCnt = 0; numDst > dstCnt; dstCnt++)
                 {
-                    // printf("NumSrcFacets: %d, scrNum %d, NumDstFacets: %d, dstNum %d\n", numScr, srcCnt, numDst, dstCnt);
+                    printf("NumSrcFacets: %d, scrNum %d, NumDstFacets: %d, dstNum %d\n", numScr, srcCnt, numDst, dstCnt);
 
                     if (hasCollision[srcCnt * numDst + dstCnt] == 1)
                     {
@@ -187,6 +186,11 @@ int ModelCuda::ProjectFromFacetsToFacets(std::vector<Object *> &scrObjects, std:
 
                     dim3 threadsPerBlock(srcFacet->frag_points.x, srcFacet->frag_points.y);
                     dim3 numBlocks(dstFacet->frag_points.x, dstFacet->frag_points.y, 1);
+
+                    if (srcFacet->frag_points.x * srcFacet->frag_points.y > 1024)
+                    {
+                        throw new runtime_error("ProjectFromFacetsToFacetsKernel, Too many threads per block.");
+                    }
 
                     ProjectFromFacetsToFacetsKernel<<<numBlocks, threadsPerBlock>>>(
                         dev_k_wave,
@@ -202,7 +206,7 @@ int ModelCuda::ProjectFromFacetsToFacets(std::vector<Object *> &scrObjects, std:
                     cudaError_t err = cudaGetLastError();
                     if (err != cudaSuccess)
                     {
-                        printf("Kernel launch failed: %s\n", cudaGetErrorString(err));
+                        printf("ProjectFromFacetsToFacetsKernel, Kernel launch failed: %s\n", cudaGetErrorString(err));
                         cudaDeviceSynchronize();
                         return 1;
                     }

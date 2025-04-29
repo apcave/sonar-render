@@ -19,7 +19,7 @@ import math
 a = 3.0
 b = 2.0
 cp = 1480.0
-frequency = 4e3
+frequency = 10e3
 target_range = 4000
 angle_i = 0.0
 target = geo.load_stl_file("./testing/sphere_1m_radius.stl")

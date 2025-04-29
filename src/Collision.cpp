@@ -145,7 +145,6 @@ int *Collision::DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2)
     h_optix_params.handle = gasHandle;
     h_optix_params.numDstPoints = numDst;
 
-    std::cout << "Check collision." << std::endl;
     size_t numBytes = numSrc * sizeof(float3) + numDst * sizeof(float3) + numDst * numSrc * sizeof(int) + sizeof(Params);
     CUDA_CHECK(cudaMalloc((void **)&(h_optix_params.vp1), numSrc * sizeof(float3)));
     CUDA_CHECK(cudaMemcpy(h_optix_params.vp1, vp1.data(), numSrc * sizeof(float3), cudaMemcpyHostToDevice));
@@ -157,10 +156,6 @@ int *Collision::DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2)
     CUDA_CHECK(cudaMalloc((void **)&d_optix_params, sizeof(Params)));
     CUDA_CHECK(cudaMemcpy((void *)d_optix_params, &h_optix_params, sizeof(Params), cudaMemcpyHostToDevice));
 
-    std::cout << "GAS handle: " << h_optix_params.handle << std::endl;
-    std::cout << "pipeline: " << pipeline << std::endl;
-    std::cout << "numSrc: " << numSrc << std::endl;
-    std::cout << "numDst: " << numDst << std::endl;
     // std::cout << "Launching Collision Program...\n";
     OPTIX_CHECK(optixLaunch(
         pipeline,
@@ -171,39 +166,36 @@ int *Collision::DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2)
         numSrc,
         numDst,
         1));
-    std::cout << "Launched Collision Program.\n";
+    // std::cout << "Launched Collision Program.\n";
 
     cudaDeviceSynchronize();
     cudaError_t err = cudaGetLastError();
-    // if (err != cudaSuccess)
-    //{
-    std::cerr << "CUDA Error: " << cudaGetErrorString(err) << std::endl;
-    //}
+    if (err != cudaSuccess)
+    {
+        std::cerr << "CUDA Error: " << cudaGetErrorString(err) << std::endl;
+    }
     cudaMemcpy(hasCollided, h_optix_params.output, numSrc * numDst * sizeof(int), cudaMemcpyDeviceToHost);
 
-    std::cout << "Collision results:" << std::endl;
-    for (int i = 0; i < numSrc; i++)
-    {
-        for (int j = 0; j < numDst; j++)
-        {
-            // std::cout << hasCollided[i * numDst + j] << std::endl;
-            if (hasCollided[i * numDst + j])
-            {
-                std::cout << " 1";
-            }
-            else
-            {
-                std::cout << " 0";
-            }
-        }
-        std::cout << std::endl;
-    }
-    std::cout << "Done with collision results." << std::endl;
-    // // delete[] hasCollided;
-    // std::cout << "hasCollided." << std::endl;
-    FreePrams();
-    // delete[] hasCollided;
+    // std::cout << "Collision results:" << std::endl;
+    // for (int i = 0; i < numSrc; i++)
+    // {
+    //     for (int j = 0; j < numDst; j++)
+    //     {
+    //         // std::cout << hasCollided[i * numDst + j] << std::endl;
+    //         if (hasCollided[i * numDst + j])
+    //         {
+    //             std::cout << " 1";
+    //         }
+    //         else
+    //         {
+    //             std::cout << " 0";
+    //         }
+    //     }
+    //     std::cout << std::endl;
+    // }
+    // std::cout << "Done with collision results." << std::endl;
 
+    FreePrams();
     return hasCollided;
 }
 
@@ -221,7 +213,6 @@ void Collision::StartOptix()
     TearDown();
     if (context == 0)
     {
-        std::cout << "Making Context." << std::endl;
         OPTIX_CHECK(optixInit());
         OPTIX_CHECK(optixDeviceContextCreate(0, 0, &context));
         MakePipeline();
@@ -272,7 +263,6 @@ Collision::Collision()
 // Function to load facets into OptiX
 int Collision::CreateGeometry(const std::vector<Triangle> &facets)
 {
-    std::cout << "Creating Geometry. <---------------------" << std::endl;
     FreeGeometry();
 
     // Check maximum trace depth
@@ -283,7 +273,6 @@ int Collision::CreateGeometry(const std::vector<Triangle> &facets)
     size_t verticesSize = facets.size() * 3 * sizeof(float3);
     CUDA_CHECK(cudaMalloc((void **)&d_vertices, verticesSize));
     CUDA_CHECK(cudaMemcpy((void *)d_vertices, facets.data(), verticesSize, cudaMemcpyHostToDevice));
-    std::cout << "Creating Geometry. num verteces: " << facets.size() << std::endl;
 
     CUdeviceptr d_indices = 0;
     OptixBuildInput buildInput = {};
@@ -318,7 +307,6 @@ int Collision::CreateGeometry(const std::vector<Triangle> &facets)
                                 &gasHandle, NULL, 0));
 
     // CUDA_CHECK(cudaFree((void *)d_tempBuffer));
-    std::cout << "Created GAS handle: " << gasHandle << std::endl;
     return 0;
 }
 
@@ -327,7 +315,6 @@ int Collision::MakePipeline()
     // Check maximum trace depth
     unsigned int maxTraceDepth = 0;
     OPTIX_CHECK(optixDeviceContextGetProperty(context, OPTIX_DEVICE_PROPERTY_LIMIT_MAX_TRACE_DEPTH, &maxTraceDepth, sizeof(maxTraceDepth)));
-    std::cout << "Maximum trace depth: " << maxTraceDepth << std::endl;
 
     // Create pipeline
     OptixPipelineCompileOptions pipelineCompileOptions = {};
@@ -460,6 +447,5 @@ int Collision::MakePipeline()
         std::cerr << "OptiX Pipeline Creation Log: " << log << std::endl;
     }
 
-    std::cout << "Created pipeline successfully. pipeline" << pipeline << std::endl;
     return 0;
 }
