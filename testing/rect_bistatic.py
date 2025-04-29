@@ -60,23 +60,23 @@ def bistatic_TES(a, b, wavelength, theta_i_deg, theta_s_deg):
     return TES_dB
 
 
-a = 1.0
-b = 1.0
+a = 3.0
+b = 2.0
 cp = 1480.0
 frequency = 10e3
-target_range = 4000
-angle_i = 60.0
+# target_range = 4000
+target_range = 5
+angle_i = 5.0
 target = geo.make_rectangle(a,b)
-target = geo.halve_facets(target)
-target = geo.halve_facets(target)
-target = geo.halve_facets(target)
+for i in range(6):
+    target = geo.halve_facets(target)
 
 api.load_stl_mesh_to_cuda(target, 0)
 
 field_surface = geo.make_rectangle(10,10, False)
-for i in range(5):
+for i in range(6):
     field_surface = geo.halve_facets(field_surface)
-# api.load_stl_mesh_to_cuda(field_surface, 2)
+api.load_stl_mesh_to_cuda(field_surface, 2)
 
 #stl_mesh = mesh.Mesh.from_file('./testing/rectangular_plate.stl')
 angle_i = [angle_i]
@@ -92,7 +92,6 @@ api.set_initial_conditions(cp, frequency, 0.0)
 
 api.render_cuda()
 field_vals = api.GetFieldPoints(len(field_pnts))
-api.TearDownCuda()
 
 magnitudes = np.sqrt(field_vals[:, 0]**2 + field_vals[:, 1]**2)
 mask = magnitudes > 1e-20

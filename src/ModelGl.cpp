@@ -177,8 +177,6 @@ void ModelGl::ProcessFrame()
         return;
     }
 
-    std::cout << "Processing frame..." << std::endl;
-
     MakeTextureShader();
 
     // glBindVertexArray(vao);

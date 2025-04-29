@@ -172,10 +172,10 @@ int ModelCuda::ProjectFromFacetsToFacets(std::vector<Object *> &scrObjects, std:
 
             for (int srcCnt = 0; numScr > srcCnt; srcCnt++)
             {
-                printf("Doing source point %d\n", srcCnt);
+                printf("Doing source facet %d of %d\n", srcCnt, numScr);
                 for (int dstCnt = 0; numDst > dstCnt; dstCnt++)
                 {
-                    printf("NumSrcFacets: %d, scrNum %d, NumDstFacets: %d, dstNum %d\n", numScr, srcCnt, numDst, dstCnt);
+                    // printf("NumSrcFacets: %d, scrNum %d, NumDstFacets: %d, dstNum %d\n", numScr, srcCnt, numDst, dstCnt);
 
                     if (hasCollision[srcCnt * numDst + dstCnt] == 1)
                     {
