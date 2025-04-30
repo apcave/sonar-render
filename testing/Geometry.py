@@ -142,3 +142,45 @@ def halve_facets(stl_mesh):
     new_mesh.normals = new_normals
 
     return new_mesh    
+
+def make_cube():
+        # Define the vertices of the cube (1 meter cube)
+    vertices = np.array([
+        [0, 0, 0],  # Vertex 0
+        [1, 0, 0],  # Vertex 1
+        [1, 1, 0],  # Vertex 2
+        [0, 1, 0],  # Vertex 3
+        [0, 0, 1],  # Vertex 4
+        [1, 0, 1],  # Vertex 5
+        [1, 1, 1],  # Vertex 6
+        [0, 1, 1],  # Vertex 7
+    ])
+
+    # Define the 12 triangles composing the cube
+    faces = np.array([
+        # Bottom face
+        [0, 3, 1],
+        [1, 3, 2],
+        # Top face
+        [4, 5, 7],
+        [5, 6, 7],
+        # Front face
+        [0, 1, 4],
+        [1, 5, 4],
+        # Back face
+        [2, 3, 6],
+        [3, 7, 6],
+        # Left face
+        [0, 4, 3],
+        [3, 4, 7],
+        # Right face
+        [1, 2, 5],
+        [2, 6, 5],
+    ])
+
+    # Create the mesh
+    cube = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
+    for i, face in enumerate(faces):
+        for j in range(3):
+            cube.vectors[i][j] = vertices[face[j], :]
+    return cube

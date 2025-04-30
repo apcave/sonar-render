@@ -39,7 +39,7 @@ def do_monostatic_rotation():
     target_range = 4000
     target = geo.make_rectangle(a,b)
 
-    for i in range(2):
+    for i in range(6):
         target = geo.halve_facets(target)
 
     angles = np.linspace(0, 90, 91, endpoint=False)

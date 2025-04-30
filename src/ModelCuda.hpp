@@ -72,6 +72,7 @@ protected:
 
 protected:
     Collision optiXCol;
+    bool cudaStarted = false;
 };
 
 #endif

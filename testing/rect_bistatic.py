@@ -63,7 +63,7 @@ def bistatic_TES(a, b, wavelength, theta_i_deg, theta_s_deg):
 a = 3.0
 b = 2.0
 cp = 1480.0
-frequency = 1e3
+frequency = 10e3
 target_range = 4000
 angle_i = 20.0
 target = geo.make_rectangle(a,b)
@@ -73,7 +73,7 @@ for i in range(6):
 api.load_stl_mesh_to_cuda(target, 0)
 
 field_surface = geo.make_rectangle(10,10, False)
-for i in range(6):
+for i in range(8):
     field_surface = geo.halve_facets(field_surface)
 api.load_stl_mesh_to_cuda(field_surface, 2)
 

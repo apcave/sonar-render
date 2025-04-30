@@ -37,6 +37,8 @@ int Collision::TearDown()
 
     FreePrams();
     FreeGeometry();
+    return 0;
+
     FreePipeline();
     if (context)
     {
@@ -82,21 +84,21 @@ void Collision::FreeGeometry()
 {
     if (d_vertices)
     {
-        std::cout << "Freeing d_vertices." << std::endl;
+        // std::cout << "Freeing d_vertices." << std::endl;
         cudaFree((void *)d_vertices);
         d_vertices = 0;
     }
 
     if (d_outputBuffer)
     {
-        std::cout << "Freeing d_outputBuffer." << std::endl;
+        // std::cout << "Freeing d_outputBuffer." << std::endl;
         cudaFree((void *)d_outputBuffer);
         d_outputBuffer = 0;
     }
 
-    if (d_tempBuffer != 0)
+    if (d_tempBuffer)
     {
-        std::cout << "Freeing d_tempBuffer." << std::endl;
+        // std::cout << "Freeing d_tempBuffer." << std::endl;
         cudaFree((void *)d_tempBuffer);
         d_tempBuffer = 0;
     }
@@ -214,7 +216,10 @@ void Collision::StartOptix()
     if (context == 0)
     {
         OPTIX_CHECK(optixInit());
-        OPTIX_CHECK(optixDeviceContextCreate(0, 0, &context));
+
+        OptixDeviceContextOptions options = {};
+        options.validationMode = OPTIX_DEVICE_CONTEXT_VALIDATION_MODE_ALL;
+        OPTIX_CHECK(optixDeviceContextCreate(0, &options, &context));
         MakePipeline();
     }
 }
@@ -222,7 +227,7 @@ void Collision::StartOptix()
 /**
  * @brief Pack all the facets into OptiX.
  */
-int Collision::StartCollision(std::vector<Object *> &targetObjects)
+int Collision::StartCollision(std::vector<Object *> &targets)
 {
     if (!hasStarted)
     {
@@ -232,7 +237,7 @@ int Collision::StartCollision(std::vector<Object *> &targetObjects)
     }
 
     int numFacets = 0;
-    for (auto object : targetObjects)
+    for (auto object : targets)
     {
         // Create geometry for each object
         numFacets += object->facets.size();
@@ -240,7 +245,7 @@ int Collision::StartCollision(std::vector<Object *> &targetObjects)
 
     std::vector<Triangle> facets(numFacets);
     int i = 0;
-    for (auto object : targetObjects)
+    for (auto object : targets)
     {
         for (auto facet : object->facets)
         {
@@ -263,18 +268,17 @@ Collision::Collision()
 // Function to load facets into OptiX
 int Collision::CreateGeometry(const std::vector<Triangle> &facets)
 {
+    // std::cout << "Creating geometry... NumFacets :" << facets.size() << std::endl;
     FreeGeometry();
 
     // Check maximum trace depth
     unsigned int maxTraceDepth = 0;
     OPTIX_CHECK(optixDeviceContextGetProperty(context, OPTIX_DEVICE_PROPERTY_LIMIT_MAX_TRACE_DEPTH, &maxTraceDepth, sizeof(maxTraceDepth)));
-
     // // Allocate device memory for vertices
     size_t verticesSize = facets.size() * 3 * sizeof(float3);
     CUDA_CHECK(cudaMalloc((void **)&d_vertices, verticesSize));
     CUDA_CHECK(cudaMemcpy((void *)d_vertices, facets.data(), verticesSize, cudaMemcpyHostToDevice));
 
-    CUdeviceptr d_indices = 0;
     OptixBuildInput buildInput = {};
     buildInput.type = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
     buildInput.triangleArray.vertexFormat = OPTIX_VERTEX_FORMAT_FLOAT3;
@@ -292,8 +296,8 @@ int Collision::CreateGeometry(const std::vector<Triangle> &facets)
     buildInput.triangleArray.sbtIndexOffsetStrideInBytes = 0;
 
     OptixAccelBuildOptions accelOptions = {};
-    accelOptions.buildFlags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION;
-    // accelOptions.buildFlags = OPTIX_BUILD_FLAG_NONE;
+    // accelOptions.buildFlags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION;
+    accelOptions.buildFlags = OPTIX_BUILD_FLAG_NONE;
     accelOptions.operation = OPTIX_BUILD_OPERATION_BUILD;
 
     OptixAccelBufferSizes gasBufferSizes;

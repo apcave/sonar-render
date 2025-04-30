@@ -19,19 +19,24 @@ import math
 a = 3.0
 b = 2.0
 cp = 1480.0
-frequency = 5e3
+frequency = 20e3
 target_range = 4000
 angle_i = 0.0
-target = geo.load_stl_file("./testing/sphere_1m_radius.stl")
+target = geo.make_cube()
+for i in range(4):
+    target = geo.halve_facets(target)
+
 field_surface = geo.make_rectangle(10,10, False)
 
-for i in range(7):
+for i in range(8):
     field_surface = geo.halve_facets(field_surface)
 
 
 
-angle_i = [0]
-source_pnts= geo.generate_field_points(target_range, angle_i)
+angle_i = [25]
+# source_pnts= geo.generate_field_points(target_range, angle_i)
+
+source_pnts=[[4,2,9]]
 angles = np.linspace(-180, 180, 361, endpoint=False)
 field_pnts= geo.generate_field_points(target_range, angles)
 

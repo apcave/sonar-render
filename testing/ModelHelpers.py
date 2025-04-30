@@ -20,7 +20,7 @@ def monostatic_iterated(pnts, object, cp, frequency):
         field_vals = api.GetFieldPoints(1)
         p_reflect.append([float(field_vals[0][0]), float(field_vals[0][1])])
         print("<<<<<<<<<-------------------->>>>")
-        # api.TearDownCuda()
+        api.TearDownCuda()
 
     return p_reflect
 

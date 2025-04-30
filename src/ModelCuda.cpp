@@ -97,14 +97,19 @@ int ModelCuda::MakeObjectOnGPU(vector<Facet *> facets)
 
 int ModelCuda::StartCuda()
 {
-    cudaDeviceSynchronize();
-    cudaFree(0);
-    cudaDeviceReset();
-    cudaError_t cudaStatus = cudaSetDevice(0);
-    if (cudaStatus != cudaSuccess)
+    if (!cudaStarted)
     {
-        printf("cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
-        return 1;
+        std::cout << "Starting CUDA... <---------------------------------------------" << std::endl;
+        cudaDeviceSynchronize();
+        cudaFree(0);
+        cudaDeviceReset();
+        cudaError_t cudaStatus = cudaSetDevice(0);
+        if (cudaStatus != cudaSuccess)
+        {
+            printf("cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
+            return 1;
+        }
+        cudaStarted = true;
     }
     return 0;
 }
@@ -159,6 +164,8 @@ int ModelCuda::StopCuda()
         delete object;
     }
     fieldObjects.clear();
+
+    optiXCol.TearDown();
 
     return 0;
 }
