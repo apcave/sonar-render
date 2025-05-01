@@ -2,17 +2,9 @@
 #define _FACET_CUDA
 
 #include "FacetGl.hpp"
+#include "ModelShared.h"
 
 #include <cuda_runtime.h>
-
-struct dev_facet
-{
-    float3 normal;
-    float3 base_point;
-    float3 xAxis;
-    float3 yAxis;
-    int3 frag_points;
-};
 
 class FacetCuda : public FacetGl
 {
@@ -29,23 +21,22 @@ public:
     void GetSurfaceScalers(float *dev_frag_stats);
     void PrintMatrix();
 
+    dev_facet MakeOptixStruct();
+
 private:
     // Area of the fragment.
     float *dev_frag_area = 0;
+
+    dev_facet host_facet;
     dev_facet *dev_data = 0;
     int3 frag_points;
 
 private:
     // Presure on the surface.
-    double *dev_Pr = 0;
-    double *dev_Pi = 0;
+    dcomplex *dev_P = 0;
 
     // Working buffers for facet to facet calculations.
-    double *dev_Pr_initial = 0;
-    double *dev_Pi_initial = 0;
-
-    double *dev_Pr_result = 0;
-    double *dev_Pi_result = 0;
+    dcomplex *dev_P_out = 0;
 
     friend class ModelCuda;
 };

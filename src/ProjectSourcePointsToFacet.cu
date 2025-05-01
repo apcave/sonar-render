@@ -20,8 +20,7 @@ __global__ void ProjectSourcePointToFacetKernel(
     dcomplex *source_points_pressure,
     dev_facet *facet_data,
     float *frag_area,
-    double *Pr_facet,
-    double *Pi_facet)
+    dcomplex *P_facet)
 {
     dcomplex k = *k_wave;
     float delta = *frag_delta;
@@ -95,8 +94,8 @@ __global__ void ProjectSourcePointToFacetKernel(
         return;
     }
 
-    atomicAddDouble(&Pr_facet[index], R.r);
-    atomicAddDouble(&Pi_facet[index], R.i);
+    atomicAddDouble(&P_facet[index].r, R.r);
+    atomicAddDouble(&P_facet[index].r, R.i);
 }
 
 int ModelCuda::ProjectSourcePointsToFacet(std::vector<Object *> &target)
@@ -148,8 +147,7 @@ int ModelCuda::ProjectSourcePointsToFacet(std::vector<Object *> &target)
                     dev_source_points_pressure,
                     facet->dev_data,
                     facet->dev_frag_area,
-                    facet->dev_Pr,
-                    facet->dev_Pi);
+                    facet->dev_P);
 
                 cudaError_t err = cudaGetLastError();
                 if (err != cudaSuccess)

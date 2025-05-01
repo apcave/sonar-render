@@ -15,7 +15,6 @@ void FacetCuda::AllocateCuda(float3 &normal,
     frag_points.y = numYpnts;
     frag_points.z = numXpntsNegative;
 
-    dev_facet host_facet;
     host_facet.normal = normal;
     host_facet.base_point = base_point;
     host_facet.xAxis = xAxis;
@@ -26,38 +25,35 @@ void FacetCuda::AllocateCuda(float3 &normal,
 
     // If the object is a source the surface pressure fixed to 1 across the surface.
 
+    dev_P = 0;
     if (objectType == OBJECT_TYPE_TARGET || objectType == OBJECT_TYPE_FIELD)
     {
         // These buffers are used to store surface pressure values.
 
         // Allocate device memory for the initial pressure data
-        cudaMalloc((void **)&dev_Pr, numXpnts * numYpnts * sizeof(double));
-        cudaMemset(dev_Pr, 0, numXpnts * numYpnts * sizeof(double));
-        cudaMalloc((void **)&dev_Pi, numXpnts * numYpnts * sizeof(double));
-        cudaMemset(dev_Pi, 0, numXpnts * numYpnts * sizeof(double));
+        cudaMalloc((void **)&dev_P, numXpnts * numYpnts * sizeof(dcomplex));
+        cudaMemset(dev_P, 0, numXpnts * numYpnts * sizeof(dcomplex));
     }
 
     // Allocate device memory for the fragment area
     cudaMalloc((void **)&dev_frag_area, numXpnts * numYpnts * sizeof(float));
 
+    dev_P_out = 0;
     if (objectType = OBJECT_TYPE_TARGET)
     {
         // These buffers are used for the facet to facet calculations.
 
         // Allocate device memory for the initial pressure data
-        cudaMalloc((void **)&dev_Pr_initial, numXpnts * numYpnts * sizeof(double));
-        cudaMemset(dev_Pr_initial, 0, numXpnts * numYpnts * sizeof(double));
-        cudaMalloc((void **)&dev_Pi_initial, numXpnts * numYpnts * sizeof(double));
-        cudaMemset(dev_Pi_initial, 0, numXpnts * numYpnts * sizeof(double));
-
-        // Allocate device memory for the result pressure data
-        cudaMalloc((void **)&dev_Pr_result, numXpnts * numYpnts * sizeof(double));
-        cudaMemset(dev_Pr_result, 0, numXpnts * numYpnts * sizeof(double));
-        cudaMalloc((void **)&dev_Pi_result, numXpnts * numYpnts * sizeof(double));
-        cudaMemset(dev_Pi_result, 0, numXpnts * numYpnts * sizeof(double));
+        cudaMalloc((void **)&dev_P_out, numXpnts * numYpnts * sizeof(dcomplex));
+        cudaMemset(dev_P_out, 0, numXpnts * numYpnts * sizeof(dcomplex));
     }
+
     cudaMemcpy(dev_data, &host_facet, sizeof(dev_facet), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_frag_area, frag_area, numXpnts * numYpnts * sizeof(float), cudaMemcpyHostToDevice);
+
+    host_facet.P = dev_P;
+    host_facet.P_out = dev_P_out;
+    host_facet.frag_area = dev_frag_area;
 }
 
 FacetCuda::~FacetCuda()
@@ -72,41 +68,22 @@ FacetCuda::~FacetCuda()
         cudaFree(dev_data);
         dev_data = 0;
     }
-    if (dev_Pr)
+    if (dev_P)
     {
-        cudaFree(dev_Pr);
-        dev_Pr = 0;
+        cudaFree(dev_P);
+        dev_P = 0;
     }
-    if (dev_Pi)
+
+    if (dev_P_out)
     {
-        cudaFree(dev_Pi);
-        dev_Pi = 0;
-    }
-    if (dev_Pr_initial)
-    {
-        cudaFree(dev_Pr_initial);
-        dev_Pr_initial = 0;
-    }
-    if (dev_Pi_initial)
-    {
-        cudaFree(dev_Pi_initial);
-        dev_Pi_initial = 0;
-    }
-    if (dev_Pr_result)
-    {
-        cudaFree(dev_Pr_result);
-        dev_Pr_result = 0;
-    }
-    if (dev_Pi_result)
-    {
-        cudaFree(dev_Pi_result);
-        dev_Pi_result = 0;
+        cudaFree(dev_P_out);
+        dev_P_out = 0;
     }
 }
 
 void FacetCuda::PrintMatrix()
 {
-    if (dev_Pr == nullptr)
+    if (dev_P)
     {
         std::cout << "FacetCuda: PrintMatrix(): dev_Pr is null." << std::endl;
         return;
@@ -114,16 +91,26 @@ void FacetCuda::PrintMatrix()
     std::cout << "FacetCuda: PrintMatrix()" << std::endl;
     std::cout << "Number of fragment points: " << numXpnts * numYpnts << std::endl;
 
-    double *host_Pr = new double[numXpnts * numYpnts];
-    cudaMemcpy(host_Pr, dev_Pr, numXpnts * numYpnts * sizeof(double), cudaMemcpyDeviceToHost);
+    dcomplex *host_P = new dcomplex[numXpnts * numYpnts];
+    cudaMemcpy(host_P, dev_P, numXpnts * numYpnts * sizeof(dcomplex), cudaMemcpyDeviceToHost);
 
     for (int j = numYpnts - 1; j >= 0; j--)
     {
         for (int i = 0; i < numXpnts; i++)
         {
-            printf("%.3e ", host_Pr[j * numXpnts + i]);
+            printf("%.3e ", host_P[j * numXpnts + i].r);
         }
         printf("\n");
     }
-    delete[] host_Pr;
+    delete[] host_P;
+}
+
+dev_facet FacetCuda::MakeOptixStruct()
+{
+    // Makes a copy.
+    if (host_facet.P_out)
+    {
+        cudaMemset(host_facet.P_out, 0, numXpnts * numYpnts * sizeof(dcomplex));
+    }
+    return host_facet;
 }

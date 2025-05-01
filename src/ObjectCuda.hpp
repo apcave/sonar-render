@@ -2,6 +2,7 @@
 #define _OBJECT_CUDA
 
 #include "ObjectGl.hpp"
+#include "ModelShared.h"
 
 class ObjectCuda : public ObjectGl
 {
@@ -12,6 +13,7 @@ public:
     void GetSurfaceScalers(float *dev_frag_stats);
     void WriteSurfaceToGlTexture(float *dev_frag_stats);
     void PrintSurfacePressure();
+    dev_object MakeOptixStruct_PF();
 };
 
 #endif

@@ -39,14 +39,14 @@ __device__ __always_inline float4 hsv2rgb(float h, float s, float v)
     }
 }
 
-__global__ void MakeSurface(double *Pr, double *Pi, cudaSurfaceObject_t surface, int maxXpnt, float *stats)
+__global__ void MakeSurface(dcomplex *P, cudaSurfaceObject_t surface, int maxXpnt, float *stats)
 {
     int xPnt = threadIdx.x;
     int yPnt = blockIdx.x;
 
     int index = yPnt * maxXpnt + xPnt;
 
-    thrust::complex<float> p((float)Pr[index], (float)Pi[index]);
+    thrust::complex<float> p((float)P[index].r, (float)P[index].i);
 
     float mag = abs(p) / stats[0];
     float phase = (atan2(p.imag(), p.real()) + M_PI) / (2.0f * M_PI);
@@ -66,20 +66,20 @@ void FacetCuda::WriteSurface(float *dev_frag_stats)
     // Make the texture out of the real values.
     dim3 threadsPerBlock(numXpnts, 1);
     dim3 numBlocks(numYpnts, 1);
-    MakeSurface<<<numBlocks, threadsPerBlock>>>(dev_Pr, dev_Pi, surface, numXpnts, dev_frag_stats);
+    MakeSurface<<<numBlocks, threadsPerBlock>>>(dev_P, surface, numXpnts, dev_frag_stats);
 
     cudaGraphicsUnmapResources(1, &cudaResource, 0);
     readyToRender = true;
 }
 
-__global__ void GetMaxValue(double *Pr, double *Pi, int maxXpnt, float *stats)
+__global__ void GetMaxValue(dcomplex *P, int maxXpnt, float *stats)
 {
     int xPnt = threadIdx.x;
     int yPnt = blockIdx.x;
 
     int index = yPnt * maxXpnt + xPnt;
 
-    thrust::complex<float> p((float)Pr[index], (float)Pi[index]);
+    thrust::complex<float> p((float)P[index].r, (float)P[index].i);
 
     float mag = abs(p);
 
@@ -96,8 +96,7 @@ void FacetCuda::GetSurfaceScalers(float *dev_frag_stats)
     dim3 threadsPerBlock(numXpnts, 1);
     dim3 numBlocks(numYpnts, 1);
 
-    GetMaxValue<<<numBlocks, threadsPerBlock>>>(dev_Pr,
-                                                dev_Pi,
+    GetMaxValue<<<numBlocks, threadsPerBlock>>>(dev_P,
                                                 numXpnts,
                                                 dev_frag_stats);
 }

@@ -12,8 +12,7 @@ __global__ void ProjectFacetToFieldPointKernel(
     dcomplex *field_points_pressure,
     dev_facet *facet_data,
     float *frag_area,
-    double *Pr_facet,
-    double *Pi_facet)
+    dcomplex *P_facet)
 {
     dcomplex k = *k_wave;
     float delta = *frag_delta;
@@ -68,9 +67,7 @@ __global__ void ProjectFacetToFieldPointKernel(
     r_i.z = xAxis.z + yAxis.z + facet_base.z;
     // printf("Facet Point Global Ref: %f, %f, %f\n", P1g.x, P1g.y, P1g.z);
 
-    dcomplex p_inc;
-    p_inc.r = Pr_facet[index];
-    p_inc.i = Pi_facet[index];
+    dcomplex p_inc = P_facet[index];
 
     float3 vr_ri = MakeVector(r_i, r);
     float r_if = GetVectorLength(vr_ri);
@@ -154,8 +151,7 @@ int ModelCuda::ProjectFromFacetsToFieldPoints()
                     dev_field_points_pressure,
                     facet->dev_data,
                     facet->dev_frag_area,
-                    facet->dev_Pr,
-                    facet->dev_Pi);
+                    facet->dev_P);
 
                 cudaError_t err = cudaGetLastError();
                 if (err != cudaSuccess)

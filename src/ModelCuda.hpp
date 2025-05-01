@@ -26,6 +26,8 @@ class ModelCuda : public ModelGl
 protected:
     // Global parameters.
     // Complex wave number.
+    dcomplex k_wave;
+    float frag_length;
     dcomplex *dev_k_wave = 0;
     // Pixel length and width.
     float *dev_frag_delta = 0;
@@ -69,6 +71,8 @@ protected:
     void WriteCudaToGlTexture();
 
     int GetSurfaceScalers();
+
+    void ProjectSrcPointsToObjects();
 
 protected:
     Collision optiXCol;

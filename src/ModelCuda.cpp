@@ -266,3 +266,28 @@ ModelCuda::~ModelCuda()
     std::cout << "Cleaning up ModelCuda..." << std::endl;
     StopCuda();
 }
+
+void ModelCuda::ProjectSrcPointsToObjects()
+{
+    globalParams gp = {};
+    gp.calcType = CalcType::SOURCE_POINTS;
+    gp.k_wave = k_wave;
+    gp.frag_delta = frag_length;
+    gp.srcPoints.numPnts = host_num_source_points;
+    gp.srcPoints.position = dev_source_points_position;
+    gp.srcPoints.pressure = dev_source_points_pressure;
+
+    for (auto object : targetObjects)
+    {
+        gp.dstObject = object->MakeOptixStruct_PF();
+        // optiX.DoProjection(gp);
+        free(gp.dstObject.facets);
+    }
+
+    for (auto object : fieldObjects)
+    {
+        gp.dstObject = object->MakeOptixStruct_PF();
+        // optiX.DoProjection(gp);
+        free(gp.dstObject.facets);
+    }
+}

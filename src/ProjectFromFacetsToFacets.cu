@@ -17,12 +17,10 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     float *frag_delta,
     dev_facet *src_facet_data,
     float *src_frag_area,
-    double *src_Pr_facet,
-    double *src_Pi_facet,
+    dcomplex *src_P_facet,
     dev_facet *dst_facet_data,
     float *dst_frag_area,
-    double *dst_Pr_facet,
-    double *dst_Pi_facet)
+    dcomplex *dst_P_facet)
 {
     dcomplex k = *k_wave;
     float delta = *frag_delta;
@@ -94,9 +92,7 @@ __global__ void ProjectFromFacetsToFacetsKernel(
     r_j.y = xAxis_B.y + yAxis_B.y + facet_base_B.y;
     r_j.z = xAxis_B.z + yAxis_B.z + facet_base_B.z;
 
-    dcomplex p_i;
-    p_i.r = src_Pr_facet[index_A];
-    p_i.i = src_Pi_facet[index_A];
+    dcomplex p_i = src_P_facet[index_A];
 
     float3 vr_ij = MakeVector(r_i, r_j);
     float r_ij = GetVectorLength(vr_ij);
@@ -137,8 +133,8 @@ __global__ void ProjectFromFacetsToFacetsKernel(
         printf("Pressure to field point prior to spreading: %e, %e\n", result.r, result.i);
         return;
     }
-    atomicAddDouble(&(dst_Pr_facet[index_B]), result.r);
-    atomicAddDouble(&(dst_Pi_facet[index_B]), result.i);
+    atomicAddDouble(&(dst_P_facet[index_B].r), result.r);
+    atomicAddDouble(&(dst_P_facet[index_B].i), result.i);
 }
 
 /**
@@ -197,12 +193,10 @@ int ModelCuda::ProjectFromFacetsToFacets(std::vector<Object *> &scrObjects, std:
                         dev_frag_delta,
                         srcFacet->dev_data,
                         srcFacet->dev_frag_area,
-                        srcFacet->dev_Pr,
-                        srcFacet->dev_Pi,
+                        srcFacet->dev_P,
                         dstFacet->dev_data,
                         dstFacet->dev_frag_area,
-                        dstFacet->dev_Pr,
-                        dstFacet->dev_Pi);
+                        dstFacet->dev_P);
                     cudaError_t err = cudaGetLastError();
                     if (err != cudaSuccess)
                     {
