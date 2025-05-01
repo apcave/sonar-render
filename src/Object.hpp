@@ -17,6 +17,9 @@ public:
 
 private:
     std::vector<float3> centroids;
+
+    // This struct is designed to be directly copied to the GPU.
+    dev_object h_obj = {};
 };
 
 #endif

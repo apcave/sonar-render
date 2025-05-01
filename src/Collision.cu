@@ -3,7 +3,7 @@
 
 #include <optix.h>
 #include <optix_device.h>
-#include <optix_function_table_definition.h>
+// #include <optix_function_table_definition.h>
 #include <optix_stubs.h>
 #include <cuda_runtime.h>
 

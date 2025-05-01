@@ -1,12 +1,9 @@
-#include "Collision.hpp"
-#include <optix.h>
-#include <optix_function_table_definition.h>
-#include <optix_stubs.h>
-#include <cuda_runtime.h>
+#include "OptiX.hpp"
 #include "OptiX/Exception.h"
-#include <fstream>
+#include <stdexcept>
+#include <optix_function_table_definition.h>
 
-std::string Collision::readFile(const std::string &filename)
+std::string OptiX::readFile(const std::string &filename)
 {
     std::string contents;
     std::ifstream file(filename, std::ios::binary);
@@ -22,11 +19,11 @@ std::string Collision::readFile(const std::string &filename)
     return contents;
 }
 
-Collision::~Collision()
+OptiX::~OptiX()
 {
 }
 
-int Collision::TearDown()
+int OptiX::TearDown()
 {
     if (hasCollided)
     {
@@ -50,11 +47,11 @@ int Collision::TearDown()
     }
     hasStarted = false;
 
-    std::cout << "Deleted Collision." << std::endl;
+    std::cout << "Deleted OptiX." << std::endl;
     return 0;
 }
 
-void Collision::FreePipeline()
+void OptiX::FreePipeline()
 {
     if (raygenRecord)
     {
@@ -80,7 +77,7 @@ void Collision::FreePipeline()
     return;
 }
 
-void Collision::FreeGeometry()
+void OptiX::FreeGeometry()
 {
     if (d_vertices)
     {
@@ -103,72 +100,65 @@ void Collision::FreeGeometry()
         d_tempBuffer = 0;
     }
 }
-void Collision::FreePrams()
+void OptiX::FreePrams()
 {
-    if (h_optix_params.vp1)
-    {
-        CUDA_CHECK(cudaFree(h_optix_params.vp1));
-        h_optix_params.vp1 = 0;
-    }
+    // if (h_optix_params.vp1)
+    // {
+    //     CUDA_CHECK(cudaFree(h_optix_params.vp1));
+    //     h_optix_params.vp1 = 0;
+    // }
 
-    if (h_optix_params.vp2)
-    {
-        CUDA_CHECK(cudaFree(h_optix_params.vp2));
-        h_optix_params.vp2 = 0;
-    }
+    // if (h_optix_params.vp2)
+    // {
+    //     CUDA_CHECK(cudaFree(h_optix_params.vp2));
+    //     h_optix_params.vp2 = 0;
+    // }
 
-    if (h_optix_params.output)
-    {
-        CUDA_CHECK(cudaFree(h_optix_params.output));
-        h_optix_params.output = 0;
-    }
+    // if (h_optix_params.output)
+    // {
+    //     CUDA_CHECK(cudaFree(h_optix_params.output));
+    //     h_optix_params.output = 0;
+    // }
+
+    // if (d_optix_params)
+    // {
+    //     CUDA_CHECK(cudaFree((void *)d_optix_params));
+    //     d_optix_params = 0;
+    // }
+}
+
+void OptiX::DoProjection(globalParams params)
+{
+    // The params are passed to the device.
+    // The results are in CUDA memory.
 
     if (d_optix_params)
     {
-        CUDA_CHECK(cudaFree((void *)d_optix_params));
-        d_optix_params = 0;
+        throw new std::runtime_error("OptiX::DoProjection: d_optix_params already allocated.");
     }
-}
+    params.handle = gasHandle;
+    CUDA_CHECK(cudaMalloc((void **)&d_optix_params, sizeof(globalParams)));
+    CUDA_CHECK(cudaMemcpy((void *)d_optix_params, &params, sizeof(globalParams), cudaMemcpyHostToDevice));
 
-int *Collision::DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2)
-{
-    if (hasCollided)
+    int numFacets = params.srcObject.numFacets;
+    if (params.calcType == FIELD_POINTS)
     {
-        std::cout << "Freeing hasCollided." << std::endl;
-        delete[] hasCollided;
-        hasCollided = 0;
+        numFacets = params.dstObject.numFacets;
     }
 
-    // FreePrams();
-    int numSrc = vp1.size();
-    int numDst = vp2.size();
-    hasCollided = new int[numSrc * numDst];
+    numFacets = 1;
 
-    h_optix_params.handle = gasHandle;
-    h_optix_params.numDstPoints = numDst;
-
-    size_t numBytes = numSrc * sizeof(float3) + numDst * sizeof(float3) + numDst * numSrc * sizeof(int) + sizeof(Params);
-    CUDA_CHECK(cudaMalloc((void **)&(h_optix_params.vp1), numSrc * sizeof(float3)));
-    CUDA_CHECK(cudaMemcpy(h_optix_params.vp1, vp1.data(), numSrc * sizeof(float3), cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMalloc((void **)&(h_optix_params.vp2), numDst * sizeof(float3)));
-    CUDA_CHECK(cudaMemcpy(h_optix_params.vp2, vp2.data(), numDst * sizeof(float3), cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMalloc((void **)&(h_optix_params.output), numDst * numSrc * sizeof(int)));
-    CUDA_CHECK(cudaMemset(h_optix_params.output, 0, numDst * numSrc * sizeof(int)));
-
-    CUDA_CHECK(cudaMalloc((void **)&d_optix_params, sizeof(Params)));
-    CUDA_CHECK(cudaMemcpy((void *)d_optix_params, &h_optix_params, sizeof(Params), cudaMemcpyHostToDevice));
-
-    // std::cout << "Launching Collision Program...\n";
+    std::cout << "Launching Collision Program...\n";
     OPTIX_CHECK(optixLaunch(
         pipeline,
         0,
         d_optix_params,
-        sizeof(Params),
+        sizeof(globalParams),
         &sbt,
-        numSrc,
-        numDst,
+        numFacets,
+        1,
         1));
-    // std::cout << "Launched Collision Program.\n";
+    std::cout << "Launched Collision Program.\n";
 
     cudaDeviceSynchronize();
     cudaError_t err = cudaGetLastError();
@@ -176,42 +166,86 @@ int *Collision::DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2)
     {
         std::cerr << "CUDA Error: " << cudaGetErrorString(err) << std::endl;
     }
-    cudaMemcpy(hasCollided, h_optix_params.output, numSrc * numDst * sizeof(int), cudaMemcpyDeviceToHost);
 
-    // std::cout << "Collision results:" << std::endl;
-    // for (int i = 0; i < numSrc; i++)
+    CUDA_CHECK(cudaFree((void *)d_optix_params));
+    d_optix_params = 0;
+}
+
+int *OptiX::DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2)
+{
+    // if (hasCollided)
     // {
-    //     for (int j = 0; j < numDst; j++)
-    //     {
-    //         // std::cout << hasCollided[i * numDst + j] << std::endl;
-    //         if (hasCollided[i * numDst + j])
-    //         {
-    //             std::cout << " 1";
-    //         }
-    //         else
-    //         {
-    //             std::cout << " 0";
-    //         }
-    //     }
-    //     std::cout << std::endl;
+    //     std::cout << "Freeing hasCollided." << std::endl;
+    //     delete[] hasCollided;
+    //     hasCollided = 0;
     // }
-    // std::cout << "Done with collision results." << std::endl;
 
-    FreePrams();
-    return hasCollided;
+    // // FreePrams();
+    // int numSrc = vp1.size();
+    // int numDst = vp2.size();
+    // hasCollided = new int[numSrc * numDst];
+
+    // h_optix_params.handle = gasHandle;
+    // h_optix_params.numDstPoints = numDst;
+
+    // size_t numBytes = numSrc * sizeof(float3) + numDst * sizeof(float3) + numDst * numSrc * sizeof(int) + sizeof(Params);
+    // CUDA_CHECK(cudaMalloc((void **)&(h_optix_params.vp1), numSrc * sizeof(float3)));
+    // CUDA_CHECK(cudaMemcpy(h_optix_params.vp1, vp1.data(), numSrc * sizeof(float3), cudaMemcpyHostToDevice));
+    // CUDA_CHECK(cudaMalloc((void **)&(h_optix_params.vp2), numDst * sizeof(float3)));
+    // CUDA_CHECK(cudaMemcpy(h_optix_params.vp2, vp2.data(), numDst * sizeof(float3), cudaMemcpyHostToDevice));
+    // CUDA_CHECK(cudaMalloc((void **)&(h_optix_params.output), numDst * numSrc * sizeof(int)));
+    // CUDA_CHECK(cudaMemset(h_optix_params.output, 0, numDst * numSrc * sizeof(int)));
+
+    // CUDA_CHECK(cudaMalloc((void **)&d_optix_params, sizeof(Params)));
+    // CUDA_CHECK(cudaMemcpy((void *)d_optix_params, &h_optix_params, sizeof(Params), cudaMemcpyHostToDevice));
+
+    // // std::cout << "Launching Collision Program...\n";
+    // OPTIX_CHECK(optixLaunch(
+    //     pipeline,
+    //     0,
+    //     d_optix_params,
+    //     sizeof(Params),
+    //     &sbt,
+    //     numSrc,
+    //     numDst,
+    //     1));
+    // // std::cout << "Launched Collision Program.\n";
+
+    // cudaDeviceSynchronize();
+    // cudaError_t err = cudaGetLastError();
+    // if (err != cudaSuccess)
+    // {
+    //     std::cerr << "CUDA Error: " << cudaGetErrorString(err) << std::endl;
+    // }
+    // cudaMemcpy(hasCollided, h_optix_params.output, numSrc * numDst * sizeof(int), cudaMemcpyDeviceToHost);
+
+    // // std::cout << "Collision results:" << std::endl;
+    // // for (int i = 0; i < numSrc; i++)
+    // // {
+    // //     for (int j = 0; j < numDst; j++)
+    // //     {
+    // //         // std::cout << hasCollided[i * numDst + j] << std::endl;
+    // //         if (hasCollided[i * numDst + j])
+    // //         {
+    // //             std::cout << " 1";
+    // //         }
+    // //         else
+    // //         {
+    // //             std::cout << " 0";
+    // //         }
+    // //     }
+    // //     std::cout << std::endl;
+    // // }
+    // // std::cout << "Done with collision results." << std::endl;
+
+    // FreePrams();
+    // return hasCollided;
+    return nullptr;
 }
 
-bool Collision::HasCollision(float3 p1, float3 p2)
+void OptiX::StartOptix()
 {
-    std::vector<float3> vp1(1, p1);
-    std::vector<float3> vp2(1, p2);
-    DoCollisions(vp1, vp2);
-    return true;
-}
-
-void Collision::StartOptix()
-{
-    std::cout << "Collision::StartOptix()" << std::endl;
+    std::cout << "OptiX::StartOptix()" << std::endl;
     TearDown();
     if (context == 0)
     {
@@ -227,7 +261,7 @@ void Collision::StartOptix()
 /**
  * @brief Pack all the facets into OptiX.
  */
-int Collision::StartCollision(std::vector<Object *> &targets)
+int OptiX::StartCollision(std::vector<Object *> &targets)
 {
     if (!hasStarted)
     {
@@ -260,13 +294,13 @@ int Collision::StartCollision(std::vector<Object *> &targets)
     return 0;
 }
 
-Collision::Collision()
+OptiX::OptiX()
 {
     // cuStreamCreate(&stream, CU_STREAM_DEFAULT);
 }
 
 // Function to load facets into OptiX
-int Collision::CreateGeometry(const std::vector<Triangle> &facets)
+int OptiX::CreateGeometry(const std::vector<Triangle> &facets)
 {
     // std::cout << "Creating geometry... NumFacets :" << facets.size() << std::endl;
     FreeGeometry();
@@ -314,7 +348,7 @@ int Collision::CreateGeometry(const std::vector<Triangle> &facets)
     return 0;
 }
 
-int Collision::MakePipeline()
+int OptiX::MakePipeline()
 {
     // Check maximum trace depth
     unsigned int maxTraceDepth = 0;
@@ -335,7 +369,7 @@ int Collision::MakePipeline()
     char log[2048];
     size_t logSize = sizeof(log);
 
-    std::string device_programs = readFile("./build/Collision.ptx");
+    std::string device_programs = readFile("./build/OptiX.ptx");
     const char *dev_prog = device_programs.c_str();
     size_t dev_prog_sz = device_programs.size();
     std::cout << "Device program size: " << dev_prog_sz << std::endl;

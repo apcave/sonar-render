@@ -1,12 +1,12 @@
 #ifndef _OPTIX_HPP
 #define _OPTIX_HPP
 #include "Object.hpp"
-#include "CudaUtils.cuh"
-#include "CollisionShared.h"
 
 #include <optix.h>
-
+// #include <optix_function_table_definition.h>
+#include <optix_stubs.h>
 #include <cuda_runtime.h>
+#include <fstream>
 #include <vector>
 #include <iostream>
 #include <cstring>
@@ -19,7 +19,6 @@ class OptiX
     };
 
 private:
-    Params h_optix_params;
     CUdeviceptr d_optix_params = 0;
 
     OptixTraversableHandle gasHandle;
@@ -40,6 +39,8 @@ private:
 public:
     OptiX();
     ~OptiX();
+
+    void DoProjection(globalParams params);
 
     int *DoCollisions(std::vector<float3> &vp1, std::vector<float3> &vp2);
 

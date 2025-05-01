@@ -1,6 +1,7 @@
 #ifndef _MODEL_CUDA
 #define _MODEL_CUDA
 #include "Collision.hpp"
+#include "OptiX.hpp"
 #include "Facet.hpp"
 #include "ModelGl.hpp"
 #include "dcomplex.h"
@@ -76,6 +77,7 @@ protected:
 
 protected:
     Collision optiXCol;
+    OptiX optiX;
     bool cudaStarted = false;
 };
 

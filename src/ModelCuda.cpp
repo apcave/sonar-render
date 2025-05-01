@@ -173,22 +173,24 @@ int ModelCuda::StopCuda()
 int ModelCuda::DoCalculations()
 {
     std::cout << "Source Points to target." << std::endl;
-    if (ProjectSourcePointsToFacet(targetObjects) != 0)
-    {
-        printf("Project from source points to target object.\n");
-        return 1;
-    }
+    ProjectSrcPointsToObjects();
 
-    std::cout << "Source Points to field." << std::endl;
-    // The field surfaces include the incident and scattered waves.
-    if (ProjectSourcePointsToFacet(fieldObjects) != 0)
-    {
-        printf("Project from source points to field object.\n");
-        return 1;
-    }
+    // if (ProjectSourcePointsToFacet(targetObjects) != 0)
+    // {
+    //     printf("Project from source points to target object.\n");
+    //     return 1;
+    // }
+
+    // std::cout << "Source Points to field." << std::endl;
+    // // The field surfaces include the incident and scattered waves.
+    // if (ProjectSourcePointsToFacet(fieldObjects) != 0)
+    // {
+    //     printf("Project from source points to field object.\n");
+    //     return 1;
+    // }
 
     // std::cout << "Projecting from target to field surface." << std::endl;
-    ProjectFromFacetsToFacets(targetObjects, fieldObjects, false);
+    // ProjectFromFacetsToFacets(targetObjects, fieldObjects, false);
     //    std::cout << "Done projecting from target to field surface." << std::endl;
 
     // for (int i = 0; i < 0; i++)
@@ -279,15 +281,13 @@ void ModelCuda::ProjectSrcPointsToObjects()
 
     for (auto object : targetObjects)
     {
-        gp.dstObject = object->MakeOptixStruct_PF();
-        // optiX.DoProjection(gp);
-        free(gp.dstObject.facets);
+        gp.dstObject = object->MakeOptixStructArray();
+        optiX.DoProjection(gp);
     }
 
     for (auto object : fieldObjects)
     {
-        gp.dstObject = object->MakeOptixStruct_PF();
-        // optiX.DoProjection(gp);
-        free(gp.dstObject.facets);
+        gp.dstObject = object->MakeOptixStructArray();
+        optiX.DoProjection(gp);
     }
 }

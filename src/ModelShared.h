@@ -15,7 +15,8 @@ enum CalcType
 {
     SOURCE_POINTS = 0,
     FIELD_POINTS,
-    FACET,
+    FACET_SELF,
+    FACET_RESP,
     FACET_NO_RESP,
 };
 
@@ -51,8 +52,6 @@ typedef struct
 
     dcomplex k_wave;  // Wave number
     float frag_delta; // Fragment length
-
-    int srcFacetNum;
 
     dev_object srcObject;
     dev_object dstObject;

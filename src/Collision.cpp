@@ -1,10 +1,5 @@
 #include "Collision.hpp"
-#include <optix.h>
-#include <optix_function_table_definition.h>
-#include <optix_stubs.h>
-#include <cuda_runtime.h>
 #include "OptiX/Exception.h"
-#include <fstream>
 
 std::string Collision::readFile(const std::string &filename)
 {

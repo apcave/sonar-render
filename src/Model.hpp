@@ -25,10 +25,10 @@ private:
     float medium_attenuation;
     float omega;
     float k;
-    dcomplex k_wave;
+
     // float resolution_factor = 7.5;
     float resolution_factor = 12.0;
-    float frag_length;
+
     float density;
 
 public:

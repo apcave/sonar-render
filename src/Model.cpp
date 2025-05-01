@@ -73,6 +73,7 @@ void Model::RenderCuda()
     std::cout << "Rendering CUDA..." << std::endl;
     StartCuda();
     optiXCol.StartCollision(targetObjects);
+    optiX.StartCollision(fieldObjects);
 
     SetGlobalParameters(k_wave, frag_length);
 

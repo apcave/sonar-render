@@ -13,7 +13,10 @@ public:
     void GetSurfaceScalers(float *dev_frag_stats);
     void WriteSurfaceToGlTexture(float *dev_frag_stats);
     void PrintSurfacePressure();
-    dev_object MakeOptixStruct_PF();
+    dev_object MakeOptixStructArray();
+
+private:
+    dev_object h_obj = {};
 };
 
 #endif
