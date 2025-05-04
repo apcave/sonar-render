@@ -1,6 +1,5 @@
 #ifndef _MODEL_CUDA
 #define _MODEL_CUDA
-#include "Collision.hpp"
 #include "OptiX.hpp"
 #include "Facet.hpp"
 #include "ModelGl.hpp"
@@ -75,8 +74,11 @@ protected:
 
     void ProjectSrcPointsToObjects();
 
+    void ProjectTargetToFieldObjects();
+
+    void ProjectTargetToFieldPoints();
+
 protected:
-    Collision optiXCol;
     OptiX optiX;
     bool cudaStarted = false;
 };

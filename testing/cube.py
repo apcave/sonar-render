@@ -19,7 +19,7 @@ import math
 a = 3.0
 b = 2.0
 cp = 1480.0
-frequency = 20e3
+frequency = 10e3
 target_range = 4000
 angle_i = 0.0
 target = geo.make_cube()
@@ -28,7 +28,7 @@ for i in range(4):
 
 field_surface = geo.make_rectangle(10,10, False)
 
-for i in range(8):
+for i in range(4):
     field_surface = geo.halve_facets(field_surface)
 
 

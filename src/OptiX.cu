@@ -34,7 +34,7 @@ __device__ double atomicAddDouble(double *address, double val)
 
 __device__ void projectSourcePointsToFacet(int b_ind)
 {
-    const dev_facet B = params.srcObject.facets[b_ind];
+    const dev_facet B = params.dstObject.facets[b_ind];
     const int numXpntsNegative = B.frag_points.z;
     const float delta = params.frag_delta;
     const int numSrc = params.srcPoints.numPnts;
@@ -59,7 +59,6 @@ __device__ void projectSourcePointsToFacet(int b_ind)
             for (int i = 0; i < numSrc; i++)
             {
                 float3 p_i = params.srcPoints.position[i];
-
                 const float3 v_ij = p_j - p_i;
                 const float r_ij = length(v_ij);
                 const float3 uv_ij = v_ij / r_ij;
@@ -87,8 +86,7 @@ __device__ void projectSourcePointsToFacet(int b_ind)
 
                 dcomplex cP_i = params.srcPoints.pressure[i];
                 thrust::complex<double> P_i = thrust::complex<double>(cP_i.r, cP_i.i);
-
-                thrust::complex<double> P_j = (P_i * thrust::exp(i1 * k * i1 * r_ij)) / r_ij;
+                thrust::complex<double> P_j = (P_i * thrust::exp(i1 * k * r_ij)) / r_ij;
 
                 dcomplex *p_out = &(B.P[ind_j]);
                 atomicAddDouble(&(p_out->r), P_j.real());
@@ -100,7 +98,7 @@ __device__ void projectSourcePointsToFacet(int b_ind)
 
 __device__ void projectFacetToFieldPoints(int a_ind)
 {
-    const dev_facet A = params.dstObject.facets[a_ind];
+    const dev_facet A = params.srcObject.facets[a_ind];
     const int numXpntsNegative = A.frag_points.z;
     const float delta = params.frag_delta;
     const int numDst = params.dstPoints.numPnts;
@@ -124,18 +122,24 @@ __device__ void projectFacetToFieldPoints(int a_ind)
             const float3 p_i = A.base_point + xAxis + yAxis;
             const float A_i = A.frag_area[ind_i];
 
+            if (A_i <= 1e-6f)
+            {
+                // printf("facets_PixelArea is zero\n");
+                continue;
+            }
+
             dcomplex cP_i = A.P[ind_i];
             thrust::complex<double> P_i = thrust::complex<double>(cP_i.r, cP_i.i);
 
             for (int j = 0; j < numDst; j++)
             {
-                float3 p_j = params.srcPoints.position[j];
+                float3 p_j = params.dstPoints.position[j];
 
-                const float3 v_ij = p_j - p_i;
-                const float r_ij = length(v_ij);
-                const float3 uv_ij = v_ij / r_ij;
+                const float3 v_ji = p_i - p_j;
+                const float r_ji = length(v_ji);
+                const float3 uv_ji = v_ji / r_ji;
 
-                const float cos_inc = dot(uv_ij, A.normal);
+                const float cos_inc = dot(-uv_ji, A.normal);
                 if (cos_inc < 1e-6f)
                 {
                     // printf("Normal doesn't align, not adding to field point.\n");
@@ -145,10 +149,10 @@ __device__ void projectFacetToFieldPoints(int a_ind)
                 unsigned int hit = 0;
                 optixTrace(
                     params.handle,
-                    p_i,
-                    uv_ij,
+                    p_j,
+                    uv_ji,
                     0.0f,           // Min t
-                    r_ij - epsilon, // Max t
+                    r_ji - epsilon, // Max t
                     0.0f,           // Ray time
                     OptixVisibilityMask(1),
                     OPTIX_RAY_FLAG_TERMINATE_ON_FIRST_HIT,
@@ -162,7 +166,7 @@ __device__ void projectFacetToFieldPoints(int a_ind)
                     continue;
                 }
 
-                thrust::complex<double> P_j = A_i * cos_inc * P_i * (-thrust::exp(i1 * k * r_ij) / ((4 * M_PI)) * ((i1 * k) / r_ij) + (1 / (r_ij * r_ij)));
+                thrust::complex<double> P_j = A_i * cos_inc * P_i * (-thrust::exp(i1 * k * r_ji) / ((4 * M_PI)) * ((i1 * k) / r_ji) + (1 / (r_ji * r_ji)));
 
                 dcomplex *p_out = &(params.dstPoints.pressure[j]);
                 atomicAddDouble(&(p_out->r), P_j.real());
@@ -177,7 +181,7 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
     const dev_facet A = params.srcObject.facets[a_ind];
     const int numXpntsNegative_i = A.frag_points.z;
     const float delta = params.frag_delta;
-    const int numDst = params.dstPoints.numPnts;
+    const int numDst = params.dstObject.numFacets;
     const float epsilon = 1e-3f;
 
     const thrust::complex<double> i1 = thrust::complex<double>(0, 1);
@@ -198,6 +202,12 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
             const float3 p_i = A.base_point + xAxis_i + yAxis_i;
             const float A_i = A.frag_area[ind_i];
 
+            if (A_i <= 1e-6f)
+            {
+                // printf("facets_PixelArea is zero\n");
+                continue;
+            }
+
             dcomplex cP_i = A.P[ind_i];
             thrust::complex<double> P_i = thrust::complex<double>(cP_i.r, cP_i.i);
 
@@ -208,22 +218,16 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                 startB_ind = a_ind + 1;
             }
 
+            // To keep calculation even do not do a double projection when the two facets are the same.
             for (int b_ind = startB_ind; b_ind < numDst; b_ind++)
             {
-                dev_facet B;
-                if (isSelfProject)
-                {
-                    B = params.srcObject.facets[b_ind];
-                }
-                else
-                {
-                    B = params.dstObject.facets[b_ind];
-                }
+
+                dev_facet B = params.dstObject.facets[b_ind];
                 const int numXpntsNegative_j = B.frag_points.z;
 
-                for (int xPnt_j = 0; xPnt_j < A.frag_points.x; xPnt_j++)
+                for (int xPnt_j = 0; xPnt_j < B.frag_points.x; xPnt_j++)
                 {
-                    for (int yPnt_j = 0; yPnt_j < A.frag_points.y; yPnt_j++)
+                    for (int yPnt_j = 0; yPnt_j < B.frag_points.y; yPnt_j++)
                     {
                         const int ind_j = yPnt_j * B.frag_points.x + xPnt_j;
                         // This is the x offset from the base point to the approximate centriod of the pixel.
@@ -238,6 +242,13 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                         const float3 v_ij = p_j - p_i;
                         const float r_ij = length(v_ij);
                         const float3 uv_ij = v_ij / r_ij;
+
+                        const float B_j = B.frag_area[ind_j];
+                        if (B_j <= 1e-6f)
+                        {
+                            // printf("facets_PixelArea is zero\n");
+                            continue;
+                        }
 
                         const float cos_inc = dot(uv_ij, A.normal);
                         if (cos_inc < 1e-6f)
@@ -265,6 +276,7 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                         {
                             continue;
                         }
+
                         thrust::complex<double> G = (-thrust::exp(i1 * k * r_ij) / ((4 * M_PI)) * ((i1 * k) / r_ij) + (1 / (r_ij * r_ij)));
                         thrust::complex<double> P_j = A_i * cos_inc * P_i * G;
 
@@ -302,17 +314,21 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
 
 extern "C" __global__ void __raygen__rg()
 {
+    // printf("Raygen kernel called\n");
+
     const uint3 idx = optixGetLaunchIndex();
     const unsigned int facet_num = idx.x;
 
     switch (params.calcType)
     {
     case SOURCE_POINTS:
-        // Call the source points kernel
+        // printf("Source points to facet projection\n");
+        //  Call the source points kernel
         projectSourcePointsToFacet(facet_num);
         return;
     case FIELD_POINTS:
         // Project is done from the facet fragments to the field point
+        // printf("Project facet to field points\n");
         projectFacetToFieldPoints(facet_num);
         return;
     case FACET_RESP:

@@ -33,6 +33,9 @@ void FacetCuda::AllocateCuda(float3 &normal,
         // Allocate device memory for the initial pressure data
         cudaMalloc((void **)&dev_P, numXpnts * numYpnts * sizeof(dcomplex));
         cudaMemset(dev_P, 0, numXpnts * numYpnts * sizeof(dcomplex));
+
+        host_facet.P = dev_P;
+        host_facet.P_out = dev_P; // The working buffer is not need for field objects.
     }
 
     // Allocate device memory for the fragment area
@@ -46,13 +49,12 @@ void FacetCuda::AllocateCuda(float3 &normal,
         // Allocate device memory for the initial pressure data
         cudaMalloc((void **)&dev_P_out, numXpnts * numYpnts * sizeof(dcomplex));
         cudaMemset(dev_P_out, 0, numXpnts * numYpnts * sizeof(dcomplex));
+        host_facet.P_out = dev_P_out;
     }
 
     cudaMemcpy(dev_data, &host_facet, sizeof(dev_facet), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_frag_area, frag_area, numXpnts * numYpnts * sizeof(float), cudaMemcpyHostToDevice);
 
-    host_facet.P = dev_P;
-    host_facet.P_out = dev_P_out;
     host_facet.frag_area = dev_frag_area;
 }
 
@@ -108,7 +110,7 @@ void FacetCuda::PrintMatrix()
 dev_facet FacetCuda::MakeOptixStruct()
 {
     // Makes a copy.
-    if (host_facet.P_out)
+    if (objectType == OBJECT_TYPE_TARGET)
     {
         cudaMemset(host_facet.P_out, 0, numXpnts * numYpnts * sizeof(dcomplex));
     }

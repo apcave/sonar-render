@@ -102,7 +102,7 @@ int ModelCuda::ProjectSourcePointsToFacet(std::vector<Object *> &target)
 {
     printf("Projecting source points to facets.\n");
     // Every facet can have a different number of pixels, where n = 1096^0.5 is the maximum number of pixels per facet.
-    int *hasColision = 0;
+    //    int *hasColision = 0;
     std::vector<float3> srcPnts;
     int numScr = sourcePoints.size();
     printf("number of source points: %d\n", numScr);
@@ -116,7 +116,7 @@ int ModelCuda::ProjectSourcePointsToFacet(std::vector<Object *> &target)
     for (auto object : target)
     {
         auto dstPnts = object->GetCentroids();
-        hasColision = optiXCol.DoCollisions(srcPnts, dstPnts);
+        //        hasColision = optiXCol.DoCollisions(srcPnts, dstPnts);
 
         for (int srcCnt = 0; numScr > srcCnt; srcCnt++)
         {
@@ -128,11 +128,11 @@ int ModelCuda::ProjectSourcePointsToFacet(std::vector<Object *> &target)
                 auto facet = object->facets[dstCnt];
                 // printf("Doing collision detection for source point %d of %d.\n", srcCnt, numScr);
 
-                if (hasColision[srcCnt * numDst + dstCnt] == 1)
-                {
-                    // printf("Collision detected.\n");
-                    continue;
-                }
+                // if (hasColision[srcCnt * numDst + dstCnt] == 1)
+                // {
+                //     // printf("Collision detected.\n");
+                //     continue;
+                // }
                 // printf("Facet: %f, %f, %f\n", facet->Centroid.x, facet->Centroid.y, facet->Centroid.z);
                 // printf("Source Point: %f, %f, %f\n", srcPnt->position.x, srcPnt->position.y, srcPnt->position.z);
 

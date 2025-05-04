@@ -31,7 +31,6 @@ set(CPP_SRC
     Object.cpp
     ObjectCuda.cpp
     ObjectGl.cpp
-    Collision.cpp
     Globals.cpp
     OptiX.cpp
 )
@@ -103,16 +102,5 @@ add_custom_command(
 add_custom_target(OptiX_render DEPENDS ${CMAKE_BINARY_DIR}/OptiX.ptx)
 
 
-add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/Collision.ptx
-    COMMAND ${CMAKE_CUDA_COMPILER}
-    ARGS -I/home/apcave/alex-portfolio/include -ptx ${CMAKE_CURRENT_SOURCE_DIR}/Collision.cu -o ${CMAKE_BINARY_DIR}/Collision.ptx
-    DEPENDS Collision.cu
-    COMMENT "Compiling Collision.cu to OptiX IR"
-)
-
-# Add a custom target for CollisionIR
-add_custom_target(CollisionIR DEPENDS ${CMAKE_BINARY_DIR}/Collision.ptx)
-
 # Ensure CollisionIR is built with cuda_project
-add_dependencies(${TARGET_NAME} CollisionIR OptiX_render)
+add_dependencies(${TARGET_NAME} OptiX_render)

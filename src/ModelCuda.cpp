@@ -165,7 +165,7 @@ int ModelCuda::StopCuda()
     }
     fieldObjects.clear();
 
-    optiXCol.TearDown();
+    optiX.TearDown();
 
     return 0;
 }
@@ -174,6 +174,14 @@ int ModelCuda::DoCalculations()
 {
     std::cout << "Source Points to target." << std::endl;
     ProjectSrcPointsToObjects();
+
+    std::cout << "Target to field objects." << std::endl;
+    // ProjectTargetToFieldObjects();
+
+    ProjectTargetToFieldPoints();
+
+    // ProjectSourcePointsToFacet(targetObjects);
+    // ProjectFromFacetsToFieldPoints();
 
     // if (ProjectSourcePointsToFacet(targetObjects) != 0)
     // {
@@ -202,11 +210,11 @@ int ModelCuda::DoCalculations()
     //     }
     // }
 
-    if (ProjectFromFacetsToFieldPoints() != 0)
-    {
-        printf("ProjectFromFacetsToFieldPoints failed.\n");
-        return 1;
-    }
+    // if (ProjectFromFacetsToFieldPoints() != 0)
+    // {
+    //     printf("ProjectFromFacetsToFieldPoints failed.\n");
+    //     return 1;
+    // }
 
     return 0;
 }
@@ -288,6 +296,46 @@ void ModelCuda::ProjectSrcPointsToObjects()
     for (auto object : fieldObjects)
     {
         gp.dstObject = object->MakeOptixStructArray();
+        optiX.DoProjection(gp);
+    }
+}
+
+void ModelCuda::ProjectTargetToFieldObjects()
+{
+    globalParams gp = {};
+    gp.calcType = CalcType::FACET_NO_RESP;
+    gp.k_wave = k_wave;
+    gp.frag_delta = frag_length;
+
+    for (auto targetOb : targetObjects)
+    {
+        gp.srcObject = targetOb->MakeOptixStructArray();
+
+        for (auto fieldOb : fieldObjects)
+        {
+            gp.dstObject = fieldOb->MakeOptixStructArray();
+
+            std::cout << "Doing facet to field object projection." << std::endl;
+            optiX.DoProjection(gp);
+        }
+    }
+}
+void ModelCuda::ProjectTargetToFieldPoints()
+{
+    globalParams gp = {};
+    gp.calcType = CalcType::FIELD_POINTS;
+    gp.k_wave = k_wave;
+    gp.frag_delta = frag_length;
+
+    gp.dstPoints.numPnts = host_num_field_points;
+    gp.dstPoints.position = dev_field_points_position;
+    gp.dstPoints.pressure = dev_field_points_pressure;
+
+    for (auto targetOb : targetObjects)
+    {
+        gp.srcObject = targetOb->MakeOptixStructArray();
+
+        std::cout << "Doing facet to field point projection." << std::endl;
         optiX.DoProjection(gp);
     }
 }

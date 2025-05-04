@@ -34,12 +34,12 @@ def do_monostatic_rotation():
     a = 3.0
     b = 2.0
     cp = 1480.0
-    frequency = 10e3
+    frequency = 3e3
     wavelength = cp / frequency
     target_range = 4000
     target = geo.make_rectangle(a,b)
 
-    for i in range(6):
+    for i in range(3):
         target = geo.halve_facets(target)
 
     angles = np.linspace(0, 90, 91, endpoint=False)

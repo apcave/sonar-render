@@ -141,23 +141,39 @@ void OptiX::DoProjection(globalParams params)
     CUDA_CHECK(cudaMemcpy((void *)d_optix_params, &params, sizeof(globalParams), cudaMemcpyHostToDevice));
 
     int numFacets = params.srcObject.numFacets;
-    if (params.calcType == FIELD_POINTS)
+    if (params.calcType == SOURCE_POINTS)
     {
         numFacets = params.dstObject.numFacets;
     }
+    std::cout << "Num facets: " << numFacets << std::endl;
+    int numberToProcess = numFacets;
+    int max_ind = 1024;
+    int num_ind = max_ind;
+    while (numberToProcess != 0)
+    {
+        if (numberToProcess > max_ind)
+        {
+            num_ind = max_ind;
+            numberToProcess -= max_ind;
+        }
+        else
+        {
+            num_ind = numberToProcess;
+            numberToProcess = 0;
+        }
 
-    numFacets = 1;
-
-    std::cout << "Launching Collision Program...\n";
-    OPTIX_CHECK(optixLaunch(
-        pipeline,
-        0,
-        d_optix_params,
-        sizeof(globalParams),
-        &sbt,
-        numFacets,
-        1,
-        1));
+        std::cout << "Launching Collision Program...\n";
+        OPTIX_CHECK(optixLaunch(
+            pipeline,
+            0,
+            d_optix_params,
+            sizeof(globalParams),
+            &sbt,
+            numFacets,
+            1,
+            1));
+        // cudaDeviceSynchronize();
+    }
     std::cout << "Launched Collision Program.\n";
 
     cudaDeviceSynchronize();
@@ -290,6 +306,7 @@ int OptiX::StartCollision(std::vector<Object *> &targets)
         }
     }
     CreateGeometry(facets);
+    std::cout << "Loaded Collision Geometry into OptiX." << std::endl;
 
     return 0;
 }
@@ -485,5 +502,6 @@ int OptiX::MakePipeline()
         std::cerr << "OptiX Pipeline Creation Log: " << log << std::endl;
     }
 
+    std::cout << "OptiX Pipeline created successfully." << std::endl;
     return 0;
 }
