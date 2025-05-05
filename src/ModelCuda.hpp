@@ -58,10 +58,6 @@ protected:
 
     int DoCalculations();
 
-    int ProjectSourcePointsToFacet(std::vector<Object *> &target);
-    int ProjectFromFacetsToFacets(std::vector<Object *> &scrObjects, std::vector<Object *> &dstObjects, bool reciprocity);
-    int ProjectFromFacetsToFieldPoints();
-
     int GetFieldPointValGPU(dcomplex *field_points_pressure);
 
     void RenderCudaObjects();

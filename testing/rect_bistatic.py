@@ -34,7 +34,7 @@ def bistatic_TES(a, b, wavelength, theta_i_deg, theta_s_deg):
         Target Echo Strength in decibels
     """
     # Convert angles to radians
-    theta_i = np.radians(theta_i_deg)
+    theta_i = np.radians(-theta_i_deg)
     theta_s = np.radians(theta_s_deg)
 
     # Wavenumber
@@ -72,8 +72,8 @@ for i in range(4):
 api.load_stl_mesh_to_cuda(target, 0)
 
 field_surface = geo.make_rectangle(10,10, False)
-# for i in range(8):
-#     field_surface = geo.halve_facets(field_surface)
+for i in range(4):
+    field_surface = geo.halve_facets(field_surface)
 api.load_stl_mesh_to_cuda(field_surface, 2)
 
 #stl_mesh = mesh.Mesh.from_file('./testing/rectangular_plate.stl')

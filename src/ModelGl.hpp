@@ -2,7 +2,7 @@
 #define _MODEL_GL
 #include "Object.hpp"
 #include "PressurePoint.hpp"
-#include "OptiX/stb_image_write.h"
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <cuda_runtime.h>
@@ -50,7 +50,7 @@ private:
 private:
     int window_width = 800 * 3;
     int window_height = 600 * 3;
-    bool renderImage = true;
+    bool renderImage = false;
 
 protected:
     bool usingOpenGL = true;

@@ -176,7 +176,7 @@ int ModelCuda::DoCalculations()
     ProjectSrcPointsToObjects();
 
     std::cout << "Target to field objects." << std::endl;
-    // ProjectTargetToFieldObjects();
+    ProjectTargetToFieldObjects();
 
     ProjectTargetToFieldPoints();
 
@@ -295,6 +295,7 @@ void ModelCuda::ProjectSrcPointsToObjects()
 
     for (auto object : fieldObjects)
     {
+        std::cout << "Doing source point to field object projection." << std::endl;
         gp.dstObject = object->MakeOptixStructArray();
         optiX.DoProjection(gp);
     }

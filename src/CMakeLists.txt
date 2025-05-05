@@ -13,9 +13,6 @@ set(TARGET_NAME cuda_project)
 
 # Add source files for the shared library
 set(CU_SRC
-    ProjectSourcePointsToFacet.cu
-    ProjectFromFacetsToFieldPoints.cu
-    ProjectFromFacetsToFacets.cu
     FacetCuda.cu
     CudaUtils.cu  
 )

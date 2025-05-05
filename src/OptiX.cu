@@ -64,6 +64,13 @@ __device__ void projectSourcePointsToFacet(int b_ind)
                 const float3 uv_ij = v_ij / r_ij;
                 const float epsilon = 1e-3f;
 
+                const float cos_inc = dot(-uv_ij, B.normal);
+                if (cos_inc < 1e-6f)
+                {
+                    // printf("Normal doesn't align, not adding to field point.\n");
+                    continue;
+                }
+
                 unsigned int hit = 0;
                 optixTrace(
                     params.handle,
@@ -86,7 +93,7 @@ __device__ void projectSourcePointsToFacet(int b_ind)
 
                 dcomplex cP_i = params.srcPoints.pressure[i];
                 thrust::complex<double> P_i = thrust::complex<double>(cP_i.r, cP_i.i);
-                thrust::complex<double> P_j = (P_i * thrust::exp(i1 * k * r_ij)) / r_ij;
+                thrust::complex<double> P_j = cos_inc * (P_i * thrust::exp(i1 * k * r_ij)) / r_ij;
 
                 dcomplex *p_out = &(B.P[ind_j]);
                 atomicAddDouble(&(p_out->r), P_j.real());
