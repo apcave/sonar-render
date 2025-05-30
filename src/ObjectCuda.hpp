@@ -14,6 +14,7 @@ public:
     void WriteSurfaceToGlTexture(float *dev_frag_stats);
     void PrintSurfacePressure();
     dev_object MakeOptixStructArray();
+    void AccumulatePressure();
 
 private:
     dev_object h_obj = {};

@@ -74,6 +74,8 @@ protected:
 
     void ProjectTargetToFieldPoints();
 
+    void ProjectTargetToTargetObjects();
+
 protected:
     OptiX optiX;
     bool cudaStarted = false;

@@ -100,3 +100,23 @@ void FacetCuda::GetSurfaceScalers(float *dev_frag_stats)
                                                 numXpnts,
                                                 dev_frag_stats);
 }
+
+__global__ void AccumulatePressureKernel(dcomplex *P, dcomplex *dev_P_out, int maxXpnt)
+{
+    int xPnt = threadIdx.x;
+    int yPnt = blockIdx.x;
+
+    int index = yPnt * maxXpnt + xPnt;
+
+    P[index].r = P[index].r + dev_P_out[index].r;
+    P[index].i = P[index].i + dev_P_out[index].i;
+}
+
+void FacetCuda::AccumulatePressure()
+{
+    // Copy the data to the device.
+    // Make the texture out of the real values.
+    dim3 threadsPerBlock(numXpnts, 1);
+    dim3 numBlocks(numYpnts, 1);
+    AccumulatePressureKernel<<<numBlocks, threadsPerBlock>>>(dev_P, dev_P_out, numXpnts);
+}

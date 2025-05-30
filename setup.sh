@@ -10,3 +10,7 @@ nvcc --version
 
 sudo apt update
 sudo apt install libglew-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev
+
+sudo docker build -t sonar-render .
+
+sudo docker run -it --entrypoint /bin/bash sonar-render

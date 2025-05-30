@@ -44,6 +44,7 @@ dev_object ObjectCuda::MakeOptixStructArray()
 
     if (h_obj.numFacets == 0 && facets.size() > 0)
     {
+        h_obj.objectType = objectType;
         h_obj.numFacets = facets.size();
         auto h_facets = new dev_facet[h_obj.numFacets]; // Gets deallocated after use.
         for (int i = 0; i < h_obj.numFacets; i++)
@@ -64,4 +65,13 @@ ObjectCuda::~ObjectCuda()
         cudaFree(h_obj.facets);
         h_obj.facets = 0;
     }
+}
+
+void ObjectCuda::AccumulatePressure()
+{
+    for (auto facet : facets)
+    {
+        facet->AccumulatePressure();
+    }
+    cudaDeviceSynchronize();
 }

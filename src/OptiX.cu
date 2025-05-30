@@ -64,7 +64,13 @@ __device__ void projectSourcePointsToFacet(int b_ind)
                 const float3 uv_ij = v_ij / r_ij;
                 const float epsilon = 1e-3f;
 
-                const float cos_inc = dot(-uv_ij, B.normal);
+                float cos_inc = dot(-uv_ij, B.normal);
+                if (params.dstObject.objectType == OBJECT_TYPE_FIELD)
+                {
+                    // This is a field object, so it is like a collection of field points.
+                    cos_inc = 1;
+                }
+
                 if (cos_inc < 1e-6f)
                 {
                     // printf("Normal doesn't align, not adding to field point.\n");
@@ -257,7 +263,13 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                             continue;
                         }
 
-                        const float cos_inc = dot(uv_ij, A.normal);
+                        float cos_inc = dot(uv_ij, A.normal);
+                        if (params.dstObject.objectType == OBJECT_TYPE_FIELD)
+                        {
+                            // This is a field object, so it is like a collection of field points.
+                            cos_inc = 1;
+                        }
+
                         if (cos_inc < 1e-6f)
                         {
                             // printf("Normal doesn't align, not adding to field point.\n");

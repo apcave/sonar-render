@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.18) # Minimum version for good CUDA support
 
+set(CMAKE_VERBOSE_MAKEFILE ON)
+
 set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
 set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
 
@@ -41,7 +43,7 @@ set(CPP_SRC
 add_library(${TARGET_NAME} SHARED ${CU_SRC} ${CPP_SRC} ${OPX_SRC})
 
 # Include directories
-target_include_directories(${TARGET_NAME} PRIVATE include ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+target_include_directories(${TARGET_NAME} PRIVATE include ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${CMAKE_SOURCE_DIR}/OptiX/include)
 
 # Link OpenGL, GLEW, and GLFW libraries for the shared library
 find_package(OpenGL REQUIRED)
@@ -70,29 +72,14 @@ set_target_properties(${TARGET_NAME} PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON
     POSITION_INDEPENDENT_CODE ON
 )
-
-include_directories(/home/apcave/alex-portfolio/include)
-link_directories(/home/apcave/alex-portfolio/lib)
-#target_link_libraries(${TARGET_NAME} PRIVATE util_7_sdk)
-# Link against the OptiX library
-# link_directories(/home/apcave/alex-portfolio/NVIDIA-OptiX-SDK-9.0.0-linux64-x86_64/lib64)
-# target_link_libraries(${TARGET_NAME} PRIVATE optix)
-
-
-# add_custom_command(
-#     OUTPUT ${CMAKE_BINARY_DIR}/Collision.optixir
-#     COMMAND ${CMAKE_CUDA_COMPILER}
-#     ARGS -I/home/apcave/alex-portfolio/include -optix-ir ${CMAKE_CURRENT_SOURCE_DIR}/Collision.cu -o ${CMAKE_BINARY_DIR}/Collision.optixir
-#     DEPENDS Collision.cu
-#     COMMENT "Compiling Collision.cu to OptiX IR"
-# )
+include_directories(${CMAKE_SOURCE_DIR}/OptiX/include)
 
 add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/OptiX.ptx
     COMMAND ${CMAKE_CUDA_COMPILER}
-    ARGS -I/home/apcave/alex-portfolio/include -ptx ${CMAKE_CURRENT_SOURCE_DIR}/OptiX.cu -o ${CMAKE_BINARY_DIR}/OptiX.ptx
+    ARGS -I${CMAKE_SOURCE_DIR}/OptiX/include -ptx ${CMAKE_CURRENT_SOURCE_DIR}/OptiX.cu -o ${CMAKE_BINARY_DIR}/OptiX.ptx
     DEPENDS OptiX.cu
-    COMMENT "Compiling Collision.cu to OptiX IR"
+    COMMENT "Compiling OptiX.cu to OptiX IR"
 )
 
 # Add a custom target for CollisionIR

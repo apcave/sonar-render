@@ -1,5 +1,6 @@
 #ifndef MODEL_SHARED_H
 #define MODEL_SHARED_H
+#include "Globals.h"
 #include "dcomplex.h"
 #include <optix.h>
 #include <cuda_runtime.h>
@@ -42,6 +43,7 @@ typedef struct
 
 typedef struct
 {
+    ObjectType objectType;
     int numFacets;
     dev_facet *facets;
 } dev_object;

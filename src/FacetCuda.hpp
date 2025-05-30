@@ -22,6 +22,7 @@ public:
     void PrintMatrix();
 
     dev_facet MakeOptixStruct();
+    void AccumulatePressure();
 
 private:
     // Area of the fragment.
