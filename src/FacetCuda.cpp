@@ -42,7 +42,7 @@ void FacetCuda::AllocateCuda(float3 &normal,
     cudaMalloc((void **)&dev_frag_area, numXpnts * numYpnts * sizeof(float));
 
     dev_P_out = 0;
-    if (objectType = OBJECT_TYPE_TARGET)
+    if (objectType == OBJECT_TYPE_TARGET)
     {
         // These buffers are used for the facet to facet calculations.
 

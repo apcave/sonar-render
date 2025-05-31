@@ -5,6 +5,7 @@
 #include <thrust/complex.h>
 
 #include <cuda_runtime.h>
+#include <stdexcept>
 
 __device__ __always_inline float4 hsv2rgb(float h, float s, float v)
 {
@@ -118,5 +119,11 @@ void FacetCuda::AccumulatePressure()
     // Make the texture out of the real values.
     dim3 threadsPerBlock(numXpnts, 1);
     dim3 numBlocks(numYpnts, 1);
+
+    if (dev_P == 0 || dev_P_out == 0)
+    {
+        throw std::runtime_error("Error: dev_P or dev_P_out is not allocated.\n");
+    }
+
     AccumulatePressureKernel<<<numBlocks, threadsPerBlock>>>(dev_P, dev_P_out, numXpnts);
 }

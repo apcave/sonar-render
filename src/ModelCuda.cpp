@@ -180,6 +180,7 @@ int ModelCuda::DoCalculations()
     std::cout << "Target to field objects." << std::endl;
     ProjectTargetToFieldObjects();
 
+    std::cout << "Target to field points." << std::endl;
     ProjectTargetToFieldPoints();
 
     // ProjectSourcePointsToFacet(targetObjects);
