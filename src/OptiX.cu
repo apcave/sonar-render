@@ -152,7 +152,7 @@ __device__ void projectFacetToFieldPoints(int a_ind)
                 const float r_ji = length(v_ji);
                 const float3 uv_ji = v_ji / r_ji;
 
-                const float cos_inc = dot(-uv_ji, A.normal);
+                float cos_inc = dot(-uv_ji, A.normal);
                 if (cos_inc < 1e-6f)
                 {
                     // printf("Normal doesn't align, not adding to field point.\n");
@@ -179,7 +179,7 @@ __device__ void projectFacetToFieldPoints(int a_ind)
                     continue;
                 }
 
-                thrust::complex<double> P_j = A_i * cos_inc * P_i * (-thrust::exp(i1 * k * r_ji) / ((4 * M_PI)) * ((i1 * k) / r_ji) + (1 / (r_ji * r_ji)));
+                thrust::complex<double> P_j = A_i * P_i * (-thrust::exp(i1 * k * r_ji) / ((4 * M_PI)) * ((i1 * k) / r_ji) + (1 / (r_ji * r_ji)));
 
                 dcomplex *p_out = &(params.dstPoints.pressure[j]);
                 atomicAddDouble(&(p_out->r), P_j.real());

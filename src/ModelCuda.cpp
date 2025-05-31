@@ -175,49 +175,14 @@ int ModelCuda::DoCalculations()
     std::cout << "Source Points to target." << std::endl;
     ProjectSrcPointsToObjects();
 
-    ProjectTargetToTargetObjects();
+    // std::cout << "Target to target objects." << std::endl;
+    // ProjectTargetToTargetObjects();
 
-    std::cout << "Target to field objects." << std::endl;
-    ProjectTargetToFieldObjects();
+    // std::cout << "Target to field objects." << std::endl;
+    // ProjectTargetToFieldObjects();
 
     std::cout << "Target to field points." << std::endl;
     ProjectTargetToFieldPoints();
-
-    // ProjectSourcePointsToFacet(targetObjects);
-    // ProjectFromFacetsToFieldPoints();
-
-    // if (ProjectSourcePointsToFacet(targetObjects) != 0)
-    // {
-    //     printf("Project from source points to target object.\n");
-    //     return 1;
-    // }
-
-    // std::cout << "Source Points to field." << std::endl;
-    // // The field surfaces include the incident and scattered waves.
-    // if (ProjectSourcePointsToFacet(fieldObjects) != 0)
-    // {
-    //     printf("Project from source points to field object.\n");
-    //     return 1;
-    // }
-
-    // std::cout << "Projecting from target to field surface." << std::endl;
-    // ProjectFromFacetsToFacets(targetObjects, fieldObjects, false);
-    //    std::cout << "Done projecting from target to field surface." << std::endl;
-
-    // for (int i = 0; i < 0; i++)
-    // {
-    //     if (ProjectFromFacetsToFacets() != 0)
-    //     {
-    //         printf("ProjectFromFacetsToFacets failed.\n");
-    //         return 1;
-    //     }
-    // }
-
-    // if (ProjectFromFacetsToFieldPoints() != 0)
-    // {
-    //     printf("ProjectFromFacetsToFieldPoints failed.\n");
-    //     return 1;
-    // }
 
     return 0;
 }
