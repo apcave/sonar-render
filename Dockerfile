@@ -68,7 +68,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Keep apt from auto upgrading the cublas and nccl packages. See https://gitlab.com/nvidia/container-images/cuda/-/issues/88
 RUN apt-mark hold ${NV_LIBCUBLAS_DEV_PACKAGE_NAME} ${NV_LIBNCCL_DEV_PACKAGE_NAME}
-ENV LIBRARY_PATH=/usr/local/cuda/lib64/stubs
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH}
 
 RUN apt-get update && apt-get install -y cmake libgl1-mesa-dev \
     libglew-dev libglfw3-dev libglm-dev \
@@ -90,7 +90,9 @@ RUN mkdir -p build && \
     make -j4
 
 COPY ./testing /acoustic-render/testing
-COPY NVIDIA-OptiX-SDK-9.0.0-linux64-x86_64.sh /acoustic-render/.
+#COPY NVIDIA-OptiX-SDK-9.0.0-linux64-x86_64.sh /acoustic-render/.
+#RUN apt-get update && apt-get install -y libxinerama-dev libcursor-dev libxi-dev \
+#    && rm -rf /var/lib/apt/lists/*
 WORKDIR /
 #ENTRYPOINT []
 #CMD ["python /batches/cube.py"]

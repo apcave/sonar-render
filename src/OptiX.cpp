@@ -136,6 +136,7 @@ void OptiX::DoProjection(globalParams params)
     {
         throw new std::runtime_error("OptiX::DoProjection: d_optix_params already allocated.");
     }
+    std::cout << "OptiX::DoProjection()" << std::endl;
     params.handle = gasHandle;
     CUDA_CHECK(cudaMalloc((void **)&d_optix_params, sizeof(globalParams)));
     CUDA_CHECK(cudaMemcpy((void *)d_optix_params, &params, sizeof(globalParams), cudaMemcpyHostToDevice));
