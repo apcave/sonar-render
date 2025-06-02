@@ -269,7 +269,7 @@ void OptiX::StartOptix()
         OPTIX_CHECK(optixInit());
 
         OptixDeviceContextOptions options = {};
-        options.validationMode = OPTIX_DEVICE_CONTEXT_VALIDATION_MODE_ALL;
+        // options.validationMode = OPTIX_DEVICE_CONTEXT_VALIDATION_MODE_ALL;
         OPTIX_CHECK(optixDeviceContextCreate(0, &options, &context));
         MakePipeline();
     }

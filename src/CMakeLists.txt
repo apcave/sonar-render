@@ -1,4 +1,12 @@
-cmake_minimum_required(VERSION 3.18) # Minimum version for good CUDA support
+cmake_minimum_required(VERSION 3.18)
+
+if(COMMAND cmake_policy)
+    cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
+
+if(POLICY CMP0072)
+    cmake_policy(SET CMP0072 NEW)
+endif()
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
@@ -8,7 +16,6 @@ set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
 # Set the CUDA architecture (adjust based on your GPU)
 set(CMAKE_CUDA_ARCHITECTURES native) # Example for sm_75 (Turing GPUs)
 project(sonar_render LANGUAGES CXX CUDA)
-find_package(CUDA REQUIRED)
 
 # Set the output library name
 set(TARGET_NAME cuda_project)
