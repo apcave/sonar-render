@@ -1,2 +1,2 @@
 #!/bin/bash
-python ./testing/rect_mono.py
+python ./run_scripts/rect_mono.py

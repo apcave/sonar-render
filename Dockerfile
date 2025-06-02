@@ -1,6 +1,7 @@
 ARG IMAGE_NAME=nvidia/cuda
+#FROM ${IMAGE_NAME}:12.8.1-runtime-ubuntu24.04 AS base
 FROM ${IMAGE_NAME}:12.8.1-devel-ubuntu24.04 AS base
-#FROM ${IMAGE_NAME}:11.8.0-runtime-ubuntu20.04 AS base
+#FROM ${IMAGE_NAME}:11.8.0-devel-ubuntu20.04 AS base
 
 RUN apt-get update && \
     apt-get install -y cmake libgl1-mesa-dev \
@@ -30,4 +31,4 @@ RUN mkdir -p build && \
     make -j4
 
 #ENTRYPOINT []
-CMD ["bash","/acoustic-render/testing/run_container.sh"]
+#CMD ["bash","/acoustic-render/run_scripts/run_container.sh"]
