@@ -126,7 +126,7 @@ __device__ void projectFacetToFieldPoints(int a_ind)
         {
             const int ind_i = yPnt * A.frag_points.x + xPnt;
             // This is the x offset from the base point to the approximate centriod of the pixel.
-            const float xoffset = delta * (xPnt - numXpntsNegative) + delta / 2; // This value can be negative.
+            const float xoffset = delta * (xPnt - numXpntsNegative); // This value can be negative.
             // This is the y offset from the base point to the approximate centriod of the pixel.
             const float yoffset = delta * yPnt + delta / 2;
 
@@ -206,7 +206,7 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
         {
             const int ind_i = yPnt_i * A.frag_points.x + xPnt_i;
             // This is the x offset from the base point to the approximate centriod of the pixel.
-            const float xoffset_i = delta * (xPnt_i - numXpntsNegative_i) + delta / 2; // This value can be negative.
+            const float xoffset_i = delta * (xPnt_i - numXpntsNegative_i); // This value can be negative.
             // This is the y offset from the base point to the approximate centriod of the pixel.
             const float yoffset_i = delta * yPnt_i + delta / 2;
 
@@ -222,7 +222,13 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
             }
 
             dcomplex cP_i = A.P[ind_i];
-            thrust::complex<double> P_i = thrust::complex<double>(cP_i.r, cP_i.i);
+            thrust::complex<double> Pr_i = thrust::complex<double>(cP_i.r, cP_i.i);
+
+            if (Pr_i.real() == 0 && Pr_i.imag() == 0)
+            {
+                // printf("Pressure is zero, skipping facet.\n");
+                continue;
+            }
 
             int startB_ind = 0;
             if (isSelfProject)
@@ -244,7 +250,7 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                     {
                         const int ind_j = yPnt_j * B.frag_points.x + xPnt_j;
                         // This is the x offset from the base point to the approximate centriod of the pixel.
-                        const float xoffset_j = delta * (xPnt_j - numXpntsNegative_j) + delta / 2; // This value can be negative.
+                        const float xoffset_j = delta * (xPnt_j - numXpntsNegative_j); // This value can be negative.
                         // This is the y offset from the base point to the approximate centriod of the pixel.
                         const float yoffset_j = delta * yPnt_j + delta / 2;
 
@@ -263,17 +269,20 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                             continue;
                         }
 
-                        float cos_inc = dot(uv_ij, A.normal);
+                        float cos_scat = dot(uv_ij, A.normal);
+
+                        // Rp = 1, Tp = 0
+                        if (cos_scat < 1e-6f)
+                        {
+                            // printf("Normal doesn't align, not adding to field point.\n");
+                            continue;
+                        }
+
+                        float cos_inc = dot(-uv_ij, B.normal);
                         if (params.dstObject.objectType == OBJECT_TYPE_FIELD)
                         {
                             // This is a field object, so it is like a collection of field points.
                             cos_inc = 1;
-                        }
-
-                        if (cos_inc < 1e-6f)
-                        {
-                            // printf("Normal doesn't align, not adding to field point.\n");
-                            continue;
                         }
 
                         unsigned int hit = 0;
@@ -297,7 +306,7 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                         }
 
                         thrust::complex<double> G = (-thrust::exp(i1 * k * r_ij) / ((4 * M_PI)) * ((i1 * k) / r_ij) + (1 / (r_ij * r_ij)));
-                        thrust::complex<double> P_j = A_i * cos_inc * P_i * G;
+                        thrust::complex<double> P_j = A_i * cos_inc * Pr_i * G;
 
                         dcomplex *p_out = &(B.P_out[ind_j]);
                         atomicAddDouble(&(p_out->r), P_j.real());
@@ -329,6 +338,7 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
             }
         }
     }
+    printf("Facet %d projected to %d facets.\n", a_ind, numDst);
 }
 
 extern "C" __global__ void __raygen__rg()

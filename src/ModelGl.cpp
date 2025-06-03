@@ -175,6 +175,14 @@ void ModelGl::ProcessFrame()
         return;
     }
 
+    // // --- Ambient light setup ---
+    // GLfloat ambient_light[] = {0.8f, 0.8f, 0.8f, 1.0f}; // RGBA, adjust as needed
+    // glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient_light);
+
+    // // Enable lighting and at least one light source
+    // glEnable(GL_LIGHTING);
+    // glEnable(GL_LIGHT0);
+
     MakeTextureShader();
 
     // glBindVertexArray(vao);

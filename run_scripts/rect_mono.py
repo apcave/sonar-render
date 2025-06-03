@@ -39,8 +39,8 @@ def do_monostatic_rotation():
     target_range = 4000
     target = geo.make_rectangle(a,b)
 
-    for i in range(3):
-        target = geo.halve_facets(target)
+    #for i in range(4):
+    #    target = geo.halve_facets(target)
 
     angles = np.linspace(0, 90, 91, endpoint=False)
     pnts = geo.generate_field_points(target_range, angles)

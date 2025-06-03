@@ -12,7 +12,7 @@ __device__ __always_inline float4 hsv2rgb(float h, float s, float v)
     float c = v * s;
     float x = c * (1.0 - abs(fmod(h * 6.0, 2.0) - 1.0));
     float m = v - c;
-    float alpha = 1.0;
+    float alpha = 1;
 
     if (h < 1.0 / 6.0)
     {

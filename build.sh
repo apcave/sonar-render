@@ -7,8 +7,8 @@ cmake ../src -DCMAKE_BUILD_TYPE=Release
 rm libcuda_project.so
 make all
 cd ..
-#python ./testing/sphere.py
-#python ./testing/rect_bistatic.py
-#python ./testing/rect_mono.py
-#python ./testing/cube.py
-python ./testing/reflector.py
+#python ./run_scripts/sphere.py
+#python ./run_scripts/rect_bistatic.py
+#python ./run_scripts/rect_mono.py
+python ./run_scripts/cube.py
+#python ./run_scripts/reflector.py

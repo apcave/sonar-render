@@ -342,3 +342,20 @@ def rotate_stl_object(stl_mesh, axis, angle_degrees):
 
     return stl_mesh
 
+def translate_stl_object(stl_mesh, translation_vector):
+    """
+    Translates an STL mesh by a given 3D vector.
+
+    Parameters:
+    stl_mesh : mesh.Mesh
+        The STL mesh object to translate.
+    translation_vector : array-like or list or np.ndarray
+        The [dx, dy, dz] translation vector.
+
+    Returns:
+    mesh.Mesh
+        The translated STL mesh (in-place).
+    """
+    translation_vector = np.asarray(translation_vector)
+    stl_mesh.vectors += translation_vector
+    return stl_mesh

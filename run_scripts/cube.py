@@ -15,28 +15,28 @@ import math
 
 
 
-
-a = 3.0
-b = 2.0
 cp = 1480.0
-frequency = 10e3
-target_range = 4000
+frequency = 8e3
+#frequency = 4e3
+target_range = 000
 angle_i = 0.0
 target = geo.make_cube()
 for i in range(4):
     target = geo.halve_facets(target)
 
-field_surface = geo.make_rectangle(10,10, False)
+#field_surface = geo.make_rectangle(10,10, False)
+field_surface = geo.make_rectangle(5,5, False)
+field_surface = geo.translate_stl_object(field_surface, [0, -0.4, 0])
 
-for i in range(4):
+for i in range(1):
     field_surface = geo.halve_facets(field_surface)
 
 
 
 angle_i = [25]
 # source_pnts= geo.generate_field_points(target_range, angle_i)
-
-source_pnts=[[4,2,9]]
+t = 20
+source_pnts=[[4*t,3*t,9*t]]
 angles = np.linspace(-180, 180, 361, endpoint=False)
 field_pnts= geo.generate_field_points(target_range, angles)
 
@@ -57,22 +57,6 @@ a = 1
 
 modeled_TES = mh.results_to_TES(field_vals, target_range)
 
-print("<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>")
-print("a >> lambda, ",a," >> ",wavelength)
-print("b >> lambda, ",b," >> ",wavelength)
-print("D = max(a,b)")
-D = max(a,b)
-print("range >> 2*D^2/lambda, ",target_range," >> ",2*D*D/wavelength)
-
-
-TES = 20 * np.log10((np.pi*a**2) / (wavelength**2))
-# TES = 20*np.log10((k*A)/(4*np.pi))
-print('Analytical TES = ', TES)
-TES = 20 * np.log10((k*a**3)/2)
-print('Analytical TES = ', TES)
-print('ka << 1 ,', k, " << 1")
-
-
 
 
 # index = np.where(angles == 0)[0][0] 
@@ -82,15 +66,15 @@ print('ka << 1 ,', k, " << 1")
 
 
 # db_values  + 40*np.log10(Radius)    
-plt.figure()
-plt.plot(angles, modeled_TES, label="Field Values (dB)")
-#plt.plot(angles, bistatic_TES, label="Analytic (dB)")
-plt.xlabel("Angle (degrees)")
-plt.ylabel("Field Value (dB)")
-plt.title("Field Values vs. Angle")
-plt.grid(True)
-plt.legend()
-plt.show()
+# plt.figure()
+# plt.plot(angles, modeled_TES, label="Field Values (dB)")
+# #plt.plot(angles, bistatic_TES, label="Analytic (dB)")
+# plt.xlabel("Angle (degrees)")
+# plt.ylabel("Field Value (dB)")
+# plt.title("Field Values vs. Angle")
+# plt.grid(True)
+# plt.legend()
+# plt.show()
 
 
 api.render_openGL()

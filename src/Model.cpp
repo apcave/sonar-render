@@ -51,7 +51,8 @@ void Model::set_inital_conditions(float cp, float t_frequency, float attenuation
     k = omega / cp;
     k_wave.r = (double)k;
     k_wave.i = (double)attenuation;
-    frag_length = medium_waveSpeed / (frequency * resolution_factor);
+    // frag_length = medium_waveSpeed / (frequency * resolution_factor);
+    frag_length = resolution_factor;
 }
 
 void Model::MakeFragments()
