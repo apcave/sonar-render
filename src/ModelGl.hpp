@@ -52,6 +52,11 @@ private:
     int window_height = 600;
     bool renderImage = true;
 
+private:
+    EGLDisplay eglDisplay;
+    EGLContext eglContext;
+    EGLSurface eglSurface;
+
 protected:
     std::vector<Object *> targetObjects;
     std::vector<Object *> fieldObjects;
