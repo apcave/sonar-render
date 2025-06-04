@@ -36,9 +36,21 @@ sudo make install
 
 
 sudo apt-get update
-sudo apt-get install -y libgl1-mesa-dev libglew-dev libglfw3-dev libglm-dev libegl1
+sudo apt-get install -y libgl1-mesa-dev libglew-dev libglm-dev libegl1
 
 python3 -m venv venv
 source venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r ./requirements.txt
+
+sudo apt-get install -y cmake xorg-dev
+sudo apt-get install -y libxkbcommon-dev
+
+git clone https://github.com/glfw/glfw.git
+cd glfw
+cmake -DGLFW_USE_EGL=ON .
+cmake -DGLFW_USE_EGL=ON -DGLFW_BUILD_WAYLAND=OFF -DGLFW_BUILD_X11=OFF ..
+make
+sudo make install
+
+export GLFW_PLATFORM=egl

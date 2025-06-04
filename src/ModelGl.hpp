@@ -48,12 +48,11 @@ private:
     void PrintTextures();
 
 private:
-    int window_width = 800 * 3;
-    int window_height = 600 * 3;
+    int window_width = 800;
+    int window_height = 600;
     bool renderImage = true;
 
 protected:
-    bool usingOpenGL = true;
     std::vector<Object *> targetObjects;
     std::vector<Object *> fieldObjects;
     std::vector<Object *> sourceObjects;

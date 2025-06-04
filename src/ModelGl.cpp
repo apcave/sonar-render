@@ -1,11 +1,124 @@
 #include "ModelGl.hpp"
 
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <GL/gl.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "OptiX/stb_image_write.h"
+
+ModelGl::ModelGl() : eglDisplay(EGL_NO_DISPLAY), eglContext(EGL_NO_CONTEXT), eglSurface(EGL_NO_SURFACE) {}
+ModelGl::~ModelGl() { Cleanup(); }
+
+void ModelGl::InitOpenGL()
+{
+    std::cout << "Initializing EGL/OpenGL..." << std::endl;
+
+    // 1. Get default display
+    eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    if (eglDisplay == EGL_NO_DISPLAY)
+    {
+        std::cerr << "Failed to get EGL display" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    // 2. Initialize EGL
+    if (!eglInitialize(eglDisplay, nullptr, nullptr))
+    {
+        std::cerr << "Failed to initialize EGL" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    // 3. Choose EGL config
+    EGLint configAttribs[] = {
+        EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+        EGL_RED_SIZE, 8,
+        EGL_GREEN_SIZE, 8,
+        EGL_BLUE_SIZE, 8,
+        EGL_ALPHA_SIZE, 8,
+        EGL_NONE};
+    EGLConfig eglConfig;
+    EGLint numConfigs;
+    if (!eglChooseConfig(eglDisplay, configAttribs, &eglConfig, 1, &numConfigs) || numConfigs == 0)
+    {
+        std::cerr << "Failed to choose EGL config" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    // 4. Create a PBuffer surface
+    EGLint pbufferAttribs[] = {
+        EGL_WIDTH,
+        window_width,
+        EGL_HEIGHT,
+        window_height,
+        EGL_NONE,
+    };
+    eglSurface = eglCreatePbufferSurface(eglDisplay, eglConfig, pbufferAttribs);
+    if (eglSurface == EGL_NO_SURFACE)
+    {
+        std::cerr << "Failed to create EGL PBuffer surface" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    // 5. Bind OpenGL API
+    if (!eglBindAPI(EGL_OPENGL_API))
+    {
+        std::cerr << "Failed to bind OpenGL API" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    // 6. Create OpenGL context
+    EGLint ctxAttribs[] = {EGL_CONTEXT_MAJOR_VERSION, 4, EGL_CONTEXT_MINOR_VERSION, 3, EGL_NONE};
+    eglContext = eglCreateContext(eglDisplay, eglConfig, EGL_NO_CONTEXT, ctxAttribs);
+    if (eglContext == EGL_NO_CONTEXT)
+    {
+        std::cerr << "Failed to create EGL context" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    // 7. Make context current
+    if (!eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext))
+    {
+        std::cerr << "Failed to make EGL context current" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    std::cout << "EGL OpenGL context initialized successfully." << std::endl;
+
+    // OpenGL state setup
+    glClearColor(0.96f, 0.96f, 0.86f, 1.0f); // Beige background
+
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 100.0f);
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixf(glm::value_ptr(projection));
+
+    float dist = 12.0f;
+    glm::mat4 view = glm::lookAt(glm::vec3(dist, dist, dist),  // Camera position
+                                 glm::vec3(0.0f, 0.0f, 0.0f),  // Look-at point
+                                 glm::vec3(0.0f, 1.0f, 0.0f)); // Up vector
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(glm::value_ptr(view));
+}
+
+void ModelGl::Cleanup()
+{
+    if (eglDisplay != EGL_NO_DISPLAY)
+    {
+        eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        if (eglContext != EGL_NO_CONTEXT)
+            eglDestroyContext(eglDisplay, eglContext);
+        if (eglSurface != EGL_NO_SURFACE)
+            eglDestroySurface(eglDisplay, eglSurface);
+        eglTerminate(eglDisplay);
+    }
+    eglDisplay = EGL_NO_DISPLAY;
+    eglContext = EGL_NO_CONTEXT;
+    eglSurface = EGL_NO_SURFACE;
+}
 
 void ModelGl::MakeTextureShader()
 {
@@ -107,59 +220,6 @@ void ModelGl::MakeTextureShader()
     glDeleteShader(fragmentShader);
 
     textureShaderProgram = shaderProgram;
-}
-
-ModelGl::ModelGl()
-{
-}
-
-ModelGl::~ModelGl() {}
-
-void ModelGl::InitOpenGL()
-{
-    std::cout << "Initializing OpenGL..." << std::endl;
-    if (!glfwInit())
-    {
-        std::cerr << "Failed to initialize GLFW" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    if (renderImage)
-    {
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // Make the window invisible
-    }
-    window = glfwCreateWindow(window_width, window_height, "CUDA-OpenGL Interop", NULL, NULL);
-    if (!window)
-    {
-        std::cerr << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        exit(EXIT_FAILURE);
-    }
-
-    glfwMakeContextCurrent(window);
-    glewExperimental = GL_TRUE;
-    if (glewInit() != GLEW_OK)
-    {
-        std::cerr << "Failed to initialize GLEW" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    glClearColor(0.96f, 0.96f, 0.86f, 1.0f); // Beige background
-
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 100.0f);
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(glm::value_ptr(projection));
-
-    float dist = 12.0f;
-    glm::mat4 view = glm::lookAt(glm::vec3(dist, dist, dist),  // Camera position
-                                 glm::vec3(0.0f, 0.0f, 0.0f),  // Look-at point
-                                 glm::vec3(0.0f, 1.0f, 0.0f)); // Up vector
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(glm::value_ptr(view));
-}
-
-void ModelGl::Cleanup()
-{
 }
 
 void ModelGl::ProcessFrame()
