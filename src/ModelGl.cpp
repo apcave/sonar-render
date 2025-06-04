@@ -230,9 +230,9 @@ void ModelGl::ProcessFrame()
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
-    if (!glfwGetCurrentContext())
+    if (eglGetCurrentContext() == EGL_NO_CONTEXT)
     {
-        std::cerr << "No active OpenGL context!" << std::endl;
+        std::cout << "Error: No current EGL OpenGL context before creating a texture." << std::endl;
         return;
     }
 
@@ -276,105 +276,70 @@ void ModelGl::ProcessFrame()
         std::cerr << "Error: Uniform 'inputTexture' not found in the shader program." << std::endl;
     }
 
-    if (!renderImage)
+    std::cout << "Processing frame for off-screen rendering..." << std::endl;
+
+    // Create a framebuffer
+    GLuint framebuffer;
+    glGenFramebuffers(1, &framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+    // Create a texture to store the rendered image
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width, window_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Attach the texture to the framebuffer
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+
+    // Check if the framebuffer is complete
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
-        // Pass the matrices to the shader
-        glUseProgram(textureShaderProgram);
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projectionMatrix);
-        glUniformMatrix4fv(modelViewLoc, 1, GL_FALSE, modelViewMatrix);
-
-        while (!glfwWindowShouldClose(window))
-        {
-            for (auto object : targetObjects)
-            {
-                object->RenderObject(textureUniformLoc);
-            }
-
-            for (auto object : fieldObjects)
-            {
-                object->RenderObject(textureUniformLoc);
-            }
-
-            // Swap buffers and poll events
-            glfwSwapBuffers(window);
-            glfwPollEvents();
-        }
-
-        glBindVertexArray(0);
-        std::cout << "Cleaning up OpenGL..." << std::endl;
-        glfwDestroyWindow(window);
-        glfwTerminate();
+        std::cerr << "Framebuffer is not complete!" << std::endl;
         return;
+    }
+
+    glViewport(0, 0, window_width, window_height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Pass the matrices to the shader
+    glUseProgram(textureShaderProgram);
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projectionMatrix);
+    glUniformMatrix4fv(modelViewLoc, 1, GL_FALSE, modelViewMatrix);
+
+    std::cout << "Rendering to image..." << std::endl;
+    // Render to an image or texture instead of a window
+    for (auto object : targetObjects)
+    {
+        object->RenderObject(textureUniformLoc);
+    }
+
+    for (auto object : fieldObjects)
+    {
+        object->RenderObject(textureUniformLoc);
+    }
+
+    // Read pixels from the framebuffer
+    std::vector<unsigned char> pixels(window_width * window_height * 3); // RGB format
+    glReadPixels(0, 0, window_width, window_height, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
+
+    // Save the image using stb_image_write or another library
+    stbi_flip_vertically_on_write(1); // Flip the image vertically
+    if (!stbi_write_png("output.png", window_width, window_height, 3, pixels.data(), window_width * 3))
+    {
+        std::cerr << "Failed to save image!" << std::endl;
     }
     else
     {
-        std::cout << "Processing frame for off-screen rendering..." << std::endl;
-
-        // Create a framebuffer
-        GLuint framebuffer;
-        glGenFramebuffers(1, &framebuffer);
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-
-        // Create a texture to store the rendered image
-        GLuint texture;
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width, window_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        // Attach the texture to the framebuffer
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
-
-        // Check if the framebuffer is complete
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        {
-            std::cerr << "Framebuffer is not complete!" << std::endl;
-            return;
-        }
-
-        glViewport(0, 0, window_width, window_height);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // Pass the matrices to the shader
-        glUseProgram(textureShaderProgram);
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projectionMatrix);
-        glUniformMatrix4fv(modelViewLoc, 1, GL_FALSE, modelViewMatrix);
-
-        std::cout << "Rendering to image..." << std::endl;
-        // Render to an image or texture instead of a window
-        for (auto object : targetObjects)
-        {
-            object->RenderObject(textureUniformLoc);
-        }
-
-        for (auto object : fieldObjects)
-        {
-            object->RenderObject(textureUniformLoc);
-        }
-
-        // Read pixels from the framebuffer
-        std::vector<unsigned char> pixels(window_width * window_height * 3); // RGB format
-        glReadPixels(0, 0, window_width, window_height, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
-
-        // Save the image using stb_image_write or another library
-        stbi_flip_vertically_on_write(1); // Flip the image vertically
-        if (!stbi_write_png("output.png", window_width, window_height, 3, pixels.data(), window_width * 3))
-        {
-            std::cerr << "Failed to save image!" << std::endl;
-        }
-        else
-        {
-            std::cout << "Image saved as 'output.png'" << std::endl;
-        }
-
-        // Cleanup
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glDeleteFramebuffers(1, &framebuffer);
-        glDeleteTextures(1, &texture);
-
-        return;
+        std::cout << "Image saved as 'output.png'" << std::endl;
     }
+
+    // Cleanup
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDeleteFramebuffers(1, &framebuffer);
+    glDeleteTextures(1, &texture);
 }
 
 int ModelGl::MakeObjectsOnGl()

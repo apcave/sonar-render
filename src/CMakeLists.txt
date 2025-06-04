@@ -55,12 +55,16 @@ target_include_directories(${TARGET_NAME} PRIVATE include ${CMAKE_CUDA_TOOLKIT_I
 # Link OpenGL, GLEW, and GLFW libraries for the shared library
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
-find_package(glfw3 REQUIRED)
+find_library(EGL_LIB EGL)
+#target_link_libraries(cuda_project PRIVATE ${EGL_LIB} OpenGL::GL)
+
+#find_package(GLEW REQUIRED)
+#find_package(glfw3 REQUIRED)
 
 target_link_libraries(${TARGET_NAME} PRIVATE
     OpenGL::GL
     GLEW::GLEW
-    glfw
+    ${ELG_LIB}
     GLU
     cuda
     cudart

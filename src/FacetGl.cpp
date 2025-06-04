@@ -11,9 +11,9 @@ FacetGl::FacetGl()
 void FacetGl::AllocateGl()
 {
     readyToRender = false;
-    if (!glfwGetCurrentContext())
+    if (eglGetCurrentContext() == EGL_NO_CONTEXT)
     {
-        std::cout << "Error Intializing OpenGL context before creating a texture." << std::endl;
+        std::cout << "Error: No current EGL OpenGL context before creating a texture." << std::endl;
         return;
     }
 

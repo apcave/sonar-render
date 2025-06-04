@@ -4,7 +4,6 @@
 #include "PressurePoint.hpp"
 
 #include <GL/glew.h>
-#include <GLFW/glfw3.h>
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 #include <iostream>
@@ -26,7 +25,6 @@ class ModelGl
 public:
 private:
     // The openGL window.
-    GLFWwindow *window;
 
     // This is the shader that processes the texture at a fragment level.
     GLuint textureShaderProgram = 0;
