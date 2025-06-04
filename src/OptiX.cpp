@@ -148,7 +148,8 @@ void OptiX::DoProjection(globalParams params)
     }
     std::cout << "Num facets: " << numFacets << std::endl;
     int numberToProcess = numFacets;
-    int max_ind = 1024;
+    // int max_ind = 1024;
+    int max_ind = 9216;
     int num_ind = max_ind;
     while (numberToProcess != 0)
     {

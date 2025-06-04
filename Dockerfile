@@ -5,7 +5,7 @@ FROM ${IMAGE_NAME}:12.8.1-devel-ubuntu24.04 AS base
 
 RUN apt-get update && \
     apt-get install -y cmake libgl1-mesa-dev \
-    libglew-dev libglfw3-dev libglm-dev \
+    libglew-dev libglfw3-dev libglm-dev libegl1 \
     python3 python3-venv python3-pip git
 
 COPY requirements.txt /tmp/requirements.txt    

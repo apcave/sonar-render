@@ -1,2 +1,2 @@
 #!/bin/bash
-ssh -i "../AlexSpotswood.pem" -X ec2-user@ec2-3-25-179-174.ap-southeast-2.compute.amazonaws.com
+ssh -i "../ec2-keys/acoustic-sim-ec2.pem" ubuntu@ec2-13-54-105-15.ap-southeast-2.compute.amazonaws.com

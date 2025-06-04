@@ -34,6 +34,10 @@ make
 sudo make install
 
 
+
+sudo apt-get update
+sudo apt-get install -y libgl1-mesa-dev libglew-dev libglfw3-dev libglm-dev libegl1
+
 python3 -m venv venv
 source venv/bin/activate
 python -m pip install --upgrade pip
