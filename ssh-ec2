@@ -1,0 +1,2 @@
+#!/bin/bash
+ssh -i "../AlexSpotswood.pem" -X ec2-user@ec2-3-25-179-174.ap-southeast-2.compute.amazonaws.com

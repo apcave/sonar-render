@@ -30,5 +30,8 @@ RUN mkdir -p build && \
     cmake ../src/ && \
     make -j4
 
+COPY /usr/lib64/libvoptix.so* /usr/local/lib/
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH    
+
 #ENTRYPOINT []
 #CMD ["bash","/acoustic-render/run_scripts/run_container.sh"]
