@@ -4,6 +4,7 @@
 #include "Globals.h"
 
 #include <GL/glew.h>
+#include <EGL/egl.h>
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 

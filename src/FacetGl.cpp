@@ -1,4 +1,5 @@
 #include "FacetGl.hpp"
+
 #include "OptiX/Exception.h"
 #include <iostream>
 #include <vector>
