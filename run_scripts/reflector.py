@@ -23,21 +23,26 @@ frequency = 5e3
 target_range = 4000
 angle_i = 0.0
 target = geo.create_trihedral_reflector(1, 0.01)
-#geo.rotate_stl_object(target, 'z', 45)
-#geo.rotate_stl_object(target, 'x', 45)
-# geo.rotate_stl_object(target, 'y', 45)
+
+for i in range(4):
+    target = geo.halve_facets(target)
+
+geo.rotate_stl_object(target, 'z', 20)
+geo.rotate_stl_object(target, 'x', 45)
+#geo.rotate_stl_object(target, 'y', 30)
 # geo.save_mesh_to_stl(target, "trihedral_reflector.stl")
 
 
 field_surface = geo.make_rectangle(10,10, False)
+field_surface = geo.translate_stl_object(field_surface, [0, -1, 0])
 
-for i in range(3):
-    field_surface = geo.halve_facets(field_surface)
+#for i in range(3):
+#    field_surface = geo.halve_facets(field_surface)
 
 
 
 angle_i = [0]
-source_pnts= geo.generate_field_points(target_range, angle_i)
+source_pnts= [[25,5,50]]
 angles = np.linspace(-180, 180, 361, endpoint=False)
 field_pnts= geo.generate_field_points(target_range, angles)
 
@@ -83,15 +88,15 @@ print('ka << 1 ,', k, " << 1")
 
 
 # db_values  + 40*np.log10(Radius)    
-plt.figure()
-plt.plot(angles, modeled_TES, label="Field Values (dB)")
-#plt.plot(angles, bistatic_TES, label="Analytic (dB)")
-plt.xlabel("Angle (degrees)")
-plt.ylabel("Field Value (dB)")
-plt.title("Field Values vs. Angle")
-plt.grid(True)
-plt.legend()
-plt.show()
+# plt.figure()
+# plt.plot(angles, modeled_TES, label="Field Values (dB)")
+# #plt.plot(angles, bistatic_TES, label="Analytic (dB)")
+# plt.xlabel("Angle (degrees)")
+# plt.ylabel("Field Value (dB)")
+# plt.title("Field Values vs. Angle")
+# plt.grid(True)
+# plt.legend()
+# plt.show()
 
 
 api.render_openGL()

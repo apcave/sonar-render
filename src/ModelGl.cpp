@@ -150,7 +150,8 @@ void ModelGl::InitOpenGL()
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(glm::value_ptr(projection));
 
-    glm::mat4 view = glm::lookAt(glm::vec3(5.0f, 5.0f, 5.0f),  // Camera position
+    float dist = 12.0f;
+    glm::mat4 view = glm::lookAt(glm::vec3(dist, dist, dist),  // Camera position
                                  glm::vec3(0.0f, 0.0f, 0.0f),  // Look-at point
                                  glm::vec3(0.0f, 1.0f, 0.0f)); // Up vector
     glMatrixMode(GL_MODELVIEW);

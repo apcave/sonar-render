@@ -50,7 +50,7 @@ private:
 private:
     int window_width = 800 * 3;
     int window_height = 600 * 3;
-    bool renderImage = false;
+    bool renderImage = true;
 
 protected:
     bool usingOpenGL = true;

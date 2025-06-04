@@ -16,7 +16,7 @@ import math
 
 
 cp = 1480.0
-frequency = 8e3
+frequency = 16e3
 #frequency = 4e3
 target_range = 000
 angle_i = 0.0
@@ -25,7 +25,7 @@ for i in range(4):
     target = geo.halve_facets(target)
 
 #field_surface = geo.make_rectangle(10,10, False)
-field_surface = geo.make_rectangle(5,5, False)
+field_surface = geo.make_rectangle(15,20, False)
 field_surface = geo.translate_stl_object(field_surface, [0, -0.4, 0])
 
 for i in range(1):

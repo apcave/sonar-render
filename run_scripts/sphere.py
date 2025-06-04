@@ -22,11 +22,11 @@ cp = 1480.0
 frequency = 5e3
 target_range = 4000
 angle_i = 0.0
-target = geo.load_stl_file("./testing/sphere_1m_radius.stl")
+target = geo.load_stl_file("./run_scripts/sphere_1m_radius.stl")
 field_surface = geo.make_rectangle(10,10, False)
-
-for i in range(7):
-    field_surface = geo.halve_facets(field_surface)
+field_surface = geo.translate_stl_object(field_surface, [0, -1.5, 0])
+#for i in range(7):
+field_surface = geo.halve_facets(field_surface)
 
 
 
