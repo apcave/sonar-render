@@ -3,8 +3,8 @@
 #include "Object.hpp"
 #include "PressurePoint.hpp"
 
-#include <glad/gl.h>
-#include <glad/egl.h>
+#include <epoxy/egl.h>
+#include <epoxy/gl.h>
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 #include <iostream>
@@ -34,6 +34,7 @@ public:
     ModelGl();
     ~ModelGl();
 
+    void FreeGl();
     void Cleanup();
 
 protected:
@@ -49,7 +50,6 @@ private:
 private:
     int window_width = 800;
     int window_height = 600;
-    bool renderImage = true;
 
 private:
     EGLDisplay eglDisplay;

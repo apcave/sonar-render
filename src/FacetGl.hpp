@@ -3,8 +3,8 @@
 
 #include "Globals.h"
 
-#include <glad/gl.h>
-#include <glad/egl.h>
+#include <epoxy/egl.h>
+#include <epoxy/gl.h>
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 
@@ -24,6 +24,7 @@ public:
     FacetGl();
     ~FacetGl();
     void AllocateGl();
+    void FreeGl();
 
     void PrintOpenGlTexture();
 

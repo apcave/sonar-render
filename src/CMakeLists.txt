@@ -27,8 +27,6 @@ set(CU_SRC
 )
 
 set(CPP_SRC
-    egl.cpp
-    gl.cpp
     Model.cpp
     ModelCuda.cpp
     ModelGl.cpp
@@ -52,16 +50,20 @@ set(CPP_SRC
 add_library(${TARGET_NAME} SHARED ${CU_SRC} ${CPP_SRC} ${OPX_SRC})
 
 # Include directories
-target_include_directories(${TARGET_NAME} PRIVATE include ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${CMAKE_SOURCE_DIR}/OptiX/include ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(${TARGET_NAME} PRIVATE include ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${CMAKE_SOURCE_DIR}/OptiX/include)
 
 # Link OpenGL, GLEW libraries for the shared library
 find_package(OpenGL REQUIRED)
 find_library(EGL_LIBRARY EGL)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(EPOXY REQUIRED epoxy)
+
 target_link_libraries(${TARGET_NAME} PRIVATE
     EGL
     GL
     cuda
     cudart
+    ${EPOXY_LIBRARIES}
 )
 
 #set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -g -G")

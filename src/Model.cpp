@@ -116,6 +116,9 @@ void Model::RenderOpenGL()
     WriteCudaToGlTexture();
     std::cout << "Test 4 <<<<------------------------------\n";
     ProcessFrame();
+    std::cout << "Test 5 <<<<------------------------------\n";
+    FreeGl();
+    std::cout << "Test 6 <<<<------------------------------\n";
 }
 
 void Model::TearDownModel()

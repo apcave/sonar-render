@@ -9,19 +9,23 @@
 #include "OptiX/stb_image_write.h"
 
 ModelGl::ModelGl() : eglDisplay(EGL_NO_DISPLAY), eglContext(EGL_NO_CONTEXT), eglSurface(EGL_NO_SURFACE) {}
-ModelGl::~ModelGl() { Cleanup(); }
+ModelGl::~ModelGl()
+{
+    std::cout << "Destroying ModelGl..." << std::endl;
+    Cleanup();
+}
 
 void ModelGl::InitOpenGL()
 {
     std::cout << "Initializing EGL/OpenGL..." << std::endl;
 
-    gladLoadEGL(eglDisplay, eglGetProcAddress);
-    std::cout << "1 help\n";
+    // gladLoadEGL(eglDisplay, eglGetProcAddress);
+    // std::cout << "1 help\n";
 
-    eglDisplay = eglGetPlatformDisplay(EGL_PLATFORM_SURFACELESS_MESA, EGL_DEFAULT_DISPLAY, NULL);
+    // eglDisplay = eglGetPlatformDisplay(EGL_PLATFORM_SURFACELESS_MESA, EGL_DEFAULT_DISPLAY, NULL);
 
     // 1. Get default display
-    // eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     std::cout << "help\n";
     if (eglDisplay == EGL_NO_DISPLAY)
     {
@@ -102,12 +106,12 @@ void ModelGl::InitOpenGL()
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "OOPS OpenGL context initialized successfully." << std::endl;
-    if (!gladLoadGL((GLADloadfunc)eglGetProcAddress))
-    {
-        std::cerr << "Failed to initialize GLAD" << std::endl;
-        exit(EXIT_FAILURE);
-    }
+    // std::cout << "OOPS OpenGL context initialized successfully." << std::endl;
+    // if (!gladLoadGL((GLADloadfunc)eglGetProcAddress))
+    // {
+    //     std::cerr << "Failed to initialize GLAD" << std::endl;
+    //     exit(EXIT_FAILURE);
+    // }
     std::cout << "EGL OpenGL context initialized successfully." << std::endl;
 
     // OpenGL state setup
@@ -138,18 +142,20 @@ void ModelGl::InitOpenGL()
 
 void ModelGl::Cleanup()
 {
-    if (eglDisplay != EGL_NO_DISPLAY)
-    {
-        eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-        if (eglContext != EGL_NO_CONTEXT)
-            eglDestroyContext(eglDisplay, eglContext);
-        if (eglSurface != EGL_NO_SURFACE)
-            eglDestroySurface(eglDisplay, eglSurface);
-        eglTerminate(eglDisplay);
-    }
-    eglDisplay = EGL_NO_DISPLAY;
-    eglContext = EGL_NO_CONTEXT;
-    eglSurface = EGL_NO_SURFACE;
+    // std::cout << "Cleaning up EGL/OpenGL..." << std::endl;
+    // if (eglDisplay != EGL_NO_DISPLAY)
+    // {
+    //     eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    //     if (eglContext != EGL_NO_CONTEXT)
+    //         eglDestroyContext(eglDisplay, eglContext);
+    //     if (eglSurface != EGL_NO_SURFACE)
+    //         eglDestroySurface(eglDisplay, eglSurface);
+    //     eglTerminate(eglDisplay);
+    // }
+    // eglDisplay = EGL_NO_DISPLAY;
+    // eglContext = EGL_NO_CONTEXT;
+    // eglSurface = EGL_NO_SURFACE;
+    // std::cout << "Completed..." << std::endl;
 }
 
 void ModelGl::MakeTextureShader()
@@ -390,4 +396,33 @@ int ModelGl::MakeObjectsOnGl()
     }
 
     return 0;
+}
+
+void ModelGl::FreeGl()
+{
+    std::cout << "TODO: Freeing Objects without Textures." << std::endl;
+    for (auto object : targetObjects)
+    {
+        object->FreeGl();
+    }
+
+    for (auto object : fieldObjects)
+    {
+        object->FreeGl();
+    }
+
+    std::cout << "Cleaning up EGL/OpenGL..." << std::endl;
+    if (eglDisplay != EGL_NO_DISPLAY)
+    {
+        eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        if (eglContext != EGL_NO_CONTEXT)
+            eglDestroyContext(eglDisplay, eglContext);
+        if (eglSurface != EGL_NO_SURFACE)
+            eglDestroySurface(eglDisplay, eglSurface);
+        eglTerminate(eglDisplay);
+    }
+    eglDisplay = EGL_NO_DISPLAY;
+    eglContext = EGL_NO_CONTEXT;
+    eglSurface = EGL_NO_SURFACE;
+    std::cout << "Completed..." << std::endl;
 }

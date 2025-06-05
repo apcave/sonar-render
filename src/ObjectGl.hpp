@@ -5,8 +5,8 @@
 #include "Facet.hpp"
 
 #include <vector>
-#include <glad/gl.h>
-#include <glad/egl.h>
+#include <epoxy/egl.h>
+#include <epoxy/gl.h>
 
 class ObjectGl
 {
@@ -20,6 +20,7 @@ public:
     void RenderObject(GLint textureUniformLoc);
 
     void AllocateGl();
+    void FreeGl();
 
 private:
     void PrintVBO();

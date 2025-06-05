@@ -10,7 +10,7 @@ void ObjectGl::MakeVBO()
     {
         std::cerr << "glGenBuffers is nullptr! Your context does not support VBOs." << std::endl;
     }
-    std::cout << "Extensions: " << glGetString(GL_EXTENSIONS) << std::endl;
+    // std::cout << "Extensions: " << glGetString(GL_EXTENSIONS) << std::endl;
 
     std::vector<float> vertexData;
     for (auto &facet : facets)
@@ -57,13 +57,17 @@ void ObjectGl::MakeVBO()
 
 ObjectGl::~ObjectGl()
 {
+    std::cout << "Deleting ObjectGl..." << std::endl;
+
     // Delete the VBO
     if (vbo != 0)
     {
+        std::cout << "2 Deleting ObjectGl..." << std::endl;
         glDeleteBuffers(1, &vbo);
         std::cout << "VBO " << vbo << " deleted." << std::endl;
         vbo = 0; // Reset to 0 to avoid dangling references
     }
+    std::cout << "1 Deleting ObjectGl..." << std::endl;
 
     // Delete the VAO
     if (vao != 0)
@@ -73,11 +77,14 @@ ObjectGl::~ObjectGl()
         vao = 0; // Reset to 0 to avoid dangling references
     }
 
+    std::cout << "Deleting facets..." << std::endl;
     for (auto facet : facets)
     {
         delete facet;
     }
     facets.clear();
+
+    std::cout << "ObjectGl deleted." << std::endl;
 }
 
 ObjectGl::ObjectGl()
@@ -138,6 +145,35 @@ void ObjectGl::AllocateGl()
     for (auto facet : facets)
     {
         facet->AllocateGl();
+    }
+}
+
+void ObjectGl::FreeGl()
+{
+    std::cout << "Deleting ObjectGl..." << std::endl;
+
+    // Delete the VBO
+    if (vbo != 0)
+    {
+        std::cout << "2 Deleting ObjectGl..." << std::endl;
+        glDeleteBuffers(1, &vbo);
+        std::cout << "VBO " << vbo << " deleted." << std::endl;
+        vbo = 0; // Reset to 0 to avoid dangling references
+    }
+    std::cout << "1 Deleting ObjectGl..." << std::endl;
+
+    // Delete the VAO
+    if (vao != 0)
+    {
+        glDeleteVertexArrays(1, &vao);
+        std::cout << "VAO " << vao << " deleted." << std::endl;
+        vao = 0; // Reset to 0 to avoid dangling references
+    }
+
+    std::cout << "Deleting facets..." << std::endl;
+    for (auto facet : facets)
+    {
+        facet->FreeGl();
     }
 }
 
