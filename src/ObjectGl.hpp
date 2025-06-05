@@ -5,7 +5,8 @@
 #include "Facet.hpp"
 
 #include <vector>
-#include <GL/glew.h>
+#include <glad/gl.h>
+#include <glad/egl.h>
 
 class ObjectGl
 {

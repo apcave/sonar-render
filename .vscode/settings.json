@@ -58,7 +58,10 @@
         "optional": "cpp",
         "ratio": "cpp",
         "variant": "cpp",
-        "list": "cpp"
+        "list": "cpp",
+        "strstream": "cpp",
+        "chrono": "cpp",
+        "mutex": "cpp"
     },
     "[cpp]": {
         "editor.defaultFormatter": "ms-vscode.cpptools"

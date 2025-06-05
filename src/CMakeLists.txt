@@ -27,6 +27,8 @@ set(CU_SRC
 )
 
 set(CPP_SRC
+    egl.cpp
+    gl.cpp
     Model.cpp
     ModelCuda.cpp
     ModelGl.cpp
@@ -50,22 +52,14 @@ set(CPP_SRC
 add_library(${TARGET_NAME} SHARED ${CU_SRC} ${CPP_SRC} ${OPX_SRC})
 
 # Include directories
-target_include_directories(${TARGET_NAME} PRIVATE include ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${CMAKE_SOURCE_DIR}/OptiX/include)
+target_include_directories(${TARGET_NAME} PRIVATE include ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${CMAKE_SOURCE_DIR}/OptiX/include ${CMAKE_SOURCE_DIR}/include)
 
-# Link OpenGL, GLEW, and GLFW libraries for the shared library
+# Link OpenGL, GLEW libraries for the shared library
 find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
-find_library(EGL_LIB EGL)
-#target_link_libraries(cuda_project PRIVATE ${EGL_LIB} OpenGL::GL)
-
-#find_package(GLEW REQUIRED)
-#find_package(glfw3 REQUIRED)
-
+find_library(EGL_LIBRARY EGL)
 target_link_libraries(${TARGET_NAME} PRIVATE
-    OpenGL::GL
-    GLEW::GLEW
-    ${ELG_LIB}
-    GLU
+    EGL
+    GL
     cuda
     cudart
 )
@@ -76,6 +70,7 @@ target_link_libraries(${TARGET_NAME} PRIVATE
 target_compile_options(${TARGET_NAME} PRIVATE
     $<$<COMPILE_LANGUAGE:CUDA>:>
     $<$<COMPILE_LANGUAGE:CXX>:>
+    $<$<COMPILE_LANGUAGE:C>:>
 )
 
 # Enable CUDA separable compilation for the shared library
