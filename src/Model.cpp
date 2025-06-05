@@ -108,17 +108,11 @@ void Model::GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoint
 void Model::RenderOpenGL()
 {
     InitOpenGL();
-    std::cout << "Test 1 <<<<------------------------------\n";
     MakeObjectsOnGl();
-    std::cout << "Test 2 <<<<------------------------------\n";
     GetSurfaceScalers();
-    std::cout << "Test 3 <<<<------------------------------\n";
     WriteCudaToGlTexture();
-    std::cout << "Test 4 <<<<------------------------------\n";
     ProcessFrame();
-    std::cout << "Test 5 <<<<------------------------------\n";
     FreeGl();
-    std::cout << "Test 6 <<<<------------------------------\n";
 }
 
 void Model::TearDownModel()

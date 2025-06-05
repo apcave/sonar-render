@@ -132,7 +132,7 @@ int ModelCuda::StopCuda()
         cudaFree(dev_frag_stats);
         dev_frag_stats = 0;
     }
-    std::cout << "1, Testing CUDA memory..." << std::endl;
+
     if (dev_source_points_position)
     {
         cudaFree(dev_source_points_position);
@@ -153,13 +153,11 @@ int ModelCuda::StopCuda()
         cudaFree(dev_field_points_pressure);
         dev_field_points_pressure = 0;
     }
-    std::cout << "2, Testing CUDA memory..." << std::endl;
-    std::cout << "Freeing target objects..." << targetObjects.size() << std::endl;
+
     for (auto object : targetObjects)
     {
         delete object;
     }
-    std::cout << "3, Testing CUDA memory..." << std::endl;
     targetObjects.clear();
 
     for (auto object : fieldObjects)

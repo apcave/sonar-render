@@ -35,7 +35,6 @@ public:
     ~ModelGl();
 
     void FreeGl();
-    void Cleanup();
 
 protected:
     void InitOpenGL();

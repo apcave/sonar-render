@@ -11,37 +11,26 @@
 ModelGl::ModelGl() : eglDisplay(EGL_NO_DISPLAY), eglContext(EGL_NO_CONTEXT), eglSurface(EGL_NO_SURFACE) {}
 ModelGl::~ModelGl()
 {
-    std::cout << "Destroying ModelGl..." << std::endl;
-    Cleanup();
 }
 
 void ModelGl::InitOpenGL()
 {
     std::cout << "Initializing EGL/OpenGL..." << std::endl;
 
-    // gladLoadEGL(eglDisplay, eglGetProcAddress);
-    // std::cout << "1 help\n";
-
-    // eglDisplay = eglGetPlatformDisplay(EGL_PLATFORM_SURFACELESS_MESA, EGL_DEFAULT_DISPLAY, NULL);
-
     // 1. Get default display
     eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    std::cout << "help\n";
     if (eglDisplay == EGL_NO_DISPLAY)
     {
         std::cerr << "Failed to get EGL display" << std::endl;
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "EGL display initialized successfully." << std::endl;
     // 2. Initialize EGL
     if (!eglInitialize(eglDisplay, nullptr, nullptr))
     {
         std::cerr << "Failed to initialize EGL" << std::endl;
         exit(EXIT_FAILURE);
     }
-
-    std::cout << "test 1\n";
 
     // 3. Choose EGL config
     EGLint configAttribs[] = {
@@ -60,8 +49,6 @@ void ModelGl::InitOpenGL()
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "Test 2\n";
-
     // 4. Create a PBuffer surface
     EGLint pbufferAttribs[] = {
         EGL_WIDTH,
@@ -77,16 +64,12 @@ void ModelGl::InitOpenGL()
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "Test 3\n";
-
     // 5. Bind OpenGL API
     if (!eglBindAPI(EGL_OPENGL_API))
     {
         std::cerr << "Failed to bind OpenGL API" << std::endl;
         exit(EXIT_FAILURE);
     }
-
-    std::cout << "Test 4\n";
 
     // 6. Create OpenGL context
     EGLint ctxAttribs[] = {EGL_CONTEXT_MAJOR_VERSION, 4, EGL_CONTEXT_MINOR_VERSION, 3, EGL_NONE};
@@ -97,22 +80,12 @@ void ModelGl::InitOpenGL()
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "Test 5\n";
-
     // 7. Make context current
     if (!eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext))
     {
         std::cerr << "Failed to make EGL context current" << std::endl;
         exit(EXIT_FAILURE);
     }
-
-    // std::cout << "OOPS OpenGL context initialized successfully." << std::endl;
-    // if (!gladLoadGL((GLADloadfunc)eglGetProcAddress))
-    // {
-    //     std::cerr << "Failed to initialize GLAD" << std::endl;
-    //     exit(EXIT_FAILURE);
-    // }
-    std::cout << "EGL OpenGL context initialized successfully." << std::endl;
 
     // OpenGL state setup
     glClearColor(0.96f, 0.96f, 0.86f, 1.0f); // Beige background
@@ -138,24 +111,6 @@ void ModelGl::InitOpenGL()
     {
         std::cout << "OpenGL context version: " << version << std::endl;
     }
-}
-
-void ModelGl::Cleanup()
-{
-    // std::cout << "Cleaning up EGL/OpenGL..." << std::endl;
-    // if (eglDisplay != EGL_NO_DISPLAY)
-    // {
-    //     eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-    //     if (eglContext != EGL_NO_CONTEXT)
-    //         eglDestroyContext(eglDisplay, eglContext);
-    //     if (eglSurface != EGL_NO_SURFACE)
-    //         eglDestroySurface(eglDisplay, eglSurface);
-    //     eglTerminate(eglDisplay);
-    // }
-    // eglDisplay = EGL_NO_DISPLAY;
-    // eglContext = EGL_NO_CONTEXT;
-    // eglSurface = EGL_NO_SURFACE;
-    // std::cout << "Completed..." << std::endl;
 }
 
 void ModelGl::MakeTextureShader()
@@ -400,7 +355,6 @@ int ModelGl::MakeObjectsOnGl()
 
 void ModelGl::FreeGl()
 {
-    std::cout << "TODO: Freeing Objects without Textures." << std::endl;
     for (auto object : targetObjects)
     {
         object->FreeGl();
@@ -411,7 +365,6 @@ void ModelGl::FreeGl()
         object->FreeGl();
     }
 
-    std::cout << "Cleaning up EGL/OpenGL..." << std::endl;
     if (eglDisplay != EGL_NO_DISPLAY)
     {
         eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
@@ -424,5 +377,4 @@ void ModelGl::FreeGl()
     eglDisplay = EGL_NO_DISPLAY;
     eglContext = EGL_NO_CONTEXT;
     eglSurface = EGL_NO_SURFACE;
-    std::cout << "Completed..." << std::endl;
 }

@@ -39,19 +39,6 @@ void FacetGl::AllocateGl()
 
 FacetGl::~FacetGl()
 {
-    // Unregister the OpenGL texture from CUDA
-    if (cudaResource)
-    {
-        cudaGraphicsUnregisterResource(cudaResource);
-        cudaResource = 0;
-    }
-
-    // Delete the OpenGL texture
-    if (textureID)
-    {
-        glDeleteTextures(1, &textureID);
-        textureID = 0;
-    }
 }
 
 void FacetGl::FreeGl()

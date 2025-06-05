@@ -2,14 +2,14 @@
 
 void ObjectGl::MakeVBO()
 {
-    std::cout << "Creating VBO for ObjectGl..." << std::endl;
+    // std::cout << "Creating VBO for ObjectGl..." << std::endl;
 
-    std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
-    std::cout << "GLSL version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-    if (glGenBuffers == nullptr)
-    {
-        std::cerr << "glGenBuffers is nullptr! Your context does not support VBOs." << std::endl;
-    }
+    // std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
+    // std::cout << "GLSL version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+    // if (glGenBuffers == nullptr)
+    // {
+    //     std::cerr << "glGenBuffers is nullptr! Your context does not support VBOs." << std::endl;
+    // }
     // std::cout << "Extensions: " << glGetString(GL_EXTENSIONS) << std::endl;
 
     std::vector<float> vertexData;
@@ -20,71 +20,41 @@ void ObjectGl::MakeVBO()
                                              facet->v2.x, facet->v2.y, facet->v2.z, facet->texCoords[2], facet->texCoords[3],
                                              facet->v3.x, facet->v3.y, facet->v3.z, facet->texCoords[4], facet->texCoords[5]});
     }
-    std::cout << "Test 1.01\n";
     // Upload the vertex data to the GPU
     glGenBuffers(1, &vbo);
-    std::cout << "Test 1.2\n";
+
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    std::cout << "Test 1.3\n";
+
     glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
-    std::cout << "Test 1.4\n";
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    std::cout << "Test 2\n";
 
     // Vertex Attribute Object....
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
-    std::cout << "Test 3\n";
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-    std::cout << "Test 3\n";
     // Position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
-    std::cout << "Test 5\n";
     // Texture coordinate attribute
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    std::cout << "Test 6\n";
     // Unbind the VBO and VAO
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-    std::cout << "Finshed VBO for ObjectGl..." << std::endl;
 }
 
 ObjectGl::~ObjectGl()
 {
-    std::cout << "Deleting ObjectGl..." << std::endl;
-
-    // Delete the VBO
-    if (vbo != 0)
-    {
-        std::cout << "2 Deleting ObjectGl..." << std::endl;
-        glDeleteBuffers(1, &vbo);
-        std::cout << "VBO " << vbo << " deleted." << std::endl;
-        vbo = 0; // Reset to 0 to avoid dangling references
-    }
-    std::cout << "1 Deleting ObjectGl..." << std::endl;
-
-    // Delete the VAO
-    if (vao != 0)
-    {
-        glDeleteVertexArrays(1, &vao);
-        std::cout << "VAO " << vao << " deleted." << std::endl;
-        vao = 0; // Reset to 0 to avoid dangling references
-    }
-
-    std::cout << "Deleting facets..." << std::endl;
     for (auto facet : facets)
     {
         delete facet;
     }
     facets.clear();
-
-    std::cout << "ObjectGl deleted." << std::endl;
 }
 
 ObjectGl::ObjectGl()
@@ -150,31 +120,25 @@ void ObjectGl::AllocateGl()
 
 void ObjectGl::FreeGl()
 {
-    std::cout << "Deleting ObjectGl..." << std::endl;
-
     // Delete the VBO
     if (vbo != 0)
     {
-        std::cout << "2 Deleting ObjectGl..." << std::endl;
         glDeleteBuffers(1, &vbo);
-        std::cout << "VBO " << vbo << " deleted." << std::endl;
         vbo = 0; // Reset to 0 to avoid dangling references
     }
-    std::cout << "1 Deleting ObjectGl..." << std::endl;
 
     // Delete the VAO
     if (vao != 0)
     {
         glDeleteVertexArrays(1, &vao);
-        std::cout << "VAO " << vao << " deleted." << std::endl;
         vao = 0; // Reset to 0 to avoid dangling references
     }
 
-    std::cout << "Deleting facets..." << std::endl;
     for (auto facet : facets)
     {
         facet->FreeGl();
     }
+    facets.clear();
 }
 
 void ObjectGl::PrintVBO()
