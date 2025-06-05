@@ -178,7 +178,7 @@ int ModelCuda::DoCalculations()
     ProjectSrcPointsToObjects();
 
     // std::cout << "Target to target objects." << std::endl;
-    // ProjectTargetToTargetObjects();
+    ProjectTargetToTargetObjects();
 
     // std::cout << "Target to field objects." << std::endl;
     ProjectTargetToFieldObjects();

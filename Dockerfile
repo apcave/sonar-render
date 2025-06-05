@@ -4,8 +4,8 @@ FROM ${IMAGE_NAME}:12.8.1-devel-ubuntu24.04 AS base
 #FROM ${IMAGE_NAME}:11.8.0-devel-ubuntu20.04 AS base
 
 RUN apt-get update && \
-    apt-get install -y cmake libgl1-mesa-dev \
-    libglew-dev libglfw3-dev libglm-dev libegl1 \
+    apt-get install -y cmake libepoxy-dev \
+    libglm-dev pkg-config \
     python3 python3-venv python3-pip git
 
 COPY requirements.txt /tmp/requirements.txt    
@@ -23,15 +23,16 @@ COPY run_scripts /acoustic-render/run_scripts
 COPY docs /acoustic-render/docs
 COPY .git /acoustic-render/.git
 
-# COPY ./lib/* /usr/lib/x86_64-linux-gnu/.
+COPY ./lib/* /usr/lib/x86_64-linux-gnu/.
+RUN rm  /usr/lib/x86_64-linux-gnu/libEGL.* && \
+    rm  /usr/lib/x86_64-linux-gnu/libEGL_mesa.* && \
+    ln -sf /usr/lib/x86_64-linux-gnu/libEGL_nvidia.so.0 /usr/lib/x86_64-linux-gnu/libEGL.so.1 && \
+    ln -sf /usr/lib/x86_64-linux-gnu/libEGL_nvidia.so.0 /usr/lib/x86_64-linux-gnu/libEGL.so
 
 RUN mkdir -p build && \
     cd build && \
     cmake ../src/ && \
-    make -j4
-
-COPY /usr/lib64/libvoptix.so* /usr/local/lib/
-ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH    
+    make -j4 all  
 
 #ENTRYPOINT []
 #CMD ["bash","/acoustic-render/run_scripts/run_container.sh"]
