@@ -1,7 +1,5 @@
 #include "ModelGl.hpp"
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #define EGL_PLATFORM_SURFACELESS_MESA 0x31DD
 
@@ -40,6 +38,7 @@ void ModelGl::InitOpenGL()
         EGL_GREEN_SIZE, 8,
         EGL_BLUE_SIZE, 8,
         EGL_ALPHA_SIZE, 8,
+        EGL_DEPTH_SIZE, 24, // <-- Add this line!
         EGL_NONE};
     EGLConfig eglConfig;
     EGLint numConfigs;
@@ -90,16 +89,12 @@ void ModelGl::InitOpenGL()
     // OpenGL state setup
     glClearColor(0.96f, 0.96f, 0.86f, 1.0f); // Beige background
 
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 100.0f);
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(glm::value_ptr(projection));
+    projection = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 100.0f);
 
     float dist = 12.0f;
-    glm::mat4 view = glm::lookAt(glm::vec3(dist, dist, dist),  // Camera position
-                                 glm::vec3(0.0f, 0.0f, 0.0f),  // Look-at point
-                                 glm::vec3(0.0f, 1.0f, 0.0f)); // Up vector
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(glm::value_ptr(view));
+    view = glm::lookAt(glm::vec3(dist, dist, dist),  // Camera position
+                       glm::vec3(0.0f, 0.0f, 0.0f),  // Look-at point
+                       glm::vec3(0.0f, 1.0f, 0.0f)); // Up vector
 
     const GLubyte *version = glGetString(GL_VERSION);
     if (!version)
@@ -221,7 +216,9 @@ void ModelGl::ProcessFrame()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
+    glDepthFunc(GL_LESS);
+
+    // glDisable(GL_CULL_FACE);
 
     if (eglGetCurrentContext() == EGL_NO_CONTEXT)
     {
@@ -238,16 +235,6 @@ void ModelGl::ProcessFrame()
     // glEnable(GL_LIGHT0);
 
     MakeTextureShader();
-
-    // glBindVertexArray(vao);
-    GLfloat projectionMatrix[16];
-    GLfloat modelViewMatrix[16];
-
-    // Get the current projection matrix
-    glGetFloatv(GL_PROJECTION_MATRIX, projectionMatrix);
-
-    // Get the current model-view matrix
-    glGetFloatv(GL_MODELVIEW_MATRIX, modelViewMatrix);
 
     // Get uniform locations in the shader
     GLint projectionLoc = glGetUniformLocation(textureShaderProgram, "projection");
@@ -276,6 +263,12 @@ void ModelGl::ProcessFrame()
     glGenFramebuffers(1, &framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
+    GLuint depthRenderbuffer;
+    glGenRenderbuffers(1, &depthRenderbuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, window_width, window_height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);
+
     // Create a texture to store the rendered image
     GLuint texture;
     glGenTextures(1, &texture);
@@ -293,17 +286,19 @@ void ModelGl::ProcessFrame()
         std::cerr << "Framebuffer is not complete!" << std::endl;
         return;
     }
-
     glViewport(0, 0, window_width, window_height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 
     // Pass the matrices to the shader
     glUseProgram(textureShaderProgram);
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projectionMatrix);
-    glUniformMatrix4fv(modelViewLoc, 1, GL_FALSE, modelViewMatrix);
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(modelViewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
     std::cout << "Rendering to image..." << std::endl;
     // Render to an image or texture instead of a window
+
     for (auto object : targetObjects)
     {
         object->RenderObject(textureUniformLoc);
@@ -333,6 +328,7 @@ void ModelGl::ProcessFrame()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDeleteFramebuffers(1, &framebuffer);
     glDeleteTextures(1, &texture);
+    glDeleteRenderbuffers(1, &depthRenderbuffer);
 }
 
 int ModelGl::MakeObjectsOnGl()

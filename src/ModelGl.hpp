@@ -10,6 +10,8 @@
 #include <iostream>
 
 #include <vector>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 /**
  * @brief OpenGL class is used to manage the C style OpenGL API for rendering.
@@ -47,13 +49,16 @@ private:
     void PrintTextures();
 
 private:
-    int window_width = 800;
-    int window_height = 600;
+    int window_width = 800 * 6;
+    int window_height = 600 * 6;
 
 private:
     EGLDisplay eglDisplay;
     EGLContext eglContext;
     EGLSurface eglSurface;
+
+    glm::mat4 view;
+    glm::mat4 projection;
 
 protected:
     std::vector<Object *> targetObjects;

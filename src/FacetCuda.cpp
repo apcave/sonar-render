@@ -112,6 +112,7 @@ dev_facet FacetCuda::MakeOptixStruct()
     // Makes a copy.
     if (objectType == OBJECT_TYPE_TARGET)
     {
+        std::cout << "Clearing P_out on target object." << std::endl;
         cudaMemset(host_facet.P_out, 0, numXpnts * numYpnts * sizeof(dcomplex));
     }
     return host_facet;
