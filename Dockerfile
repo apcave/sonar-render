@@ -24,10 +24,13 @@ COPY docs /acoustic-render/docs
 COPY .git /acoustic-render/.git
 
 COPY ./lib/* /usr/lib/x86_64-linux-gnu/.
-RUN rm  /usr/lib/x86_64-linux-gnu/libEGL.* && \
-    rm  /usr/lib/x86_64-linux-gnu/libEGL_mesa.* && \
-    ln -sf /usr/lib/x86_64-linux-gnu/libEGL_nvidia.so.0 /usr/lib/x86_64-linux-gnu/libEGL.so.1 && \
-    ln -sf /usr/lib/x86_64-linux-gnu/libEGL_nvidia.so.0 /usr/lib/x86_64-linux-gnu/libEGL.so
+# RUN rm  /usr/lib/x86_64-linux-gnu/libEGL.* && \
+#     rm  /usr/lib/x86_64-linux-gnu/libEGL_mesa.* && \
+#     ln -sf /usr/lib/x86_64-linux-gnu/libEGL_nvidia.so.0 /usr/lib/x86_64-linux-gnu/libEGL.so.1 && \
+#     ln -sf /usr/lib/x86_64-linux-gnu/libEGL_nvidia.so.0 /usr/lib/x86_64-linux-gnu/libEGL.so
+
+RUN   rm  /usr/lib/x86_64-linux-gnu/libEGL_mesa.* && \
+    ln -sf /usr/lib/x86_64-linux-gnu/libEGL_nvidia.so.0 /usr/lib/x86_64-linux-gnu/libEGL_mesa.so.0
 
 RUN mkdir -p build && \
     cd build && \
