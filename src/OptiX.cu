@@ -36,7 +36,7 @@ __device__ void projectSourcePointsToFacet(int b_ind)
 {
     const dev_facet B = params.dstObject.facets[b_ind];
     const int numXpntsNegative = B.frag_points.z;
-    const float delta = params.frag_delta;
+    const float delta = params.dstObject.delta;
     const int numSrc = params.srcPoints.numPnts;
 
     const thrust::complex<double> i1 = thrust::complex<double>(0, 1);
@@ -113,7 +113,7 @@ __device__ void projectFacetToFieldPoints(int a_ind)
 {
     const dev_facet A = params.srcObject.facets[a_ind];
     const int numXpntsNegative = A.frag_points.z;
-    const float delta = params.frag_delta;
+    const float delta = params.srcObject.delta;
     const int numDst = params.dstPoints.numPnts;
     const float epsilon = 1e-3f;
 
@@ -193,7 +193,8 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
 {
     const dev_facet A = params.srcObject.facets[a_ind];
     const int numXpntsNegative_i = A.frag_points.z;
-    const float delta = params.frag_delta;
+    const float delta_i = params.srcObject.delta;
+    const float delta_j = params.dstObject.delta;
     const int numDst = params.dstObject.numFacets;
     const float epsilon = 1e-3f;
 
@@ -206,9 +207,9 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
         {
             const int ind_i = yPnt_i * A.frag_points.x + xPnt_i;
             // This is the x offset from the base point to the approximate centriod of the pixel.
-            const float xoffset_i = delta * (xPnt_i - numXpntsNegative_i); // This value can be negative.
+            const float xoffset_i = delta_i * (xPnt_i - numXpntsNegative_i); // This value can be negative.
             // This is the y offset from the base point to the approximate centriod of the pixel.
-            const float yoffset_i = delta * yPnt_i + delta / 2;
+            const float yoffset_i = delta_i * yPnt_i + delta_i / 2;
 
             const float3 xAxis_i = A.xAxis * xoffset_i;
             const float3 yAxis_i = A.yAxis * yoffset_i;
@@ -265,9 +266,9 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                     {
                         const int ind_j = yPnt_j * B.frag_points.x + xPnt_j;
                         // This is the x offset from the base point to the approximate centriod of the pixel.
-                        const float xoffset_j = delta * (xPnt_j - numXpntsNegative_j); // This value can be negative.
+                        const float xoffset_j = delta_j * (xPnt_j - numXpntsNegative_j); // This value can be negative.
                         // This is the y offset from the base point to the approximate centriod of the pixel.
-                        const float yoffset_j = delta * yPnt_j + delta / 2;
+                        const float yoffset_j = delta_j * yPnt_j + delta_j / 2;
 
                         const float3 xAxis_j = B.xAxis * xoffset_j;
                         const float3 yAxis_j = B.yAxis * yoffset_j;
@@ -375,7 +376,7 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
             }
         }
     }
-    printf("Facet %d projected to %d facets.\n", a_ind, numDst);
+    //printf("Facet %d projected to %d facets.\n", a_ind, numDst);
 }
 
 extern "C" __global__ void __raygen__rg()

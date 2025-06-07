@@ -47,6 +47,7 @@ typedef struct
     ObjectType objectType;
     int numFacets;
     dev_facet *facets;
+    float delta;
 } dev_object;
 
 typedef struct
@@ -54,7 +55,6 @@ typedef struct
     OptixTraversableHandle handle; // Acceleration structure handle
 
     dcomplex k_wave;  // Wave number
-    float frag_delta; // Fragment length
 
     dev_object srcObject;
     dev_object dstObject;

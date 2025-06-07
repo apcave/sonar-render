@@ -45,6 +45,7 @@ dev_object ObjectCuda::MakeOptixStructArray()
     if (h_obj.numFacets == 0 && facets.size() > 0)
     {
         h_obj.objectType = objectType;
+        h_obj.delta = resolution;
         h_obj.numFacets = facets.size();
         auto h_facets = new dev_facet[h_obj.numFacets]; // Gets deallocated after use.
         for (int i = 0; i < h_obj.numFacets; i++)

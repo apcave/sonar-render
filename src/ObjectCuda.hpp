@@ -18,8 +18,12 @@ public:
     void PrimeReflections();
     void SwapOutputToInputPressure();
 
+protected:
+    float resolution = 0.0f;
+
 private:
     dev_object h_obj = {};
+
 };
 
 #endif

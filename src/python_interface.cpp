@@ -23,7 +23,7 @@ extern "C" void set_initial_conditions(float cp, float frequency, float attenuat
     modelTes.set_inital_conditions(cp, frequency, attenuation, density);
 };
 
-extern "C" void load_geometry(float *v1, int num_vertices, int objectType, float resolution = 2e-2)
+extern "C" void load_geometry(float *v1, int num_vertices, int objectType, float resolution)
 {
 
     auto ot = safeConvertToEnum(objectType);

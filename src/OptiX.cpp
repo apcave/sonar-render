@@ -136,7 +136,7 @@ void OptiX::DoProjection(globalParams params)
     {
         throw new std::runtime_error("OptiX::DoProjection: d_optix_params already allocated.");
     }
-    std::cout << "OptiX::DoProjection()" << std::endl;
+    //std::cout << "OptiX::DoProjection()" << std::endl;
     params.handle = gasHandle;
     CUDA_CHECK(cudaMalloc((void **)&d_optix_params, sizeof(globalParams)));
     CUDA_CHECK(cudaMemcpy((void *)d_optix_params, &params, sizeof(globalParams), cudaMemcpyHostToDevice));
@@ -146,7 +146,6 @@ void OptiX::DoProjection(globalParams params)
     {
         numFacets = params.dstObject.numFacets;
     }
-    std::cout << "Num facets: " << numFacets << std::endl;
     int numberToProcess = numFacets;
     // int max_ind = 1024;
     int max_ind = 9216;
@@ -164,7 +163,7 @@ void OptiX::DoProjection(globalParams params)
             numberToProcess = 0;
         }
 
-        std::cout << "Launching Collision Program...\n";
+        //std::cout << "Launching Collision Program...\n";
         OPTIX_CHECK(optixLaunch(
             pipeline,
             0,
@@ -176,7 +175,7 @@ void OptiX::DoProjection(globalParams params)
             1));
         // cudaDeviceSynchronize();
     }
-    std::cout << "Launched Collision Program.\n";
+    //std::cout << "Launched Collision Program.\n";
 
     cudaDeviceSynchronize();
     cudaError_t err = cudaGetLastError();

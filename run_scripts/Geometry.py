@@ -277,20 +277,29 @@ def create_plate(length, width, thickness=0.01):
 
     return plate
 
-def create_reflector(side_length, thickness):
-        
-    plate_1 = create_plate(side_length, side_length, thickness)
+def create_reflector(width, thickness):
+    
+    side_length = (2*((width/2)**2))**0.5
+    plate_1 = create_plate(side_length, width, thickness)
     plate_1 = rotate_stl_object(plate_1, 'x', 45)
-    plate_2 = create_plate(side_length, side_length, thickness)
+    
+    plate_2 = create_plate(side_length, width, thickness)
     plate_2 = rotate_stl_object(plate_2, 'x', -45)
 
+    plate_3 = create_plate(side_length, width, thickness)
+    plate_3 = rotate_stl_object(plate_3, 'x', 90)
+    plate_3 = rotate_stl_object(plate_3, 'z', 90)
+    plate_3 = rotate_stl_object(plate_3, 'y', -45)
+    
+    plate_4 = create_plate(side_length, width, thickness)
+    plate_4 = rotate_stl_object(plate_4, 'x', 90)
+    plate_4 = rotate_stl_object(plate_4, 'z', 90) 
+    plate_4 = rotate_stl_object(plate_4, 'y', 45)
 
 
-    reflector = join_meshes(plate_xy, plate_1)
-    reflector = join_meshes(reflector, plate_2)
-
-    reflector = rotate_stl_object(reflector, 'z', 45)
-    reflector = rotate_stl_object(reflector, 'x', 45)    
+    reflector = join_meshes(plate_1, plate_2)
+    reflector = join_meshes(reflector, plate_3)
+    reflector = join_meshes(reflector, plate_4)  
 
     #plate_xz = create_plate(side_length, thickness, 'xz')
     #plate_yz = create_plate(side_length, thickness, 'yz')

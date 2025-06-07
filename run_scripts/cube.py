@@ -47,10 +47,10 @@ field_pnts= geo.generate_field_points(target_range, angles)
 api.load_points_to_cuda(source_pnts, isSource=True)
 api.load_points_to_cuda(field_pnts, isSource=False)
 api.set_initial_conditions(cp, frequency, 0.0)
-api.load_stl_mesh_to_cuda(target, 0) # 0 is for target object.
-api.load_stl_mesh_to_cuda(field_surface, 2) # 1 is for field surface.
+api.load_stl_mesh_to_cuda(target, 0, 20e-3) # 0 is for target object.
+api.load_stl_mesh_to_cuda(field_surface, 2,50e-3) # 1 is for field surface.
 
-api.render_cuda()
+mh.run_rendering()
 field_vals = api.GetFieldPoints(len(field_pnts))
 
 wavelength = cp / frequency
@@ -79,6 +79,7 @@ modeled_TES = mh.results_to_TES(field_vals, target_range)
 # plt.legend()
 # plt.show()
 
-
-api.render_openGL()
+window_width = 800 * 8
+window_height = 600 * 8
+api.render_openGL(window_width, window_height, "cube.png")
 #api.TearDownCuda()

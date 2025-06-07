@@ -5,6 +5,7 @@ from stl import mesh
 from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 import math
+import time
 
 def monostatic_iterated(pnts, object, cp, frequency):
     """The source points and field points are iterated over while the other data is fixed.
@@ -34,3 +35,24 @@ def results_to_TES(res, tartget_range):
     db_values = 20 * np.log10(magnitudes + 1e-12) + 2 * atten
 
     return db_values
+
+def run_rendering(doSelfReflect=False):
+    """Wrapper function to run the rendering.
+    Provides for a centralized place to call the rendering functions."""
+    api.render_cuda()
+    st_time = time.time()
+    api.project_source_points_to_objects()
+    end_time = time.time()
+    print("Time taken to project source points to objects: ", end_time - st_time)
+    
+    if doSelfReflect:  # Set to True if you want to project target to target objects
+        for i in range(5):
+            st_time = time.time()
+            api.project_target_to_target_objects()
+            end_time = time.time()
+            print("Time taken to project target to target objects: ", end_time - st_time)
+        
+    st_time = time.time()
+    api.project_target_to_field_objects()
+    end_time = time.time()
+    print("Time taken to project target to field objects: ", end_time - st_time)

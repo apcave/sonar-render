@@ -89,7 +89,7 @@ void Model::RenderCuda()
     MakeSourcePointsOnGPU(sourcePoints);
     MakeFieldPointsOnGPU(fieldPoints);
 
-    // DoCalculations();
+    //DoCalculations();
 }
 
 void Model::GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints)
