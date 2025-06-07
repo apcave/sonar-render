@@ -240,11 +240,11 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
             }
 
             int startB_ind = 0;
-            // if (isSelfProject)
-            // {
-            //     // To keep calculation even do not do a double projection when the two facets are the same.
-            //     startB_ind = a_ind + 1;
-            // }
+            if (isSelfProject)
+            {
+                // To keep calculation even do not do a double projection when the two facets are the same.
+                startB_ind = a_ind + 1;
+            }
 
             // To keep calculation even do not do a double projection when the two facets are the same.
             for (int b_ind = startB_ind; b_ind < numDst; b_ind++)
@@ -292,11 +292,11 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                         float cos_scat = dot(uv_ij, A.normal);
 
                         // Rp = 1, Tp = 0
-                        // if (cos_scat < 1e-6f)
-                        // {
-                        //     // printf("Normal doesn't align, not adding to field point.\n");
-                        //     continue;
-                        // }
+                        if (cos_scat < 1e-6f)
+                        {
+                            // printf("Normal doesn't align, not adding to field point.\n");
+                            continue;
+                        }
 
                         float cos_inc = dot(-uv_ij, B.normal);
 
@@ -306,11 +306,11 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                             cos_inc = 1;
                         }                        
 
-                        // if (cos_inc < 1e-6f)
-                        // {
-                        //     // printf("Normal doesn't align, not adding to field point.\n");
-                        //     continue;
-                        // }
+                        if (cos_inc < 1e-6f)
+                        {
+                             // printf("Normal doesn't align, not adding to field point.\n");
+                             continue;
+                        }
 
                         unsigned int hit = 0;
                         optixTrace(
@@ -335,7 +335,7 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                         thrust::complex<double> G = (-thrust::exp(i1 * k * r_ij) / ((4 * M_PI)) * ((i1 * k) / r_ij) + (1 / (r_ij * r_ij)));
                         thrust::complex<double> P_j = A_i * cos_inc * Pr_i * G;
 
-                        if (abs(A_i * G) < 1)
+                        //if (abs(A_i * G) < 1)
                         {
                             dcomplex *p_out = &(B.P_out[ind_j]);
                             atomicAddDouble(&(p_out->r), P_j.real());
@@ -363,7 +363,7 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
 
                             thrust::complex<double> rP_j = rA_i * rcos_inc * rP_i * G;
 
-                            if (abs(rA_i * G) < 1)
+                            //if (abs(rA_i * G) < 1)
                             {
                                 dcomplex *rp_out = &(A.P_out[ind_i]);
                                 atomicAddDouble(&(rp_out->r), rP_j.real());
