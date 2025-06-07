@@ -39,18 +39,14 @@ public:
     void FreeGl();
 
 protected:
-    void InitOpenGL();
+    void InitOpenGL(int width, int height);
     int MakeObjectsOnGl();
     int MakeTextureOnGl(double *dev_frag_stats);
-    void ProcessFrame();
+    void ProcessFrame(int width, int height, char *filename);
 
 private:
     void MakeTextureShader();
     void PrintTextures();
-
-private:
-    int window_width = 800 * 8;
-    int window_height = 600 * 8;
 
 private:
     EGLDisplay eglDisplay;

@@ -48,6 +48,11 @@ public:
     ModelCuda();
     ~ModelCuda();
 
+    void ProjectSrcPointsToObjects();
+    void ProjectTargetToFieldObjects();
+    void ProjectTargetToFieldPoints();
+    void ProjectTargetToTargetObjects();
+
 protected:
     int SetGlobalParameters(dcomplex k_wave, float pixel_delta);
     int MakeObjectOnGPU(vector<Facet *> facets);
@@ -67,14 +72,6 @@ protected:
     void WriteCudaToGlTexture();
 
     int GetSurfaceScalers();
-
-    void ProjectSrcPointsToObjects();
-
-    void ProjectTargetToFieldObjects();
-
-    void ProjectTargetToFieldPoints();
-
-    void ProjectTargetToTargetObjects();
 
 protected:
     OptiX optiX;

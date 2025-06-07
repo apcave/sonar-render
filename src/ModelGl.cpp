@@ -11,7 +11,7 @@ ModelGl::~ModelGl()
 {
 }
 
-void ModelGl::InitOpenGL()
+void ModelGl::InitOpenGL(int width, int height)
 {
     std::cout << "Initializing EGL/OpenGL..." << std::endl;
 
@@ -51,9 +51,9 @@ void ModelGl::InitOpenGL()
     // 4. Create a PBuffer surface
     EGLint pbufferAttribs[] = {
         EGL_WIDTH,
-        window_width,
+        width,
         EGL_HEIGHT,
-        window_height,
+        height,
         EGL_NONE,
     };
     eglSurface = eglCreatePbufferSurface(eglDisplay, eglConfig, pbufferAttribs);
@@ -89,7 +89,7 @@ void ModelGl::InitOpenGL()
     // OpenGL state setup
     glClearColor(0.96f, 0.96f, 0.86f, 1.0f); // Beige background
 
-    projection = glm::perspective(glm::radians(45.0f), (float)window_width / (float)window_height, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
 
     float dist = 12.0f;
     view = glm::lookAt(glm::vec3(dist, dist, dist),  // Camera position
@@ -210,7 +210,7 @@ void ModelGl::MakeTextureShader()
     textureShaderProgram = shaderProgram;
 }
 
-void ModelGl::ProcessFrame()
+void ModelGl::ProcessFrame(int width, int height, char *filename)
 {
     std::cout << "Processing frame... <------------------------" << std::endl;
 
@@ -266,14 +266,14 @@ void ModelGl::ProcessFrame()
     GLuint depthRenderbuffer;
     glGenRenderbuffers(1, &depthRenderbuffer);
     glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, window_width, window_height);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);
 
     // Create a texture to store the rendered image
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width, window_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -286,7 +286,7 @@ void ModelGl::ProcessFrame()
         std::cerr << "Framebuffer is not complete!" << std::endl;
         return;
     }
-    glViewport(0, 0, window_width, window_height);
+    glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -310,12 +310,12 @@ void ModelGl::ProcessFrame()
     }
 
     // Read pixels from the framebuffer
-    std::vector<unsigned char> pixels(window_width * window_height * 3); // RGB format
-    glReadPixels(0, 0, window_width, window_height, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
+    std::vector<unsigned char> pixels(width * height * 3); // RGB format
+    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
 
     // Save the image using stb_image_write or another library
     stbi_flip_vertically_on_write(1); // Flip the image vertically
-    if (!stbi_write_png("output.png", window_width, window_height, 3, pixels.data(), window_width * 3))
+    if (!stbi_write_png(filename, width, height, 3, pixels.data(), width * 3))
     {
         std::cerr << "Failed to save image!" << std::endl;
     }

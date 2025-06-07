@@ -27,11 +27,11 @@ def load_points_to_cuda(points, isSource=False):
         cpp_lib.load_field_points(v0_ptr, num_points)
 
 
-def load_stl_mesh_to_cuda(stl_mesh, object_type):
+def load_stl_mesh_to_cuda(stl_mesh, object_type, resolution=2e-3):
     """Loads a geometry that can be a source or a target to the CUDA library."""
 
     # Define the function signature in the shared library
-    cpp_lib.load_geometry.argtypes = [ctypes.POINTER(ctypes.c_float), ctypes.c_int, ctypes.c_int]
+    cpp_lib.load_geometry.argtypes = [ctypes.POINTER(ctypes.c_float), ctypes.c_int, ctypes.c_int, ctypes.c_float]
     cpp_lib.load_geometry.restype = None
 
 
@@ -40,7 +40,7 @@ def load_stl_mesh_to_cuda(stl_mesh, object_type):
     # Pass the array to C++
     v0_ptr = flattened.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
  
-    cpp_lib.load_geometry(v0_ptr, num_facets, object_type)
+    cpp_lib.load_geometry(v0_ptr, num_facets, object_type, resolution)
 
 def render_cuda():
     """Pixelate the facets of the STL mesh."""
@@ -67,11 +67,29 @@ def GetFieldPoints(NumFieldPnts):
 
     return field_points
 
-def render_openGL():
-    """Render the OpenGL window."""
+def render_openGL(width, height, filename="output.png"):
+    """Render the OpenGL window with the specified width and height."""
+    cpp_lib.RenderOpenGL.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_char)]
+    cpp_lib.RenderOpenGL.restype = None
 
-    cpp_lib.RenderOpenGL()
+    cpp_lib.RenderOpenGL(width, height, filename.encode('utf-8'))
 
 def TearDownCuda():
     """Tear down the CUDA model."""
     cpp_lib.TearDownCuda()
+
+def project_source_points_to_objects():
+    """Project source points to field points."""
+    cpp_lib.ProjectSrcPointsToObjects()
+
+def project_target_to_field_objects():
+    """Project target points to field points."""
+    cpp_lib.ProjectTargetToFieldObjects()
+
+def project_target_to_field_points():
+    """Project target points to field points."""
+    cpp_lib.ProjectTargetToFieldObjects()
+
+def project_target_to_target_objects():
+    """Project target points to target objects."""
+    cpp_lib.ProjectTargetToTargetObjects()

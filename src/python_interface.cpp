@@ -16,7 +16,6 @@ extern "C" void load_source_points(float *v1, int num_source_points);
 extern "C" void set_initial_conditions(float cp, float frequency, float attenuation, float density);
 extern "C" void render_cuda();
 extern "C" void GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints);
-extern "C" void RenderOpenGL();
 extern "C" void TearDownCuda();
 
 extern "C" void set_initial_conditions(float cp, float frequency, float attenuation, float density)
@@ -24,11 +23,11 @@ extern "C" void set_initial_conditions(float cp, float frequency, float attenuat
     modelTes.set_inital_conditions(cp, frequency, attenuation, density);
 };
 
-extern "C" void load_geometry(float *v1, int num_vertices, int objectType)
+extern "C" void load_geometry(float *v1, int num_vertices, int objectType, float resolution = 2e-2)
 {
 
     auto ot = safeConvertToEnum(objectType);
-    auto object = new Object(ot);
+    auto object = new Object(ot, resolution);
 
     for (int i = 0; i < num_vertices; ++i)
     {
@@ -65,14 +64,34 @@ extern "C" void render_cuda()
     modelTes.RenderCuda();
 };
 
+extern "C" void ProjectSrcPointsToObjects()
+{
+    modelTes.ProjectSrcPointsToObjects();
+};
+
+extern "C" void ProjectTargetToFieldObjects()
+{
+    modelTes.ProjectTargetToFieldObjects();
+};
+
+extern "C" void ProjectTargetToFieldPoints()
+{
+    modelTes.ProjectTargetToFieldPoints();
+};
+
+extern "C" void ProjectTargetToTargetObjects()
+{
+    modelTes.ProjectTargetToTargetObjects();
+};
+
 extern "C" void GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints)
 {
     modelTes.GetFieldPointPressures(field_points_pressure, NumPoints);
 }
 
-extern "C" void RenderOpenGL()
+extern "C" void RenderOpenGL(int width, int height, char *filename)
 {
-    modelTes.RenderOpenGL();
+    modelTes.RenderOpenGL(width, height, filename);
 }
 
 extern "C" void TearDownCuda()

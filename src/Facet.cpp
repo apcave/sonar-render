@@ -92,9 +92,10 @@ void Facet::CalculateCentroid()
 	Centroid.z = (v1.z + v2.z + v3.z) / 3.0f;
 }
 
-Facet::Facet(float3 t_v1, float3 t_v2, float3 t_v3, ObjectType type)
+Facet::Facet(float3 t_v1, float3 t_v2, float3 t_v3, ObjectType type, float t_resolution)
 {
 	objectType = type;
+	delta = t_resolution;
 	v1 = t_v1;
 	v2 = t_v2;
 	v3 = t_v3;
@@ -107,7 +108,7 @@ Facet::Facet(float3 t_v1, float3 t_v2, float3 t_v3, ObjectType type)
 	GenerateFacetLimits();
 }
 
-void Facet::MakeFragmentData(float frag_length)
+void Facet::MakeFragmentData()
 {
 	/**
 	 * A matrix of pixel areas is created.
@@ -120,8 +121,6 @@ void Facet::MakeFragmentData(float frag_length)
 	 * The pixels are in plane and organized with offsets so later the distance from a pixel
 	 * centroid to a point or another pixel can be calculated.
 	 **/
-
-	delta = frag_length;
 	numXpntsNegative = ceil(abs(BaseLengthNeg) / delta);
 	int numPos = ceil(abs(BaseLengthPos) / delta);
 	numXpnts = numXpntsNegative + numPos;

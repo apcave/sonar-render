@@ -22,7 +22,7 @@ cp = 1480.0
 frequency = 10e3
 target_range = 4000
 angle_i = 0.0
-target = geo.create_trihedral_reflector(1, 0.01)
+target = geo.create_reflector(1, 0.01)
 #target = geo.rotate_stl_object(target, 'x', -20)
 #target = geo.rotate_stl_object(target, 'y', 10)
 target = geo.rotate_stl_object(target, 'y', 10)
@@ -52,15 +52,11 @@ field_pnts= geo.generate_field_points(target_range, angles)
 
 api.load_points_to_cuda(source_pnts, isSource=True)
 api.load_points_to_cuda(field_pnts, isSource=False)
-api.set_initial_conditions(cp, frequency, 2e-3)
-api.load_stl_mesh_to_cuda(target, 0, 0.01) # 0 is for target object.
-api.load_stl_mesh_to_cuda(field_surface, 2, 5e-3) # 1 is for field surface.
+api.set_initial_conditions(cp, frequency, 0.0)
+api.load_stl_mesh_to_cuda(target, 0) # 0 is for target object.
+api.load_stl_mesh_to_cuda(field_surface, 2) # 1 is for field surface.
 
 api.render_cuda()
-api.project_source_points_to_objects()
-api.project_target_to_field_objects()
-
-
 field_vals = api.GetFieldPoints(len(field_pnts))
 
 wavelength = cp / frequency
@@ -106,7 +102,5 @@ print('ka << 1 ,', k, " << 1")
 # plt.show()
 
 
-window_width = 800 * 8
-window_height = 600 * 8
-api.render_openGL(window_width, window_height, "reflector.png")
+api.render_openGL()
 #api.TearDownCuda()

@@ -277,6 +277,31 @@ def create_plate(length, width, thickness=0.01):
 
     return plate
 
+def create_reflector(side_length, thickness):
+        
+    plate_1 = create_plate(side_length, side_length, thickness)
+    plate_1 = rotate_stl_object(plate_1, 'x', 45)
+    plate_2 = create_plate(side_length, side_length, thickness)
+    plate_2 = rotate_stl_object(plate_2, 'x', -45)
+
+
+
+    reflector = join_meshes(plate_xy, plate_1)
+    reflector = join_meshes(reflector, plate_2)
+
+    reflector = rotate_stl_object(reflector, 'z', 45)
+    reflector = rotate_stl_object(reflector, 'x', 45)    
+
+    #plate_xz = create_plate(side_length, thickness, 'xz')
+    #plate_yz = create_plate(side_length, thickness, 'yz')
+
+    #plate_xz.translate([0, -side_length / 2, 0])  # Move xz plate to align with xy
+    #plate_yz.translate([-side_length / 2, 0, 0])  # Move yz plate to align with xy    
+
+    
+    return reflector
+
+
 def create_trihedral_reflector(side_length, thickness):
         
     plate_xy = create_plate(side_length, side_length, thickness)

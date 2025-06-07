@@ -51,8 +51,6 @@ void Model::set_inital_conditions(float cp, float t_frequency, float attenuation
     k = omega / cp;
     k_wave.r = (double)k;
     k_wave.i = (double)attenuation;
-    // frag_length = medium_waveSpeed / (frequency * resolution_factor);
-    frag_length = resolution_factor;
 }
 
 void Model::MakeFragments()
@@ -60,12 +58,12 @@ void Model::MakeFragments()
     // Iterate over each target object and its facets
     for (auto object : targetObjects)
     {
-        object->MakeFragmentData(frag_length);
+        object->MakeFragmentData();
     }
 
     for (auto object : fieldObjects)
     {
-        object->MakeFragmentData(frag_length);
+        object->MakeFragmentData();
     }
 }
 
@@ -91,7 +89,7 @@ void Model::RenderCuda()
     MakeSourcePointsOnGPU(sourcePoints);
     MakeFieldPointsOnGPU(fieldPoints);
 
-    DoCalculations();
+    // DoCalculations();
 }
 
 void Model::GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints)
@@ -105,13 +103,13 @@ void Model::GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoint
  *
  * Note it expects the CUDA calculations to be done before calling this function.
  */
-void Model::RenderOpenGL()
+void Model::RenderOpenGL(int width, int height, char *filename)
 {
-    InitOpenGL();
+    InitOpenGL(width, height);
     MakeObjectsOnGl();
     GetSurfaceScalers();
     WriteCudaToGlTexture();
-    ProcessFrame();
+    ProcessFrame(width, height, filename);
     FreeGl();
 }
 

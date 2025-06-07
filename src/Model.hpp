@@ -25,10 +25,6 @@ private:
     float medium_attenuation;
     float omega;
     float k;
-
-    // float resolution_factor = 7.5;
-    // float resolution_factor = 2e-2; // 48
-    float resolution_factor = 2e-2; // 48
     float density;
 
 public:
@@ -46,7 +42,7 @@ public:
     void TearDownModel();
 
     void GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints);
-    void RenderOpenGL();
+    void RenderOpenGL(int width, int height, char *filename);
 };
 
 #endif

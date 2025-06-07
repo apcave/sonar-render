@@ -8,11 +8,11 @@ class Object : public ObjectCuda
 {
 
 public:
-    Object(ObjectType type);
+    Object(ObjectType type, float t_resolution);
 
     ~Object();
     void AddFacet(float3 v1, float3 v2, float3 v3);
-    void MakeFragmentData(float frag_length);
+    void MakeFragmentData();
     std::vector<float3> &GetCentroids();
 
 private:
@@ -20,6 +20,7 @@ private:
 
     // This struct is designed to be directly copied to the GPU.
     dev_object h_obj = {};
+    float resolution;
 };
 
 #endif

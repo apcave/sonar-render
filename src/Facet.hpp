@@ -39,7 +39,7 @@ private:
 	float delta;
 
 public:
-	Facet(float3 t_v1, float3 t_v2, float3 t_v3, ObjectType type);
+	Facet(float3 t_v1, float3 t_v2, float3 t_v3, ObjectType type, float t_resolution);
 	~Facet();
 
 public:
@@ -47,7 +47,7 @@ public:
 	void MakeCuda();
 
 	void CompressPixels();
-	void MakeFragmentData(float frag_length);
+	void MakeFragmentData();
 
 private:
 	void GenerateFacetLimits();
