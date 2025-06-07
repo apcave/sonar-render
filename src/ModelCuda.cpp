@@ -177,11 +177,11 @@ int ModelCuda::DoCalculations()
     std::cout << "Source Points to target." << std::endl;
     ProjectSrcPointsToObjects();
 
-    for (int i = 0; i < 2; i++)
-    {
-        std::cout << "Target to target objects." << std::endl;
-        ProjectTargetToTargetObjects();
-    }
+    // for (int i = 0; i < 2; i++)
+    // {
+    //     std::cout << "Target to target objects." << std::endl;
+    //     ProjectTargetToTargetObjects();
+    // }
 
     std::cout << "Target to field objects." << std::endl;
     ProjectTargetToFieldObjects();
@@ -269,7 +269,6 @@ void ModelCuda::ProjectSrcPointsToObjects()
         // object->AccumulatePressure();
     }
 
-    return;
     for (auto object : fieldObjects)
     {
         std::cout << "Doing source point to field object projection." << std::endl;

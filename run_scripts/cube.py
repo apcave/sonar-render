@@ -16,8 +16,8 @@ import math
 
 
 cp = 1480.0
-frequency = 16e3
-#frequency = 4e3
+frequency = 5e3
+#frequency = 1e3
 target_range = 000
 angle_i = 0.0
 target = geo.make_cube()
@@ -26,6 +26,7 @@ for i in range(4):
 
 #field_surface = geo.make_rectangle(10,10, False)
 field_surface = geo.make_rectangle(9,14, False)
+
 field_surface = geo.translate_stl_object(field_surface, [0, -0.1, 3])
 
 for i in range(1):

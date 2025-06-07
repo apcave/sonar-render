@@ -48,8 +48,18 @@ __global__ void MakeSurface(dcomplex *P, cudaSurfaceObject_t surface, int maxXpn
     int index = yPnt * maxXpnt + xPnt;
 
     thrust::complex<float> p((float)P[index].r, (float)P[index].i);
-    float mag_normal = (abs(p) / stats[0]); // The largest magnitude is 0 zero.
-    float mag = 1 - exp(-mag_normal * 3.5); // The brightness is 0 to 1. Zero is black.
+    //float mag_normal = (abs(p) / stats[0]); // The largest magnitude is 0 zero.
+    //float mag = 1 - exp(-mag_normal * 3.5); // The brightness is 0 to 1. Zero is black.
+
+    float dB = 20.0f * log10f(abs(p) + 1e-8f);
+    float min_dB = -90.0f;
+    float max_dB = -20.0f;
+    // float min_dB = -110.0f;
+    // float max_dB = 0.0f;    
+    float mag = (dB - min_dB) / (max_dB - min_dB);
+    mag = fminf(fmaxf(mag, 0.0f), 1.0f);
+
+
     float phase = (atan2(p.imag(), p.real()) + M_PI) / (2.0f * M_PI);
 
     float4 value = hsv2rgb(phase, 0.8, mag);

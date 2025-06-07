@@ -5,10 +5,10 @@ cmake ../src -DCMAKE_BUILD_TYPE=Release
 #cmake ../src -DCMAKE_BUILD_TYPE=Debug
 
 rm libcuda_project.so
-make all
+make -j5 all
 cd ..
 #python ./run_scripts/sphere.py
 #python ./run_scripts/rect_bistatic.py
 #python ./run_scripts/rect_mono.py
-#python ./run_scripts/cube.py
-python ./run_scripts/reflector.py
+python ./run_scripts/cube.py
+#python ./run_scripts/reflector.py

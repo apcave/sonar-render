@@ -20,7 +20,6 @@ a = 3.0
 b = 2.0
 cp = 1480.0
 frequency = 8e3
-frequency = 16e3
 target_range = 4000
 angle_i = 0.0
 target = geo.load_stl_file("./run_scripts/sphere_1m_radius.stl")
@@ -28,9 +27,9 @@ target.vectors *= 0.5
 target = geo.translate_stl_object(target, [0, 0.5, 0])
 
 #field_surface = geo.make_rectangle(10,10, False)
-field_surface = geo.make_rectangle(9,14, False)
-field_surface = geo.translate_stl_object(field_surface, [0, -0.1, 3])
-field_surface = geo.translate_stl_object(field_surface, [0, -1.1, 0])
+#field_surface = geo.make_rectangle(9,14, False)
+field_surface = geo.make_rectangle(9,9, False)
+field_surface = geo.translate_stl_object(field_surface, [0, 0.5, 3])
 
 for i in range(1):
     field_surface = geo.halve_facets(field_surface)
@@ -40,7 +39,7 @@ target = geo.translate_stl_object(target, [0, 0, -3])
 
 angle_i = [0]
 t = 20
-source_pnts=[[4*t,3*t,9*t]]
+source_pnts=[[4*t,0*3*t,9*t]]
 angles = np.linspace(-180, 180, 361, endpoint=False)
 field_pnts= geo.generate_field_points(target_range, angles)
 
