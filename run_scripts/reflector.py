@@ -25,8 +25,8 @@ angle_i = 0.0
 target = geo.create_trihedral_reflector(1, 0.01)
 target = geo.rotate_stl_object(target, 'x', -20)
 target = geo.rotate_stl_object(target, 'y', 10)
-#for i in range(2):
-#    target = geo.halve_facets(target)
+for i in range(4):
+    target = geo.halve_facets(target)
 
 #geo.rotate_stl_object(target, 'z', 20)
 #geo.rotate_stl_object(target, 'x', 45)
@@ -37,8 +37,8 @@ target = geo.rotate_stl_object(target, 'y', 10)
 field_surface = geo.make_rectangle(5,5, False)
 field_surface = geo.translate_stl_object(field_surface, [0, -0.6, 1])
 
-#for i in range(1):
-#    field_surface = geo.halve_facets(field_surface)
+for i in range(3):
+    field_surface = geo.halve_facets(field_surface)
 
 
 angle_i = [0]

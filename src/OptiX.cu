@@ -225,9 +225,13 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
             // {
             //     continue;
             // }
-
             dcomplex cP_i = A.P[ind_i];
             thrust::complex<double> Pr_i = thrust::complex<double>(cP_i.r, cP_i.i);
+            if (params.dstObject.objectType == OBJECT_TYPE_TARGET)
+            {
+                cP_i = A.P_in[ind_i];
+                Pr_i = thrust::complex<double>(cP_i.r, cP_i.i);
+            }
 
             if (Pr_i.real() == 0 && Pr_i.imag() == 0)
             {
@@ -236,15 +240,21 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
             }
 
             int startB_ind = 0;
-            if (isSelfProject)
-            {
-                // To keep calculation even do not do a double projection when the two facets are the same.
-                startB_ind = a_ind + 1;
-            }
+            // if (isSelfProject)
+            // {
+            //     // To keep calculation even do not do a double projection when the two facets are the same.
+            //     startB_ind = a_ind + 1;
+            // }
 
             // To keep calculation even do not do a double projection when the two facets are the same.
             for (int b_ind = startB_ind; b_ind < numDst; b_ind++)
             {
+
+                if (isSelfProject && b_ind == a_ind)
+                {
+                    // Skip self projection if it is not needed.
+                    continue;
+                }
 
                 dev_facet B = params.dstObject.facets[b_ind];
                 const int numXpntsNegative_j = B.frag_points.z;
@@ -282,18 +292,25 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                         float cos_scat = dot(uv_ij, A.normal);
 
                         // Rp = 1, Tp = 0
-                        if (cos_scat < 1e-6f)
-                        {
-                            // printf("Normal doesn't align, not adding to field point.\n");
-                            continue;
-                        }
+                        // if (cos_scat < 1e-6f)
+                        // {
+                        //     // printf("Normal doesn't align, not adding to field point.\n");
+                        //     continue;
+                        // }
 
                         float cos_inc = dot(-uv_ij, B.normal);
-                        if (params.dstObject.objectType == OBJECT_TYPE_FIELD)
+
+                       if (params.dstObject.objectType == OBJECT_TYPE_FIELD)
                         {
                             // This is a field object, so it is like a collection of field points.
                             cos_inc = 1;
-                        }
+                        }                        
+
+                        // if (cos_inc < 1e-6f)
+                        // {
+                        //     // printf("Normal doesn't align, not adding to field point.\n");
+                        //     continue;
+                        // }
 
                         unsigned int hit = 0;
                         optixTrace(
@@ -318,15 +335,14 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                         thrust::complex<double> G = (-thrust::exp(i1 * k * r_ij) / ((4 * M_PI)) * ((i1 * k) / r_ij) + (1 / (r_ij * r_ij)));
                         thrust::complex<double> P_j = A_i * cos_inc * Pr_i * G;
 
-                        if (abs(A_i * G) > 1)
+                        if (abs(A_i * G) < 1)
                         {
-                            // printf("Pressure is too high, skipping facet.\n");
-                            continue;
+                            dcomplex *p_out = &(B.P_out[ind_j]);
+                            atomicAddDouble(&(p_out->r), P_j.real());
+                            atomicAddDouble(&(p_out->i), P_j.imag());
                         }
 
-                        dcomplex *p_out = &(B.P_out[ind_j]);
-                        atomicAddDouble(&(p_out->r), P_j.real());
-                        atomicAddDouble(&(p_out->i), P_j.imag());
+
 
                         // printf("Test\n");
 
@@ -347,9 +363,12 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
 
                             thrust::complex<double> rP_j = rA_i * rcos_inc * rP_i * G;
 
-                            dcomplex *rp_out = &(A.P_out[ind_i]);
-                            atomicAddDouble(&(rp_out->r), rP_j.real());
-                            atomicAddDouble(&(rp_out->i), rP_j.imag());
+                            if (abs(rA_i * G) < 1)
+                            {
+                                dcomplex *rp_out = &(A.P_out[ind_i]);
+                                atomicAddDouble(&(rp_out->r), rP_j.real());
+                                atomicAddDouble(&(rp_out->i), rP_j.imag());
+                            }
                         }
                     }
                 }

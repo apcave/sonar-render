@@ -37,6 +37,7 @@ typedef struct
     int3 frag_points;
     float *frag_area;
     dcomplex *P; // These buffers are swapped for the application.
+    dcomplex *P_in;
     dcomplex *P_out;
 
 } dev_facet;

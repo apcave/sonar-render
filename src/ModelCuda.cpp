@@ -177,11 +177,11 @@ int ModelCuda::DoCalculations()
     std::cout << "Source Points to target." << std::endl;
     ProjectSrcPointsToObjects();
 
-    // for (int i = 0; i < 2; i++)
-    // {
+    for (int i = 0; i < 4; i++)
+    {
     //     std::cout << "Target to target objects." << std::endl;
-    //     ProjectTargetToTargetObjects();
-    // }
+        ProjectTargetToTargetObjects();
+    }
 
     std::cout << "Target to field objects." << std::endl;
     ProjectTargetToFieldObjects();
@@ -269,6 +269,7 @@ void ModelCuda::ProjectSrcPointsToObjects()
         // object->AccumulatePressure();
     }
 
+    return;
     for (auto object : fieldObjects)
     {
         std::cout << "Doing source point to field object projection." << std::endl;
@@ -326,11 +327,17 @@ void ModelCuda::ProjectTargetToTargetObjects()
 
     for (auto targetOb : targetObjects)
     {
+        targetOb->PrimeReflections();
+    }
+    
+    for (auto targetOb : targetObjects)
+    {
         gp.srcObject = targetOb->MakeOptixStructArray();
         gp.dstObject = gp.srcObject;
         std::cout << "Doing facet to facet projection." << std::endl;
         optiX.DoProjection(gp);
 
         targetOb->AccumulatePressure();
+        targetOb->SwapOutputToInputPressure();
     }
 }

@@ -75,3 +75,21 @@ void ObjectCuda::AccumulatePressure()
     }
     cudaDeviceSynchronize();
 }
+
+    void ObjectCuda::PrimeReflections()
+    {
+        for (auto facet : facets)
+        {
+            facet->PrimeReflections();
+        }
+        cudaDeviceSynchronize();
+    }
+    
+    void ObjectCuda::SwapOutputToInputPressure()
+    {
+        for (auto facet : facets)
+        {
+            facet->SwapOutputToInputPressure();
+        }
+        cudaDeviceSynchronize();
+    }

@@ -21,7 +21,6 @@ void FacetCuda::AllocateCuda(float3 &normal,
     host_facet.yAxis = yAxis;
     host_facet.frag_points = frag_points;
 
-    cudaMalloc((void **)&dev_data, sizeof(dev_facet));
 
     // If the object is a source the surface pressure fixed to 1 across the surface.
 
@@ -36,11 +35,13 @@ void FacetCuda::AllocateCuda(float3 &normal,
 
         host_facet.P = dev_P;
         host_facet.P_out = dev_P; // The working buffer is not need for field objects.
+        host_facet.P_in = dev_P;
     }
 
     // Allocate device memory for the fragment area
     cudaMalloc((void **)&dev_frag_area, numXpnts * numYpnts * sizeof(float));
 
+    dev_P_in = 0;
     dev_P_out = 0;
     if (objectType == OBJECT_TYPE_TARGET)
     {
@@ -50,9 +51,12 @@ void FacetCuda::AllocateCuda(float3 &normal,
         cudaMalloc((void **)&dev_P_out, numXpnts * numYpnts * sizeof(dcomplex));
         cudaMemset(dev_P_out, 0, numXpnts * numYpnts * sizeof(dcomplex));
         host_facet.P_out = dev_P_out;
-    }
 
-    cudaMemcpy(dev_data, &host_facet, sizeof(dev_facet), cudaMemcpyHostToDevice);
+        // Allocate device memory for the initial pressure data
+        cudaMalloc((void **)&dev_P_in, numXpnts * numYpnts * sizeof(dcomplex));
+        cudaMemset(dev_P_in, 0, numXpnts * numYpnts * sizeof(dcomplex));
+        host_facet.P_out = dev_P_in;        
+    }
     cudaMemcpy(dev_frag_area, frag_area, numXpnts * numYpnts * sizeof(float), cudaMemcpyHostToDevice);
 
     host_facet.frag_area = dev_frag_area;
@@ -65,11 +69,6 @@ FacetCuda::~FacetCuda()
         cudaFree(dev_frag_area);
         dev_frag_area = 0;
     }
-    if (dev_data)
-    {
-        cudaFree(dev_data);
-        dev_data = 0;
-    }
     if (dev_P)
     {
         cudaFree(dev_P);
@@ -81,6 +80,12 @@ FacetCuda::~FacetCuda()
         cudaFree(dev_P_out);
         dev_P_out = 0;
     }
+
+    if (dev_P_in)
+    {
+        cudaFree(dev_P_in);
+        dev_P_in = 0;
+    }    
 }
 
 void FacetCuda::PrintMatrix()
@@ -115,4 +120,19 @@ dev_facet FacetCuda::MakeOptixStruct()
         cudaMemset(host_facet.P_out, 0, numXpnts * numYpnts * sizeof(dcomplex));
     }
     return host_facet;
+}
+
+
+void FacetCuda::PrimeReflections()
+{
+    cudaMemcpy(dev_P_in, dev_P, numXpnts * numYpnts * sizeof(dcomplex), cudaMemcpyDeviceToDevice);
+}
+
+void FacetCuda::SwapOutputToInputPressure()
+{
+    if (objectType == OBJECT_TYPE_TARGET)
+    {    
+        cudaMemcpy(dev_P_in, dev_P_out, numXpnts * numYpnts * sizeof(dcomplex), cudaMemcpyDeviceToDevice);
+        cudaMemset(dev_P_out, 0, numXpnts * numYpnts * sizeof(dcomplex));
+    }
 }
