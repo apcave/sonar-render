@@ -318,11 +318,11 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                         thrust::complex<double> G = (-thrust::exp(i1 * k * r_ij) / ((4 * M_PI)) * ((i1 * k) / r_ij) + (1 / (r_ij * r_ij)));
                         thrust::complex<double> P_j = A_i * cos_inc * Pr_i * G;
 
-                        if (abs(A_i * G) > 1)
-                        {
-                            // printf("Pressure is too high, skipping facet.\n");
-                            continue;
-                        }
+                        // if (abs(A_i * G) > 1)
+                        // {
+                        //     // printf("Pressure is too high, skipping facet.\n");
+                        //     continue;
+                        // }
 
                         dcomplex *p_out = &(B.P_out[ind_j]);
                         atomicAddDouble(&(p_out->r), P_j.real());

@@ -15,7 +15,7 @@ public:
     void PrintSurfacePressure();
     dev_object MakeOptixStructArray();
     void AccumulatePressure();
-
+    void SwapInputOutputBuffers(bool finalReflection);
 private:
     dev_object h_obj = {};
 };

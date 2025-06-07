@@ -21,7 +21,6 @@ void FacetCuda::AllocateCuda(float3 &normal,
     host_facet.yAxis = yAxis;
     host_facet.frag_points = frag_points;
 
-    cudaMalloc((void **)&dev_data, sizeof(dev_facet));
 
     // If the object is a source the surface pressure fixed to 1 across the surface.
 
@@ -40,7 +39,7 @@ void FacetCuda::AllocateCuda(float3 &normal,
 
     // Allocate device memory for the fragment area
     cudaMalloc((void **)&dev_frag_area, numXpnts * numYpnts * sizeof(float));
-
+    dev_P_in = 0;
     dev_P_out = 0;
     if (objectType == OBJECT_TYPE_TARGET)
     {
@@ -50,9 +49,11 @@ void FacetCuda::AllocateCuda(float3 &normal,
         cudaMalloc((void **)&dev_P_out, numXpnts * numYpnts * sizeof(dcomplex));
         cudaMemset(dev_P_out, 0, numXpnts * numYpnts * sizeof(dcomplex));
         host_facet.P_out = dev_P_out;
+
+        cudaMalloc((void **)&dev_P_in, numXpnts * numYpnts * sizeof(dcomplex));
+        cudaMemset(dev_P_in, 0, numXpnts * numYpnts * sizeof(dcomplex));
     }
 
-    cudaMemcpy(dev_data, &host_facet, sizeof(dev_facet), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_frag_area, frag_area, numXpnts * numYpnts * sizeof(float), cudaMemcpyHostToDevice);
 
     host_facet.frag_area = dev_frag_area;
@@ -65,11 +66,7 @@ FacetCuda::~FacetCuda()
         cudaFree(dev_frag_area);
         dev_frag_area = 0;
     }
-    if (dev_data)
-    {
-        cudaFree(dev_data);
-        dev_data = 0;
-    }
+
     if (dev_P)
     {
         cudaFree(dev_P);
@@ -81,6 +78,12 @@ FacetCuda::~FacetCuda()
         cudaFree(dev_P_out);
         dev_P_out = 0;
     }
+
+    if (dev_P_in)
+    {
+        cudaFree(dev_P_in);
+        dev_P_in = 0;
+    }    
 }
 
 void FacetCuda::PrintMatrix()
@@ -110,9 +113,33 @@ void FacetCuda::PrintMatrix()
 dev_facet FacetCuda::MakeOptixStruct()
 {
     // Makes a copy.
-    if (objectType == OBJECT_TYPE_TARGET)
-    {
-        cudaMemset(host_facet.P_out, 0, numXpnts * numYpnts * sizeof(dcomplex));
-    }
+    // if (objectType == OBJECT_TYPE_TARGET)
+    // {
+    //     cudaMemset(host_facet.P_out, 0, numXpnts * numYpnts * sizeof(dcomplex));
+    // }
     return host_facet;
+}
+
+void FacetCuda::SwapInputOutputBuffers(bool finalReflection)
+{
+    if (finalReflection)
+    {
+        // If this is the final reflection, we don't need to swap the buffers.
+
+        //std::cout << "FacetCuda: SwapInputOutputBuffers(): Final reflection, not swapping buffers." << std::endl;
+
+        host_facet.P = dev_P;
+        //cudaMemset(dev_P_in, 0, numXpnts * numYpnts * sizeof(dcomplex));
+        //cudaMemset(dev_P_out, 0, numXpnts * numYpnts * sizeof(dcomplex));
+        return;
+    }
+    //std::cout << "FacetCuda: SwapInputOutputBuffers(): Swapping buffers." << std::endl;
+
+    host_facet.P = dev_P_out;
+    cudaMemset(dev_P_in, 0, numXpnts * numYpnts * sizeof(dcomplex));
+    host_facet.P_out = dev_P_in;
+
+    dcomplex *temp = dev_P_out;
+    dev_P_out = dev_P_in;
+    dev_P_in = temp;
 }

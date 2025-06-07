@@ -23,13 +23,13 @@ public:
 
     dev_facet MakeOptixStruct();
     void AccumulatePressure();
+    void SwapInputOutputBuffers(bool finalReflection);
 
 private:
     // Area of the fragment.
     float *dev_frag_area = 0;
 
     dev_facet host_facet;
-    dev_facet *dev_data = 0;
     int3 frag_points;
 
 private:
@@ -37,6 +37,7 @@ private:
     dcomplex *dev_P = 0;
 
     // Working buffers for facet to facet calculations.
+    dcomplex *dev_P_in = 0;
     dcomplex *dev_P_out = 0;
 
     friend class ModelCuda;

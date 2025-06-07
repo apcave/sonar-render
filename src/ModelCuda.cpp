@@ -177,11 +177,10 @@ int ModelCuda::DoCalculations()
     std::cout << "Source Points to target." << std::endl;
     ProjectSrcPointsToObjects();
 
-    // for (int i = 0; i < 2; i++)
-    // {
-    //     std::cout << "Target to target objects." << std::endl;
-    //     ProjectTargetToTargetObjects();
-    // }
+
+    std::cout << "Target to target objects." << std::endl;
+    ProjectTargetToTargetObjects(1);
+
 
     std::cout << "Target to field objects." << std::endl;
     ProjectTargetToFieldObjects();
@@ -269,6 +268,7 @@ void ModelCuda::ProjectSrcPointsToObjects()
         // object->AccumulatePressure();
     }
 
+    return;
     for (auto object : fieldObjects)
     {
         std::cout << "Doing source point to field object projection." << std::endl;
@@ -317,20 +317,27 @@ void ModelCuda::ProjectTargetToFieldPoints()
     }
 }
 
-void ModelCuda::ProjectTargetToTargetObjects()
+void ModelCuda::ProjectTargetToTargetObjects(int numRelections)
 {
     globalParams gp = {};
     gp.calcType = CalcType::FACET_SELF;
     gp.k_wave = k_wave;
     gp.frag_delta = frag_length;
 
-    for (auto targetOb : targetObjects)
+    for (int i = 0; 1 > i; i++)
     {
-        gp.srcObject = targetOb->MakeOptixStructArray();
-        gp.dstObject = gp.srcObject;
-        std::cout << "Doing facet to facet projection." << std::endl;
-        optiX.DoProjection(gp);
+        for (auto targetOb : targetObjects)
+        {
+            gp.srcObject = targetOb->MakeOptixStructArray();
+            gp.dstObject = gp.srcObject;
+            std::cout << "Doing facet to facet projection." << std::endl;
+            optiX.DoProjection(gp);
 
-        targetOb->AccumulatePressure();
+            targetOb->AccumulatePressure();
+
+            //bool finalReflection = (i == numRelections - 1);
+            //targetOb->SwapInputOutputBuffers(true);
+        }
     }
 }
+    

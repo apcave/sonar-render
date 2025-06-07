@@ -74,7 +74,7 @@ protected:
 
     void ProjectTargetToFieldPoints();
 
-    void ProjectTargetToTargetObjects();
+    void ProjectTargetToTargetObjects(int numRelections);
 
 protected:
     OptiX optiX;
