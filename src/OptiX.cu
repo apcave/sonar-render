@@ -221,6 +221,11 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                 continue;
             }
 
+            // if (A_i < delta * delta - 1e-6f)
+            // {
+            //     continue;
+            // }
+
             dcomplex cP_i = A.P[ind_i];
             thrust::complex<double> Pr_i = thrust::complex<double>(cP_i.r, cP_i.i);
 
@@ -269,6 +274,11 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                             continue;
                         }
 
+                        // if (B_j < delta * delta - 1e-6f)
+                        // {
+                        //     continue;
+                        // }
+
                         float cos_scat = dot(uv_ij, A.normal);
 
                         // Rp = 1, Tp = 0
@@ -308,9 +318,17 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                         thrust::complex<double> G = (-thrust::exp(i1 * k * r_ij) / ((4 * M_PI)) * ((i1 * k) / r_ij) + (1 / (r_ij * r_ij)));
                         thrust::complex<double> P_j = A_i * cos_inc * Pr_i * G;
 
+                        // if (abs(A_i * G) > 1)
+                        // {
+                        //     // printf("Pressure is too high, skipping facet.\n");
+                        //     continue;
+                        // }
+
                         dcomplex *p_out = &(B.P_out[ind_j]);
                         atomicAddDouble(&(p_out->r), P_j.real());
                         atomicAddDouble(&(p_out->i), P_j.imag());
+
+                        // printf("Test\n");
 
                         if (useReciprocity)
                         {

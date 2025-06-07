@@ -165,44 +165,48 @@ def halve_facets(stl_mesh):
 
 def make_cube():
         # Define the vertices of the cube (1 meter cube)
+    # Define the 8 vertices of the cube
     vertices = np.array([
-        [0, 0, 0],  # Vertex 0
-        [1, 0, 0],  # Vertex 1
-        [1, 1, 0],  # Vertex 2
-        [0, 1, 0],  # Vertex 3
-        [0, 0, 1],  # Vertex 4
-        [1, 0, 1],  # Vertex 5
-        [1, 1, 1],  # Vertex 6
-        [0, 1, 1],  # Vertex 7
+        [0, 0, 0],  # 0
+        [1, 0, 0],  # 1
+        [1, 1, 0],  # 2
+        [0, 1, 0],  # 3
+        [0, 0, 1],  # 4
+        [1, 0, 1],  # 5
+        [1, 1, 1],  # 6
+        [0, 1, 1],  # 7
     ])
 
-    # Define the 12 triangles composing the cube
+    # Each face is made of two triangles, vertices in CCW order as seen from outside
     faces = np.array([
-        # Bottom face
-        [0, 3, 1],
-        [1, 3, 2],
-        # Top face
-        [4, 5, 7],
-        [5, 6, 7],
-        # Front face
-        [0, 1, 4],
-        [1, 5, 4],
-        # Back face
-        [2, 3, 6],
-        [3, 7, 6],
-        # Left face
-        [0, 4, 3],
-        [3, 4, 7],
-        # Right face
-        [1, 2, 5],
-        [2, 6, 5],
+        # Bottom (z=0)
+        [2, 1, 0],
+        [3, 2, 0],
+    
+        # # Top (z=1)
+        [5, 6, 4],
+        [6, 7, 4],
+        # # Front (y=0)
+        [0, 4, 5],
+        [0, 5, 1],
+        # # Back (y=1)
+        [6, 2, 3],
+        [7, 6, 3],
+        # # Left (x=0)
+        [7, 3, 0],
+        [4, 7, 0],
+        # Right (x=1)
+        [6, 5, 1],
+        [2, 6, 1],
     ])
+
 
     # Create the mesh
     cube = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
     for i, face in enumerate(faces):
         for j in range(3):
             cube.vectors[i][j] = vertices[face[j], :]
+
     return cube
 
 def join_meshes(mesh1, mesh2):
@@ -257,11 +261,11 @@ def create_plate(length, width, thickness=0.01):
 
     # Define the faces of the plate
     faces = np.array([
-        [0, 1, 2], [0, 2, 3],  # Bottom face
-        [4, 5, 6], [4, 6, 7],  # Top face
+       [2, 1, 0], [3, 2, 0],  # Bottom face
+        [4, 5, 6], [4, 6, 7],  # Front face
         [0, 1, 5], [0, 5, 4],  # Side faces
-        [1, 2, 6], [1, 6, 5],
-        [2, 3, 7], [2, 7, 6],
+       [1, 2, 6], [1, 6, 5],   # RHS
+        [2, 3, 7], [2, 7, 6],   # TOP
         [3, 0, 4], [3, 4, 7],
     ])
 

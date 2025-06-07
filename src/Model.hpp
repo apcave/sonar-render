@@ -27,8 +27,8 @@ private:
     float k;
 
     // float resolution_factor = 7.5;
+    // float resolution_factor = 2e-2; // 48
     float resolution_factor = 2e-2; // 48
-
     float density;
 
 public:

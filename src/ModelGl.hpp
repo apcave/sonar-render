@@ -49,8 +49,8 @@ private:
     void PrintTextures();
 
 private:
-    int window_width = 800 * 6;
-    int window_height = 600 * 6;
+    int window_width = 800 * 12;
+    int window_height = 600 * 12;
 
 private:
     EGLDisplay eglDisplay;

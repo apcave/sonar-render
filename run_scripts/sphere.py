@@ -19,19 +19,28 @@ import math
 a = 3.0
 b = 2.0
 cp = 1480.0
-frequency = 5e3
+frequency = 8e3
+frequency = 16e3
 target_range = 4000
 angle_i = 0.0
 target = geo.load_stl_file("./run_scripts/sphere_1m_radius.stl")
-field_surface = geo.make_rectangle(10,10, False)
-field_surface = geo.translate_stl_object(field_surface, [0, -1.5, 0])
-#for i in range(7):
-field_surface = geo.halve_facets(field_surface)
+target.vectors *= 0.5
+target = geo.translate_stl_object(target, [0, 0.5, 0])
 
+#field_surface = geo.make_rectangle(10,10, False)
+field_surface = geo.make_rectangle(9,14, False)
+field_surface = geo.translate_stl_object(field_surface, [0, -0.1, 3])
+field_surface = geo.translate_stl_object(field_surface, [0, -1.1, 0])
 
+for i in range(1):
+    field_surface = geo.halve_facets(field_surface)
+
+field_surface = geo.translate_stl_object(field_surface, [0, 0, -3])
+target = geo.translate_stl_object(target, [0, 0, -3])
 
 angle_i = [0]
-source_pnts= geo.generate_field_points(target_range, angle_i)
+t = 20
+source_pnts=[[4*t,3*t,9*t]]
 angles = np.linspace(-180, 180, 361, endpoint=False)
 field_pnts= geo.generate_field_points(target_range, angles)
 
@@ -77,15 +86,15 @@ print('ka << 1 ,', k, " << 1")
 
 
 # db_values  + 40*np.log10(Radius)    
-plt.figure()
-plt.plot(angles, modeled_TES, label="Field Values (dB)")
-#plt.plot(angles, bistatic_TES, label="Analytic (dB)")
-plt.xlabel("Angle (degrees)")
-plt.ylabel("Field Value (dB)")
-plt.title("Field Values vs. Angle")
-plt.grid(True)
-plt.legend()
-plt.show()
+# plt.figure()
+# plt.plot(angles, modeled_TES, label="Field Values (dB)")
+# #plt.plot(angles, bistatic_TES, label="Analytic (dB)")
+# plt.xlabel("Angle (degrees)")
+# plt.ylabel("Field Value (dB)")
+# plt.title("Field Values vs. Angle")
+# plt.grid(True)
+# plt.legend()
+# plt.show()
 
 
 api.render_openGL()

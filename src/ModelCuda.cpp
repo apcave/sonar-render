@@ -177,14 +177,17 @@ int ModelCuda::DoCalculations()
     std::cout << "Source Points to target." << std::endl;
     ProjectSrcPointsToObjects();
 
-    // std::cout << "Target to target objects." << std::endl;
-    ProjectTargetToTargetObjects();
+    for (int i = 0; i < 2; i++)
+    {
+        std::cout << "Target to target objects." << std::endl;
+        ProjectTargetToTargetObjects();
+    }
 
-    // std::cout << "Target to field objects." << std::endl;
+    std::cout << "Target to field objects." << std::endl;
     ProjectTargetToFieldObjects();
 
-    std::cout << "Target to field points." << std::endl;
-    ProjectTargetToFieldPoints();
+    // std::cout << "Target to field points." << std::endl;
+    // ProjectTargetToFieldPoints();
 
     return 0;
 }

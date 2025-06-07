@@ -19,30 +19,32 @@ import math
 a = 3.0
 b = 2.0
 cp = 1480.0
-frequency = 5e3
+frequency = 2e3
 target_range = 4000
 angle_i = 0.0
 target = geo.create_trihedral_reflector(1, 0.01)
+target = geo.rotate_stl_object(target, 'x', -20)
+target = geo.rotate_stl_object(target, 'y', 10)
+#for i in range(2):
+#    target = geo.halve_facets(target)
 
-for i in range(4):
-    target = geo.halve_facets(target)
-
-geo.rotate_stl_object(target, 'z', 20)
-geo.rotate_stl_object(target, 'x', 45)
+#geo.rotate_stl_object(target, 'z', 20)
+#geo.rotate_stl_object(target, 'x', 45)
 #geo.rotate_stl_object(target, 'y', 30)
 # geo.save_mesh_to_stl(target, "trihedral_reflector.stl")
 
 
-field_surface = geo.make_rectangle(10,10, False)
-field_surface = geo.translate_stl_object(field_surface, [0, -1, 0])
+field_surface = geo.make_rectangle(5,5, False)
+field_surface = geo.translate_stl_object(field_surface, [0, -0.6, 1])
 
-#for i in range(3):
+#for i in range(1):
 #    field_surface = geo.halve_facets(field_surface)
 
 
-
 angle_i = [0]
-source_pnts= [[25,5,50]]
+t = 20
+#source_pnts=[[0*4*t,0*3*t,9*t],[0,3*t,-9*t]]
+source_pnts=[[4*t,3*t,9*t]]
 angles = np.linspace(-180, 180, 361, endpoint=False)
 field_pnts= geo.generate_field_points(target_range, angles)
 

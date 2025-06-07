@@ -4,3 +4,4 @@ build/
 run_scripts/__pycache__
 *.png
 lib/
+gallery/
