@@ -34,23 +34,24 @@ target = geo.load_stl_file('../hull_20cmMesh.stl')
 #geo.rotate_stl_object(target, 'x', 45)
 #geo.rotate_stl_object(target, 'y', 30)
 # geo.save_mesh_to_stl(target, "trihedral_reflector.stl")
-
-a = 70
+preview = False
+a = 70*4
 Area = a * a
-length = 100
+length = 100*2
 width = Area / length
-field_surface = geo.make_rectangle(length,width, False)
+field_surface = geo.make_rectangle(140*2,140*2, False)
 geo.rotate_stl_object(field_surface, 'x', 90)
-#field_surface = geo.translate_stl_object(field_surface, [0, 0, 1])
+geo.rotate_stl_object(field_surface, 'z', 45)
 
-#for i in range(3):
-#    field_surface = geo.halve_facets(field_surface)
+for i in range(3):
+    field_surface = geo.halve_facets(field_surface)
 
+#145.39013504981995
 
 angle_i = [0]
 t = 1000
 #source_pnts=[[0*4*t,0*3*t,9*t],[0,3*t,-9*t]]
-source_pnts=[[1*t,0.5*t,0.1*t]]
+source_pnts=[[0.2*t,1*t,0.1*t]]
 angles = np.linspace(-180, 180, 361, endpoint=False)
 field_pnts= geo.generate_field_points(target_range, angles)
 
@@ -69,7 +70,7 @@ api.set_initial_conditions(cp, frequency, 0.0)
 api.load_stl_mesh_to_cuda(target, 0, 0.1) # 0 is for target object.
 api.load_stl_mesh_to_cuda(field_surface, 2, feildRes) # 1 is for field surface.
 
-mh.run_rendering(5,False)
+mh.run_rendering(0,True)
 
 field_vals = api.GetFieldPoints(len(field_pnts))
 
@@ -116,10 +117,11 @@ print('ka << 1 ,', k, " << 1")
 # plt.show()
 
 # Camera Postion
+radius = 170.0
 viewSettings = [0.0] * 9
-viewSettings[0] = 70.0
-viewSettings[1] = 70.0
-viewSettings[2] = 70.0
+viewSettings[0] = radius
+viewSettings[1] = radius
+viewSettings[2] = radius
 
 # Camera Target
 viewSettings[3] = 0.0
@@ -131,7 +133,11 @@ viewSettings[6] = 0.0
 viewSettings[7] = 0.0
 viewSettings[8] = 1.0
 
-window_width = 800 * 16
-window_height = 600 * 16
+if preview:
+    window_width = 800
+    window_height = 600
+else:
+    window_width = 800 * 16
+    window_height = 600 * 16
 api.render_openGL(window_width, window_height, viewSettings, "BeTTSi.png")
 #api.TearDownCuda()
