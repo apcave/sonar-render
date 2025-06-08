@@ -103,9 +103,9 @@ void Model::GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoint
  *
  * Note it expects the CUDA calculations to be done before calling this function.
  */
-void Model::RenderOpenGL(int width, int height, char *filename)
+void Model::RenderOpenGL(int width, int height, char *filename, float viewSettings[9])
 {
-    InitOpenGL(width, height);
+    InitOpenGL(width, height, viewSettings);
     MakeObjectsOnGl();
     GetSurfaceScalers();
     WriteCudaToGlTexture();

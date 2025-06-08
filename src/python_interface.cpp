@@ -89,9 +89,10 @@ extern "C" void GetFieldPointPressures(dcomplex *field_points_pressure, int NumP
     modelTes.GetFieldPointPressures(field_points_pressure, NumPoints);
 }
 
-extern "C" void RenderOpenGL(int width, int height, char *filename)
+extern "C" void RenderOpenGL(int width, int height, char *filename, float viewSettings[9])
 {
-    modelTes.RenderOpenGL(width, height, filename);
+    // Render the model to OpenGL
+    modelTes.RenderOpenGL(width, height, filename, viewSettings);
 }
 
 extern "C" void TearDownCuda()

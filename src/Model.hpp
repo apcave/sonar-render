@@ -42,7 +42,7 @@ public:
     void TearDownModel();
 
     void GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints);
-    void RenderOpenGL(int width, int height, char *filename);
+    void RenderOpenGL(int width, int height, char *filename, float viewSettings[9]);
 };
 
 #endif

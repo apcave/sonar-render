@@ -11,7 +11,7 @@ ModelGl::~ModelGl()
 {
 }
 
-void ModelGl::InitOpenGL(int width, int height)
+void ModelGl::InitOpenGL(int width, int height, float viewSettings[9])
 {
     std::cout << "Initializing EGL/OpenGL..." << std::endl;
 
@@ -89,12 +89,16 @@ void ModelGl::InitOpenGL(int width, int height)
     // OpenGL state setup
     glClearColor(0.96f, 0.96f, 0.86f, 1.0f); // Beige background
 
-    projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 10000.0f);
 
-    float dist = 12.0f;
-    view = glm::lookAt(glm::vec3(dist, dist, dist),  // Camera position
-                       glm::vec3(0.0f, 0.0f, 0.0f),  // Look-at point
-                       glm::vec3(0.0f, 1.0f, 0.0f)); // Up vector
+    //float dist = 12.0f;
+    // view = glm::lookAt(glm::vec3(dist, dist, dist),  // Camera position
+    //                    glm::vec3(0.0f, 0.0f, 0.0f),  // Look-at point
+    //                    glm::vec3(0.0f, 1.0f, 0.0f)); // Up vector
+    view = glm::lookAt(glm::vec3(viewSettings[0], viewSettings[1], viewSettings[2]),  // Camera position
+                       glm::vec3(viewSettings[3], viewSettings[4], viewSettings[5]),  // Look-at point
+                       glm::vec3(viewSettings[6], viewSettings[7], viewSettings[8])); // Up vector
+
 
     const GLubyte *version = glGetString(GL_VERSION);
     if (!version)

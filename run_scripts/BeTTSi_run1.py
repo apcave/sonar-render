@@ -16,19 +16,18 @@ import math
 
 
 
+
 a = 3.0
 b = 2.0
 cp = 1480.0
-frequency = 5e3
+frequency = 2e3
 target_range = 4000
 angle_i = 0.0
-target = geo.create_reflector(1, 0.01)
-#target.vectors = target.vectors * 2  # Scale down the mesh to 1 cm size
+target = geo.load_stl_file('../hull_20cmMesh.stl')
 #target = geo.rotate_stl_object(target, 'x', -20)
 #target = geo.rotate_stl_object(target, 'y', 10)
-target = geo.rotate_stl_object(target, 'y', 10)
-for i in range(4):
-    target = geo.halve_facets(target)
+#target = geo.rotate_stl_object(target, 'y', 10)
+
 
 #geo.rotate_stl_object(target, 'z', 20)
 #geo.rotate_stl_object(target, 'x', 45)
@@ -36,17 +35,18 @@ for i in range(4):
 # geo.save_mesh_to_stl(target, "trihedral_reflector.stl")
 
 
-field_surface = geo.make_rectangle(15,15, False)
-field_surface = geo.translate_stl_object(field_surface, [0, 0, 1])
+field_surface = geo.make_rectangle(1000,1000, False)
+geo.rotate_stl_object(field_surface, 'x', 90)
+#field_surface = geo.translate_stl_object(field_surface, [0, 0, 1])
 
-# for i in range(3):
-#     field_surface = geo.halve_facets(field_surface)
+#for i in range(3):
+#    field_surface = geo.halve_facets(field_surface)
 
 
 angle_i = [0]
-t = 20
+t = 1000
 #source_pnts=[[0*4*t,0*3*t,9*t],[0,3*t,-9*t]]
-source_pnts=[[0*4*t,0*3*t,9*t]]
+source_pnts=[[0.5*t,0.5*t,1*t]]
 angles = np.linspace(-180, 180, 361, endpoint=False)
 field_pnts= geo.generate_field_points(target_range, angles)
 
@@ -54,10 +54,11 @@ field_pnts= geo.generate_field_points(target_range, angles)
 api.load_points_to_cuda(source_pnts, isSource=True)
 api.load_points_to_cuda(field_pnts, isSource=False)
 api.set_initial_conditions(cp, frequency, 0.0)
-api.load_stl_mesh_to_cuda(target,0, 10e-3) # 0 is for target object.
-api.load_stl_mesh_to_cuda(field_surface, 2, 40e-3) # 1 is for field surface.
+api.load_stl_mesh_to_cuda(target, 0, 10e-3) # 0 is for target object.
+api.load_stl_mesh_to_cuda(field_surface, 2, 1) # 1 is for field surface.
 
-mh.run_rendering(True)
+mh.run_rendering(False)
+
 field_vals = api.GetFieldPoints(len(field_pnts))
 
 wavelength = cp / frequency
@@ -102,8 +103,23 @@ print('ka << 1 ,', k, " << 1")
 # plt.legend()
 # plt.show()
 
+# Camera Postion
+viewSettings = [0.0] * 9
+viewSettings[0] = 600.0
+viewSettings[1] = 600.0
+viewSettings[2] = 600.0
+
+# Camera Target
+viewSettings[3] = 0.0
+viewSettings[4] = 0.0
+viewSettings[5] = 0.0
+
+# Camera Up Vector
+viewSettings[6] = 0.0
+viewSettings[7] = 0.0
+viewSettings[8] = 1.0
 
 window_width = 800 * 8
 window_height = 600 * 8
-api.render_openGL(window_width, window_height, "reflector2.png")
+api.render_openGL(window_width, window_height, viewSettings, "BeTTSi.png")
 #api.TearDownCuda()
