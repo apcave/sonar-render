@@ -7,6 +7,7 @@ from stl import mesh
 from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 import math
+import datetime
 
 
 
@@ -20,7 +21,7 @@ import math
 a = 3.0
 b = 2.0
 cp = 1480.0
-frequency = 2e3
+frequency = 1e3
 target_range = 4000
 angle_i = 0.0
 target = geo.load_stl_file('../hull_20cmMesh.stl')
@@ -34,8 +35,11 @@ target = geo.load_stl_file('../hull_20cmMesh.stl')
 #geo.rotate_stl_object(target, 'y', 30)
 # geo.save_mesh_to_stl(target, "trihedral_reflector.stl")
 
-
-field_surface = geo.make_rectangle(1000,1000, False)
+a = 70
+Area = a * a
+length = 100
+width = Area / length
+field_surface = geo.make_rectangle(length,width, False)
 geo.rotate_stl_object(field_surface, 'x', 90)
 #field_surface = geo.translate_stl_object(field_surface, [0, 0, 1])
 
@@ -46,18 +50,26 @@ geo.rotate_stl_object(field_surface, 'x', 90)
 angle_i = [0]
 t = 1000
 #source_pnts=[[0*4*t,0*3*t,9*t],[0,3*t,-9*t]]
-source_pnts=[[0.5*t,0.5*t,1*t]]
+source_pnts=[[1*t,0.5*t,0.1*t]]
 angles = np.linspace(-180, 180, 361, endpoint=False)
 field_pnts= geo.generate_field_points(target_range, angles)
+
+projectTime = 0.1521
+feildRes = 0.2
+hoursComputation = 4
+numPnts = (hoursComputation*3600 / projectTime)
+length = np.sqrt(numPnts)*feildRes
+print("Number of Field Points: ", numPnts)
+print("Length of Field Surface: ", length)
 
 
 api.load_points_to_cuda(source_pnts, isSource=True)
 api.load_points_to_cuda(field_pnts, isSource=False)
 api.set_initial_conditions(cp, frequency, 0.0)
-api.load_stl_mesh_to_cuda(target, 0, 10e-3) # 0 is for target object.
-api.load_stl_mesh_to_cuda(field_surface, 2, 1) # 1 is for field surface.
+api.load_stl_mesh_to_cuda(target, 0, 0.1) # 0 is for target object.
+api.load_stl_mesh_to_cuda(field_surface, 2, feildRes) # 1 is for field surface.
 
-mh.run_rendering(False)
+mh.run_rendering(5,False)
 
 field_vals = api.GetFieldPoints(len(field_pnts))
 
@@ -105,9 +117,9 @@ print('ka << 1 ,', k, " << 1")
 
 # Camera Postion
 viewSettings = [0.0] * 9
-viewSettings[0] = 600.0
-viewSettings[1] = 600.0
-viewSettings[2] = 600.0
+viewSettings[0] = 70.0
+viewSettings[1] = 70.0
+viewSettings[2] = 70.0
 
 # Camera Target
 viewSettings[3] = 0.0
@@ -119,7 +131,7 @@ viewSettings[6] = 0.0
 viewSettings[7] = 0.0
 viewSettings[8] = 1.0
 
-window_width = 800 * 8
-window_height = 600 * 8
+window_width = 800 * 16
+window_height = 600 * 16
 api.render_openGL(window_width, window_height, viewSettings, "BeTTSi.png")
 #api.TearDownCuda()

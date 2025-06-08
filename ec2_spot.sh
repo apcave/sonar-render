@@ -14,3 +14,5 @@ mkdir build
 cd build
 cmake ../src/
 make -j5 all
+
+echo "source ~/sonar-render/venv/bin/activate" >>  ~/.bashrc

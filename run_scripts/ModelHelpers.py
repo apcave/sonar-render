@@ -36,7 +36,7 @@ def results_to_TES(res, tartget_range):
 
     return db_values
 
-def run_rendering(doSelfReflect=False):
+def run_rendering(NumRelfections, Project_To_Feild_Surface):
     """Wrapper function to run the rendering.
     Provides for a centralized place to call the rendering functions."""
     api.render_cuda()
@@ -45,14 +45,14 @@ def run_rendering(doSelfReflect=False):
     end_time = time.time()
     print("Time taken to project source points to objects: ", end_time - st_time)
     
-    if doSelfReflect:  # Set to True if you want to project target to target objects
-        for i in range(5):
-            st_time = time.time()
-            api.project_target_to_target_objects()
-            end_time = time.time()
-            print("Time taken to project target to target objects: ", end_time - st_time)
+    for i in range(NumRelfections):
+        st_time = time.time()
+        api.project_target_to_target_objects()
+        end_time = time.time()
+        print("Time taken to project target to target objects: ", end_time - st_time)
         
-    st_time = time.time()
-    api.project_target_to_field_objects()
-    end_time = time.time()
-    print("Time taken to project target to field objects: ", end_time - st_time)
+    if Project_To_Feild_Surface:
+        st_time = time.time()
+        api.project_target_to_field_objects()
+        end_time = time.time()
+        print("Time taken to project target to field objects: ", end_time - st_time)
