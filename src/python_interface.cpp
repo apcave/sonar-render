@@ -64,9 +64,9 @@ extern "C" void render_cuda()
     modelTes.RenderCuda();
 };
 
-extern "C" void ProjectSrcPointsToObjects()
+extern "C" void ProjectSrcPointsToObjects(bool projectFieldObjects = false)
 {
-    modelTes.ProjectSrcPointsToObjects();
+    modelTes.ProjectSrcPointsToObjects(projectFieldObjects);
 };
 
 extern "C" void ProjectTargetToFieldObjects()

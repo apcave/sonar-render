@@ -67,7 +67,7 @@ def GetFieldPoints(NumFieldPnts):
 
     return field_points
 
-def render_openGL(width, height, viewSettings, filename="output.png"):
+def render_openGL(width, height, viewSettings, filename="output"):
     """Render the OpenGL window with the specified width and height."""
     cpp_lib.RenderOpenGL.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_char), ctypes.POINTER(ctypes.c_float)]
     cpp_lib.RenderOpenGL.restype = None
@@ -75,15 +75,19 @@ def render_openGL(width, height, viewSettings, filename="output.png"):
     # Convert viewSettings to a ctypes float array
     viewSettings_arr = (ctypes.c_float * len(viewSettings))(*viewSettings)
 
+    filename += ".png"
     cpp_lib.RenderOpenGL(width, height, filename.encode('utf-8'),viewSettings_arr)
 
 def TearDownCuda():
     """Tear down the CUDA model."""
     cpp_lib.TearDownCuda()
 
-def project_source_points_to_objects():
+def project_source_points_to_objects(project_to_field_surface=False):
     """Project source points to field points."""
-    cpp_lib.ProjectSrcPointsToObjects()
+    cpp_lib.RenderOpenGL.argtypes = [ctypes.c_bool]
+    cpp_lib.RenderOpenGL.restype = None
+        
+    cpp_lib.ProjectSrcPointsToObjects(project_to_field_surface)
 
 def project_target_to_field_objects():
     """Project target points to field points."""
