@@ -57,7 +57,7 @@ def render_cube(frequency):
 
     api.set_initial_conditions(cp, frequency, att)
     api.load_stl_mesh_to_cuda(target, 0, delta_s) # 0 is for target object.
-    api.load_stl_mesh_to_cuda(field_surface, 2, 50e-3) # 1 is for field surface.
+    api.load_stl_mesh_to_cuda(field_surface, 2, delta_s) # 1 is for field surface.
 
     mh.run_rendering(0, test=test)
 
