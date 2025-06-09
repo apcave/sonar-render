@@ -82,8 +82,8 @@ def render_cube(frequency):
     # plt.show()
 
     mh.render_to_file(viewSettings, file_name=file_name, test=test)
+    api.TearDownCuda()
 
-
-for frequency in range(1e3, 30e3, 500):
+for frequency in range(1000, 30050, 50):
     print(f"Rendering cube at frequency: {frequency} Hz")
-    render_cube(frequency):
+    render_cube(float(frequency))

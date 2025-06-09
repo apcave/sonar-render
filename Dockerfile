@@ -1,6 +1,6 @@
-ARG IMAGE_NAME=nvidia/cuda
-#FROM ${IMAGE_NAME}:12.8.1-runtime-ubuntu24.04 AS base
-FROM ${IMAGE_NAME}:12.8.1-devel-ubuntu24.04 AS base
+
+FROM nvidia/cuda:12.0.0-devel-ubuntu22.04 AS base
+#FROM ${IMAGE_NAME}:12.8.1-devel-ubuntu24.04 AS base
 #FROM ${IMAGE_NAME}:11.8.0-devel-ubuntu20.04 AS base
 
 RUN apt-get update && \
@@ -23,14 +23,10 @@ COPY run_scripts /acoustic-render/run_scripts
 COPY docs /acoustic-render/docs
 COPY .git /acoustic-render/.git
 
-COPY ./lib/* /usr/lib/x86_64-linux-gnu/.
-# RUN rm  /usr/lib/x86_64-linux-gnu/libEGL.* && \
-#     rm  /usr/lib/x86_64-linux-gnu/libEGL_mesa.* && \
-#     ln -sf /usr/lib/x86_64-linux-gnu/libEGL_nvidia.so.0 /usr/lib/x86_64-linux-gnu/libEGL.so.1 && \
-#     ln -sf /usr/lib/x86_64-linux-gnu/libEGL_nvidia.so.0 /usr/lib/x86_64-linux-gnu/libEGL.so
+#COPY ./lib/* /usr/lib/x86_64-linux-gnu/.
 
-RUN   rm  /usr/lib/x86_64-linux-gnu/libEGL_mesa.* && \
-    ln -sf /usr/lib/x86_64-linux-gnu/libEGL_nvidia.so.0 /usr/lib/x86_64-linux-gnu/libEGL_mesa.so.0
+#RUN   rm  /usr/lib/x86_64-linux-gnu/libEGL_mesa.* && \
+#    ln -sf /usr/lib/x86_64-linux-gnu/libEGL_nvidia.so.0 /usr/lib/x86_64-linux-gnu/libEGL_mesa.so.0
 
 RUN mkdir -p build && \
     cd build && \

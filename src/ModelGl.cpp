@@ -15,6 +15,11 @@ void ModelGl::InitOpenGL(int width, int height, float viewSettings[9])
 {
     std::cout << "Initializing EGL/OpenGL..." << std::endl;
 
+    if (eglDisplay != EGL_NO_DISPLAY)
+    {
+        return;
+    }
+
     // 1. Get default display
     eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if (eglDisplay == EGL_NO_DISPLAY)
@@ -365,16 +370,16 @@ void ModelGl::FreeGl()
         object->FreeGl();
     }
 
-    if (eglDisplay != EGL_NO_DISPLAY)
-    {
-        eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-        if (eglContext != EGL_NO_CONTEXT)
-            eglDestroyContext(eglDisplay, eglContext);
-        if (eglSurface != EGL_NO_SURFACE)
-            eglDestroySurface(eglDisplay, eglSurface);
-        eglTerminate(eglDisplay);
-    }
-    eglDisplay = EGL_NO_DISPLAY;
-    eglContext = EGL_NO_CONTEXT;
-    eglSurface = EGL_NO_SURFACE;
+    // if (eglDisplay != EGL_NO_DISPLAY)
+    // {
+    //     eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    //     if (eglContext != EGL_NO_CONTEXT)
+    //         eglDestroyContext(eglDisplay, eglContext);
+    //     if (eglSurface != EGL_NO_SURFACE)
+    //         eglDestroySurface(eglDisplay, eglSurface);
+    //     eglTerminate(eglDisplay);
+    // }
+    // eglDisplay = EGL_NO_DISPLAY;
+    // eglContext = EGL_NO_CONTEXT;
+    // eglSurface = EGL_NO_SURFACE;
 }

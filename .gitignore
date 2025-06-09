@@ -2,6 +2,7 @@ reference/
 venv/
 build/
 run_scripts/__pycache__
+run_scripts/modules/__pycache__
 *.png
 lib/
 gallery/
