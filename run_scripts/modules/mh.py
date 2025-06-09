@@ -2,6 +2,7 @@ from . import api
 from . import aws
 from . import geo
 
+import asyncio
 import numpy as np 
 from stl import mesh
 from mpl_toolkits import mplot3d
@@ -81,8 +82,8 @@ def render_to_file(viewSettings, window_width = 800*8, window_height = 600 * 8, 
 
     print("Rendering to file: ", file_name)
     if not test:
-        aws.copy_file_to_s3(file_name)
-        #aws.list_as_url()
+        asyncio.run(aws.copy_file_to_s3(file_name))
+        # aws.list_as_url()
         
 def setup_iso_scene(ref_length=20.0):
     """
