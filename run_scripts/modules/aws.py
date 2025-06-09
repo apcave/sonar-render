@@ -1,7 +1,7 @@
 import boto3
 import datetime
 
-s3 = boto3.client('s3')
+s3 = boto3.client('s3', region_name='ap-southeast-2')
 bucket_name = 'alexv2'
 
 def copy_file_to_s3(file_name):
