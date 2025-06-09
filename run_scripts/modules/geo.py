@@ -112,6 +112,38 @@ def make_rectangle(length, width, xy_plane=True):
 
     return plate
 
+def make_right_angle_triangle(x_length, y_length):
+    """
+    Creates a right-angle triangle mesh in the x-y plane with the right angle at the origin.
+    The hypotenuse runs from (x_length, 0, 0) to (0, y_length, 0).
+
+    Parameters:
+    x_length : float
+        Length along the x-axis.
+    y_length : float
+        Length along the y-axis.
+
+    Returns:
+    mesh.Mesh
+        The STL mesh of the triangle.
+    """
+    vertices = np.array([
+        [0, 0, 0],                # Right angle at origin
+        [x_length, 0, 0],         # Along x-axis
+        [0, y_length, 0],         # Along y-axis
+    ])
+
+    # One triangle: vertices 0, 1, 2
+    facets = np.array([
+        [vertices[0], vertices[1], vertices[2]],
+    ])
+
+    triangle = mesh.Mesh(np.zeros(facets.shape[0], dtype=mesh.Mesh.dtype))
+    for i, facet in enumerate(facets):
+        triangle.vectors[i] = facet
+
+    return triangle
+
 def load_stl_file(file_path):
     """Load an STL file and return the mesh object."""
     try:
@@ -397,3 +429,5 @@ def translate_stl_object(stl_mesh, translation_vector):
     translation_vector = np.asarray(translation_vector)
     stl_mesh.vectors += translation_vector
     return stl_mesh
+
+

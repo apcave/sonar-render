@@ -5,3 +5,5 @@ run_scripts/__pycache__
 *.png
 lib/
 gallery/
+BeTTSSi_II/
+.env

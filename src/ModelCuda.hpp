@@ -48,7 +48,7 @@ public:
     ModelCuda();
     ~ModelCuda();
 
-    void ProjectSrcPointsToObjects();
+    void ProjectSrcPointsToObjects(bool projectFieldObjects);
     void ProjectTargetToFieldObjects();
     void ProjectTargetToFieldPoints();
     void ProjectTargetToTargetObjects();
