@@ -1,0 +1,20 @@
+{
+    "ImageId": "ami-076c9b48e84595ab0",
+    "InstanceType": "g5.2xlarge",
+    "KeyName": "AlexSpotswood",
+    "SubnetId": "subnet-0fd81388ed29426bf",
+    "BlockDeviceMappings": [
+        {
+            "DeviceName": "/dev/sda1",
+            "Ebs": {
+                "DeleteOnTermination": true,
+                "Iops": 3000,
+                "SnapshotId": "snap-07dab9f47485b5bc1",
+                "VolumeSize": 45,
+                "VolumeType": "gp3",
+                "Encrypted": false,
+                "Throughput": 125
+            }
+        }
+    ]
+}
