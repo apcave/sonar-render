@@ -32,7 +32,7 @@ def render_cube(frequency):
 
 
     # Sometimes smaller facets are required as very large facets do not render.
-    for i in range(1):
+    for i in range(3):
         field_surface = geo.halve_facets(field_surface)
 
 
@@ -50,8 +50,8 @@ def render_cube(frequency):
     # The feild surface delta has large effect on computation time although
     # aliasing can occur if it is too large. The only effects the image if you zoom in.
     delta = (cp / frequency) / 7.5
-    delta_s = max(delta, 50e-3)  # Ensure a minimum distance for source points.
-    print("delta = ", delta)
+    delta_s = min(delta, 50e-3)  # Ensure a minimum distance for source points.
+    print("delta = ", delta_s)
 
     att = mh.seawater_attenuation_db_per_m(frequency/1000)
 
@@ -84,6 +84,7 @@ def render_cube(frequency):
     mh.render_to_file(viewSettings, file_name=file_name, test=test)
     api.TearDownCuda()
 
-for frequency in range(1000, 30050, 50):
+
+for frequency in range(1342, 30005, 1):
     print(f"Rendering cube at frequency: {frequency} Hz")
     render_cube(float(frequency))
