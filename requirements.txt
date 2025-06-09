@@ -3,3 +3,4 @@ numpy-stl
 scipy
 matplotlib
 trimesh
+boto3
