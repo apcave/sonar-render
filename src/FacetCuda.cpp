@@ -21,7 +21,6 @@ void FacetCuda::AllocateCuda(float3 &normal,
     host_facet.yAxis = yAxis;
     host_facet.frag_points = frag_points;
 
-
     // If the object is a source the surface pressure fixed to 1 across the surface.
 
     dev_P = 0;
@@ -55,7 +54,7 @@ void FacetCuda::AllocateCuda(float3 &normal,
         // Allocate device memory for the initial pressure data
         cudaMalloc((void **)&dev_P_in, numXpnts * numYpnts * sizeof(dcomplex));
         cudaMemset(dev_P_in, 0, numXpnts * numYpnts * sizeof(dcomplex));
-        host_facet.P_out = dev_P_in;        
+        host_facet.P_in = dev_P_in;
     }
     cudaMemcpy(dev_frag_area, frag_area, numXpnts * numYpnts * sizeof(float), cudaMemcpyHostToDevice);
 
@@ -85,11 +84,8 @@ FacetCuda::~FacetCuda()
     {
         cudaFree(dev_P_in);
         dev_P_in = 0;
-    }    
+    }
 }
-
-
- 
 
 void FacetCuda::PrintMatrix()
 {
@@ -125,7 +121,6 @@ dev_facet FacetCuda::MakeOptixStruct()
     return host_facet;
 }
 
-
 void FacetCuda::PrimeReflections()
 {
     cudaMemcpy(dev_P_in, dev_P, numXpnts * numYpnts * sizeof(dcomplex), cudaMemcpyDeviceToDevice);
@@ -134,7 +129,7 @@ void FacetCuda::PrimeReflections()
 void FacetCuda::SwapOutputToInputPressure()
 {
     if (objectType == OBJECT_TYPE_TARGET)
-    {    
+    {
         cudaMemcpy(dev_P_in, dev_P_out, numXpnts * numYpnts * sizeof(dcomplex), cudaMemcpyDeviceToDevice);
         cudaMemset(dev_P_out, 0, numXpnts * numYpnts * sizeof(dcomplex));
     }

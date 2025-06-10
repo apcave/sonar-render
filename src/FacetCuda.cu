@@ -48,15 +48,15 @@ __global__ void MakeSurface(dcomplex *P, cudaSurfaceObject_t surface, int maxXpn
     int index = yPnt * maxXpnt + xPnt;
 
     thrust::complex<float> p((float)P[index].r, (float)P[index].i);
-    //float mag_normal = (abs(p) / stats[0]); // The largest magnitude is 0 zero.
-    //float mag = 1 - exp(-mag_normal * 3.5); // The brightness is 0 to 1. Zero is black.
+    // float mag_normal = (abs(p) / stats[0]); // The largest magnitude is 0 zero.
+    // float mag = 1 - exp(-mag_normal * 3.5); // The brightness is 0 to 1. Zero is black.
 
     const float saturation = 0.8f; // Saturation for the color.
-    float dB = 20.0f * log10f(abs(p) + 1e-8f);   
+    float dB = 20.0f * log10f(abs(p) + 1e-8f);
     float mag = (dB - min_dB) / (max_dB - min_dB);
     mag = fminf(fmaxf(mag, 0.0f), 1.0f);
 
-    float4 value = make_float4(saturation*mag, saturation*mag, saturation*mag, 1.0f);
+    float4 value = make_float4(saturation * mag, saturation * mag, saturation * mag, 1.0f);
     if (render_phase)
     {
         // If we are rendering the phase, we need to convert the complex number to a color.
@@ -64,7 +64,7 @@ __global__ void MakeSurface(dcomplex *P, cudaSurfaceObject_t surface, int maxXpn
         float phase = (atan2f(p.imag(), p.real()) + M_PI) / (2.0f * M_PI);
         value = hsv2rgb(phase, 0.8f, mag);
     }
-    
+
     // value = (float)yPnt / (float)maxXpnt;
     surf2Dwrite(value, surface, xPnt * sizeof(float4), yPnt);
 
@@ -84,7 +84,6 @@ void FacetCuda::WriteSurface(float min_dB, float max_dB, bool render_phase)
     readyToRender = true;
 }
 
-
 __global__ void AccumulatePressureKernel(dcomplex *P, dcomplex *dev_P_out, int maxXpnt)
 {
     int xPnt = threadIdx.x;
@@ -92,8 +91,13 @@ __global__ void AccumulatePressureKernel(dcomplex *P, dcomplex *dev_P_out, int m
 
     int index = yPnt * maxXpnt + xPnt;
 
-    P[index].r = P[index].r + dev_P_out[index].r;
-    P[index].i = P[index].i + dev_P_out[index].i;
+    // P[index].r = P[index].r + dev_P_out[index].r;
+    // P[index].i = P[index].i + dev_P_out[index].i;
+
+    // printf("AccumulatePressureKernel: %d, %d, %f, %f\n", xPnt, yPnt, dev_P_out[index].r, dev_P_out[index].i);
+
+    P[index].r = dev_P_out[index].r;
+    P[index].i = dev_P_out[index].i;
 }
 
 void FacetCuda::AccumulatePressure()

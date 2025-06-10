@@ -26,10 +26,10 @@ def render_cube(frequency):
     #target.vectors = target.vectors * 2  # Scale down the mesh to 1 cm size
     #target = geo.rotate_stl_object(target, 'x', -20)
     #target = geo.rotate_stl_object(target, 'y', 10)
-    target = geo.translate_stl_object(target, [0, 5, -5])
-    target = geo.rotate_stl_object(target, 'y', 35)
+    target = geo.translate_stl_object(target, [0, 2, -5])
+    #target = geo.rotate_stl_object(target, 'y', 35)
 
-    for i in range(5):
+    for i in range(4):
         target = geo.halve_facets(target)
 
     #15
@@ -67,14 +67,14 @@ def render_cube(frequency):
     file_name = f"reflector2_test_{int(frequency)}_Hz"
     file_name = "range_test"
     api.set_initial_conditions(cp, frequency, 0.0)
-    mh.run_rendering(5, test=test)
+    mh.run_rendering(1, test=test)
 
     mh.render_to_file(viewSettings, file_name=file_name, test=test)
     api.TearDownCuda()
 
 mh.query_gpu_info()
 
-render_cube(8.0e3)
+render_cube(5.0e3)
 # for frequency in range(1920, 100000, 1):
 #     print(f"Rendering cube at frequency: {frequency} Hz")
 #     render_cube(float(frequency))
