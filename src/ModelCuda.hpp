@@ -32,6 +32,8 @@ protected:
     // Pixel length and width.
     float *dev_frag_delta = 0;
 
+    dev_scratch_pad* dev_scratch = 0; // Used for OptiX calculations.
+
     int host_num_source_points;
     float3 *dev_source_points_position = 0;   // constant
     dcomplex *dev_source_points_pressure = 0; // constant

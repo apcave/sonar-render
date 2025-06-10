@@ -25,6 +25,14 @@ int ModelCuda::SetGlobalParameters(dcomplex k_wave, float pixel_delta)
         return 1;
     }
 
+    cudaMalloc(&dev_scratch, sizeof(dev_scratch_pad));
+    cudaStatus = cudaMemset(dev_scratch, 0, sizeof(dev_scratch_pad));
+    if (cudaStatus != cudaSuccess)
+    {
+        fprintf(stderr, "scratch data failed: %s\n", cudaGetErrorString(cudaStatus));
+        return 1;
+    }
+
     return 0;
 }
 
@@ -148,6 +156,12 @@ int ModelCuda::StopCuda()
         dev_field_points_pressure = 0;
     }
 
+    if( dev_scratch )
+    {
+        cudaFree(dev_scratch);
+        dev_scratch = 0;
+    }
+
     for (auto object : targetObjects)
     {
         delete object;
@@ -232,6 +246,7 @@ void ModelCuda::ProjectSrcPointsToObjects(bool projectFieldObjects)
     globalParams gp = {};
     gp.calcType = CalcType::SOURCE_POINTS;
     gp.k_wave = k_wave;
+    gp.scratch = dev_scratch;
     gp.srcPoints.numPnts = host_num_source_points;
     gp.srcPoints.position = dev_source_points_position;
     gp.srcPoints.pressure = dev_source_points_pressure;
@@ -269,6 +284,7 @@ void ModelCuda::ProjectTargetToFieldObjects()
     globalParams gp = {};
     gp.calcType = CalcType::FACET_NO_RESP;
     gp.k_wave = k_wave;
+    gp.scratch = dev_scratch;
 
     for (auto targetOb : targetObjects)
     {
@@ -290,6 +306,7 @@ void ModelCuda::ProjectTargetToFieldPoints()
     globalParams gp = {};
     gp.calcType = CalcType::FIELD_POINTS;
     gp.k_wave = k_wave;
+    gp.scratch = dev_scratch;
 
     gp.dstPoints.numPnts = host_num_field_points;
     gp.dstPoints.position = dev_field_points_position;
@@ -311,6 +328,7 @@ void ModelCuda::ProjectTargetToTargetObjects()
     globalParams gp = {};
     gp.calcType = CalcType::FACET_SELF;
     gp.k_wave = k_wave;
+    gp.scratch = dev_scratch;
 
     for (auto targetOb : targetObjects)
     {

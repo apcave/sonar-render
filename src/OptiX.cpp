@@ -138,7 +138,6 @@ void OptiX::DoProjection(globalParams params)
     }
     //std::cout << "OptiX::DoProjection()" << std::endl;
     params.handle = gasHandle;
-    params.facetCount = 0;
     CUDA_CHECK(cudaMalloc((void **)&d_optix_params, sizeof(globalParams)));
     CUDA_CHECK(cudaMemcpy((void *)d_optix_params, &params, sizeof(globalParams), cudaMemcpyHostToDevice));
 

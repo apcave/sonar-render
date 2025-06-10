@@ -376,10 +376,16 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
             }
         }
     }
-    printf("Facet %d projected to %d facets.\n", a_ind, numDst);
-    // atomicAdd(&(params.facetCount), 1);
-    // float progress = (float)(params.facetCount); /// (float)params.srcObject.numFacets;
-    // printf("Progress: %.2f\n", progress * 100.0f);     
+
+    //printf("Facet %d projected to %d facets.\n", a_ind, numDst);
+    // atomicAdd(&(params.scratch->facetCount), 1);
+    // float progress = 100.0f * (float)(params.scratch->facetCount) / (float)params.srcObject.numFacets;
+    // if (params.scratch->facetCount % 100 == 0)
+    // {
+    //     printf("Progress: %.2f\n", progress );     
+
+    //     //atomicAdd(&params.scratch->progress, 5.0f);
+    // }
 }
 
 extern "C" __global__ void __raygen__rg()

@@ -71,7 +71,7 @@ typedef struct
     CalcType calcType;
 
     // used to store variables that are editable in CUDA.
-    dev_scratch_pad scratch;
+    dev_scratch_pad* scratch;
 
 } globalParams;
 
