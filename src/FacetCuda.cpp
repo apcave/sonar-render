@@ -88,6 +88,9 @@ FacetCuda::~FacetCuda()
     }    
 }
 
+
+ 
+
 void FacetCuda::PrintMatrix()
 {
     if (dev_P)

@@ -84,8 +84,8 @@ def TearDownCuda():
 
 def project_source_points_to_objects(project_to_field_surface=False):
     """Project source points to field points."""
-    cpp_lib.RenderOpenGL.argtypes = [ctypes.c_bool]
-    cpp_lib.RenderOpenGL.restype = None
+    cpp_lib.ProjectSrcPointsToObjects.argtypes = [ctypes.c_bool]
+    cpp_lib.ProjectSrcPointsToObjects.restype = None
         
     cpp_lib.ProjectSrcPointsToObjects(project_to_field_surface)
 
@@ -100,3 +100,10 @@ def project_target_to_field_points():
 def project_target_to_target_objects():
     """Project target points to target objects."""
     cpp_lib.ProjectTargetToTargetObjects()
+    
+def sound_visualisation_init(max_db, min_db, render_phase_target, render_phase_field):
+    """Initialise the sound visualisation."""
+    cpp_lib.SoundVisualisationInit.argtypes = [ctypes.c_float, ctypes.c_float, ctypes.c_bool]
+    cpp_lib.SoundVisualisationInit.restype = None    
+    
+    cpp_lib.SoundVisualisationInit(max_db, min_db, render_phase_target, render_phase_field)

@@ -4,23 +4,15 @@ ObjectCuda::ObjectCuda()
 {
 }
 
-void ObjectCuda::WriteSurfaceToGlTexture(float *dev_frag_stats)
+void ObjectCuda::WriteSurfaceToGlTexture(float min_dB, float max_dB, bool render_phase)
 {
     for (auto facet : facets)
     {
-        facet->WriteSurface(dev_frag_stats);
+        facet->WriteSurface(min_dB, max_dB, render_phase);
     }
     cudaDeviceSynchronize();
 }
 
-void ObjectCuda::GetSurfaceScalers(float *dev_frag_stats)
-{
-    for (auto facet : facets)
-    {
-        facet->GetSurfaceScalers(dev_frag_stats);
-    }
-    cudaDeviceSynchronize();
-}
 
 void ObjectCuda::MakeCudaObjects()
 {

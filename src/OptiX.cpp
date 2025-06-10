@@ -138,6 +138,7 @@ void OptiX::DoProjection(globalParams params)
     }
     //std::cout << "OptiX::DoProjection()" << std::endl;
     params.handle = gasHandle;
+    params.facetCount = 0;
     CUDA_CHECK(cudaMalloc((void **)&d_optix_params, sizeof(globalParams)));
     CUDA_CHECK(cudaMemcpy((void *)d_optix_params, &params, sizeof(globalParams), cudaMemcpyHostToDevice));
 
@@ -146,35 +147,18 @@ void OptiX::DoProjection(globalParams params)
     {
         numFacets = params.dstObject.numFacets;
     }
-    int numberToProcess = numFacets;
-    // int max_ind = 1024;
-    int max_ind = 9216;
-    int num_ind = max_ind;
-    while (numberToProcess != 0)
-    {
-        if (numberToProcess > max_ind)
-        {
-            num_ind = max_ind;
-            numberToProcess -= max_ind;
-        }
-        else
-        {
-            num_ind = numberToProcess;
-            numberToProcess = 0;
-        }
 
-        //std::cout << "Launching Collision Program...\n";
-        OPTIX_CHECK(optixLaunch(
-            pipeline,
-            0,
-            d_optix_params,
-            sizeof(globalParams),
-            &sbt,
-            numFacets,
-            1,
-            1));
-        // cudaDeviceSynchronize();
-    }
+    //std::cout << "Launching Collision Program...\n";
+    OPTIX_CHECK(optixLaunch(
+        pipeline,
+        0,
+        d_optix_params,
+        sizeof(globalParams),
+        &sbt,
+        numFacets,
+        1,
+        1));
+
     //std::cout << "Launched Collision Program.\n";
 
     cudaDeviceSynchronize();

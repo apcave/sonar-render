@@ -107,7 +107,6 @@ void Model::RenderOpenGL(int width, int height, char *filename, float viewSettin
 {
     InitOpenGL(width, height, viewSettings);
     MakeObjectsOnGl();
-    GetSurfaceScalers();
     WriteCudaToGlTexture();
     ProcessFrame(width, height, filename);
     FreeGl();

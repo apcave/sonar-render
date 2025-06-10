@@ -10,8 +10,7 @@ public:
     ObjectCuda();
     ~ObjectCuda();
     void MakeCudaObjects();
-    void GetSurfaceScalers(float *dev_frag_stats);
-    void WriteSurfaceToGlTexture(float *dev_frag_stats);
+    void WriteSurfaceToGlTexture(float min_dB, float max_dB, bool render_phase);
     void PrintSurfacePressure();
     dev_object MakeOptixStructArray();
     void AccumulatePressure();

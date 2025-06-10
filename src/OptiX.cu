@@ -376,7 +376,10 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
             }
         }
     }
-    //printf("Facet %d projected to %d facets.\n", a_ind, numDst);
+    printf("Facet %d projected to %d facets.\n", a_ind, numDst);
+    // atomicAdd(&(params.facetCount), 1);
+    // float progress = (float)(params.facetCount); /// (float)params.srcObject.numFacets;
+    // printf("Progress: %.2f\n", progress * 100.0f);     
 }
 
 extern "C" __global__ void __raygen__rg()
@@ -392,30 +395,32 @@ extern "C" __global__ void __raygen__rg()
         // printf("Source points to facet projection\n");
         //  Call the source points kernel
         projectSourcePointsToFacet(facet_num);
-        return;
+        break;
     case FIELD_POINTS:
         // Project is done from the facet fragments to the field point
         // printf("Project facet to field points\n");
         projectFacetToFieldPoints(facet_num);
-        return;
+        break;
     case FACET_RESP:
         // Used for target object to other target object.
         projectFacetToFacets(facet_num, true, false);
-        return;
+        break;
     case FACET_NO_RESP:
         // No reciprocity is done. Used for target objects to field objects.
-        projectFacetToFacets(facet_num, false, false);
-        return;
+        projectFacetToFacets(facet_num, false, false);       
+        break;
     case FACET_SELF:
         // Accelerated self projection for target to target.
         // Uses reciprocity to half the number of calculations.
         projectFacetToFacets(facet_num, true, true);
-        return;
+        break;
 
     default:
         printf("Invalid calculation type\n");
         return;
     }
+
+
 }
 
 extern "C" __global__ void __closesthit__ch()

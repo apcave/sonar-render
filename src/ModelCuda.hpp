@@ -32,10 +32,6 @@ protected:
     // Pixel length and width.
     float *dev_frag_delta = 0;
 
-    // Used for scaling the textures.
-    float *dev_frag_stats = 0;
-    float host_frag_stats[3];
-
     int host_num_source_points;
     float3 *dev_source_points_position = 0;   // constant
     dcomplex *dev_source_points_pressure = 0; // constant
@@ -44,10 +40,16 @@ protected:
     float3 *dev_field_points_position = 0;   // constant
     dcomplex *dev_field_points_pressure = 0; // constant
 
+    float max_dB = -20.0f; // Maximum dB value for rendering
+    float min_dB = -90.0f; // Minimum dB value for rendering
+    bool render_phase_target = true;
+    bool render_phase_field  = true;
+
 public:
     ModelCuda();
     ~ModelCuda();
 
+    void SoundVisualisationInit(float maxDbValue, float minDbValue, bool renderPhaseTarget, bool renderPhaseField);
     void ProjectSrcPointsToObjects(bool projectFieldObjects);
     void ProjectTargetToFieldObjects();
     void ProjectTargetToFieldPoints();

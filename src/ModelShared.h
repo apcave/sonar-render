@@ -52,6 +52,12 @@ typedef struct
 
 typedef struct
 {
+    int facetCount; // Number of facets in the acceleration structure
+    float progress;
+} dev_scratch_pad;
+
+typedef struct
+{
     OptixTraversableHandle handle; // Acceleration structure handle
 
     dcomplex k_wave;  // Wave number
@@ -63,6 +69,9 @@ typedef struct
     dev_points dstPoints;
 
     CalcType calcType;
+
+    // used to store variables that are editable in CUDA.
+    dev_scratch_pad scratch;
 
 } globalParams;
 

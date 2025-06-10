@@ -17,8 +17,7 @@ public:
                       float3 &yAxis,
                       float *frag_area);
 
-    void WriteSurface(float *dev_frag_stats);
-    void GetSurfaceScalers(float *dev_frag_stats);
+    void WriteSurface(float min_dB, float max_dB, bool render_phase);
     void PrintMatrix();
 
     dev_facet MakeOptixStruct();

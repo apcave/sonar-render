@@ -99,3 +99,9 @@ extern "C" void TearDownCuda()
 {
     modelTes.TearDownModel();
 }
+
+extern "C" void SoundVisualisationInit(float maxDbValue, float minDbValue, bool renderPhaseTarget, bool renderPhaseField)
+{
+    // Initialize the OpenGL context
+    modelTes.SoundVisualisationInit(maxDbValue, minDbValue, renderPhaseTarget, renderPhaseField);
+}

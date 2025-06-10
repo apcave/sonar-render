@@ -40,7 +40,7 @@ __device__ __always_inline float4 hsv2rgb(float h, float s, float v)
     }
 }
 
-__global__ void MakeSurface(dcomplex *P, cudaSurfaceObject_t surface, int maxXpnt, float *stats)
+__global__ void MakeSurface(dcomplex *P, cudaSurfaceObject_t surface, int maxXpnt, float min_dB, float max_dB, bool render_phase)
 {
     int xPnt = threadIdx.x;
     int yPnt = blockIdx.x;
@@ -51,66 +51,39 @@ __global__ void MakeSurface(dcomplex *P, cudaSurfaceObject_t surface, int maxXpn
     //float mag_normal = (abs(p) / stats[0]); // The largest magnitude is 0 zero.
     //float mag = 1 - exp(-mag_normal * 3.5); // The brightness is 0 to 1. Zero is black.
 
-    float dB = 20.0f * log10f(abs(p) + 1e-8f);
-    float min_dB = -90.0f;
-    float max_dB = -20.0f;
-    // float min_dB = -110.0f;
-    // float max_dB = 0.0f;    
+    const float saturation = 0.8f; // Saturation for the color.
+    float dB = 20.0f * log10f(abs(p) + 1e-8f);   
     float mag = (dB - min_dB) / (max_dB - min_dB);
     mag = fminf(fmaxf(mag, 0.0f), 1.0f);
 
-
-    float phase = (atan2(p.imag(), p.real()) + M_PI) / (2.0f * M_PI);
-
-    float4 value = hsv2rgb(phase, 0.8, mag);
-
+    float4 value = make_float4(saturation*mag, saturation*mag, saturation*mag, 1.0f);
+    if (render_phase)
+    {
+        // If we are rendering the phase, we need to convert the complex number to a color.
+        // The phase is in the range [0, 1].
+        float phase = (atan2f(p.imag(), p.real()) + M_PI) / (2.0f * M_PI);
+        value = hsv2rgb(phase, 0.8f, mag);
+    }
+    
     // value = (float)yPnt / (float)maxXpnt;
     surf2Dwrite(value, surface, xPnt * sizeof(float4), yPnt);
 
     // printf("Write surface: %f, %f, %f\n", value, stats[0], stats[1]);
 }
 
-void FacetCuda::WriteSurface(float *dev_frag_stats)
+void FacetCuda::WriteSurface(float min_dB, float max_dB, bool render_phase)
 {
     MapToCuda();
     // Copy the data to the device.
     // Make the texture out of the real values.
     dim3 threadsPerBlock(numXpnts, 1);
     dim3 numBlocks(numYpnts, 1);
-    MakeSurface<<<numBlocks, threadsPerBlock>>>(dev_P, surface, numXpnts, dev_frag_stats);
+    MakeSurface<<<numBlocks, threadsPerBlock>>>(dev_P, surface, numXpnts, min_dB, max_dB, render_phase);
 
     cudaGraphicsUnmapResources(1, &cudaResource, 0);
     readyToRender = true;
 }
 
-__global__ void GetMaxValue(dcomplex *P, int maxXpnt, float *stats)
-{
-    int xPnt = threadIdx.x;
-    int yPnt = blockIdx.x;
-
-    int index = yPnt * maxXpnt + xPnt;
-
-    thrust::complex<float> p((float)P[index].r, (float)P[index].i);
-
-    float mag = abs(p);
-
-    atomicMaxFloat(&stats[0], mag);
-    // atomicMinFloat(&stats[1], real);
-    // atomicMaxFloat(&stats[2], abs);
-
-    // printf("GetMaxValue: %e, %e, %e\n", stats[0], stats[1], stats[2]);
-    //  printf("CurVal: %e, %e, %e\n", real, imag, abs);
-}
-
-void FacetCuda::GetSurfaceScalers(float *dev_frag_stats)
-{
-    dim3 threadsPerBlock(numXpnts, 1);
-    dim3 numBlocks(numYpnts, 1);
-
-    GetMaxValue<<<numBlocks, threadsPerBlock>>>(dev_P,
-                                                numXpnts,
-                                                dev_frag_stats);
-}
 
 __global__ void AccumulatePressureKernel(dcomplex *P, dcomplex *dev_P_out, int maxXpnt)
 {

@@ -39,7 +39,6 @@ public:
 protected:
     void InitOpenGL(int width, int height, float viewSettings[9]);
     int MakeObjectsOnGl();
-    int MakeTextureOnGl(double *dev_frag_stats);
     void ProcessFrame(int width, int height, char *filename);
     void FreeGl();
 

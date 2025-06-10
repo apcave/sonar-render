@@ -25,7 +25,6 @@ int ModelCuda::SetGlobalParameters(dcomplex k_wave, float pixel_delta)
         return 1;
     }
 
-    cudaMalloc(&dev_frag_stats, 3 * sizeof(float));
     return 0;
 }
 
@@ -127,11 +126,6 @@ int ModelCuda::StopCuda()
         cudaFree(dev_frag_delta);
         dev_frag_delta = 0;
     }
-    if (dev_frag_stats)
-    {
-        cudaFree(dev_frag_stats);
-        dev_frag_stats = 0;
-    }
 
     if (dev_source_points_position)
     {
@@ -203,33 +197,14 @@ void ModelCuda::WriteCudaToGlTexture()
 {
     for (auto object : targetObjects)
     {
-        object->WriteSurfaceToGlTexture(dev_frag_stats);
+        object->WriteSurfaceToGlTexture(min_dB, max_dB, render_phase_target);
     }
 
     for (auto object : fieldObjects)
     {
         std::cout << "Writing field object to OpenGL texture." << std::endl;
-        object->WriteSurfaceToGlTexture(dev_frag_stats);
+        object->WriteSurfaceToGlTexture(min_dB, max_dB, render_phase_field);
     }
-}
-
-int ModelCuda::GetSurfaceScalers()
-{
-    // Clear the pressure stats.
-    cudaMemset(dev_frag_stats, 0, 3 * sizeof(float));
-
-    // Copy the pressure from the matrix to the surface.
-    for (auto object : targetObjects)
-    {
-        object->GetSurfaceScalers(dev_frag_stats);
-    }
-
-    for (auto object : fieldObjects)
-    {
-        object->GetSurfaceScalers(dev_frag_stats);
-    }
-
-    return 1;
 }
 
 ModelCuda::ModelCuda()
@@ -353,4 +328,16 @@ void ModelCuda::ProjectTargetToTargetObjects()
         targetOb->AccumulatePressure();
         targetOb->SwapOutputToInputPressure();
     }
+}
+
+void ModelCuda::SoundVisualisationInit(float maxDbValue, float minDbValue, bool renderPhaseTarget, bool renderPhaseField)
+{
+    max_dB = maxDbValue;
+    min_dB = minDbValue;
+    render_phase_target = renderPhaseTarget;
+    render_phase_field = renderPhaseField;
+
+    std::cout << "FacetCuda: SoundVisualisationInit(): max_dB: " << max_dB << ", min_dB: " << min_dB
+              << ", render_phase_target: " << render_phase_target
+              << ", render_phase_field: " << render_phase_field << std::endl;
 }
