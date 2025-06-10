@@ -79,9 +79,9 @@ extern "C" void ProjectTargetToFieldPoints()
     modelTes.ProjectTargetToFieldPoints();
 };
 
-extern "C" void ProjectTargetToTargetObjects()
+extern "C" void ProjectTargetToTargetObjects(int number_reflections)
 {
-    modelTes.ProjectTargetToTargetObjects();
+    modelTes.ProjectTargetToTargetObjects(number_reflections);
 };
 
 extern "C" void GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints)

@@ -156,7 +156,7 @@ int ModelCuda::StopCuda()
         dev_field_points_pressure = 0;
     }
 
-    if( dev_scratch )
+    if (dev_scratch)
     {
         cudaFree(dev_scratch);
         dev_scratch = 0;
@@ -191,8 +191,8 @@ int ModelCuda::DoCalculations()
     //     ProjectTargetToTargetObjects();
     // }
 
-    //std::cout << "Target to field objects." << std::endl;
-    //ProjectTargetToFieldObjects();
+    // std::cout << "Target to field objects." << std::endl;
+    // ProjectTargetToFieldObjects();
 
     // std::cout << "Target to field points." << std::endl;
     // ProjectTargetToFieldPoints();
@@ -256,22 +256,22 @@ void ModelCuda::ProjectSrcPointsToObjects(bool projectFieldObjects)
         std::cout << "Doing source point to target object projection." << std::endl;
         gp.dstObject = object->MakeOptixStructArray();
         std::cout << "Doing facet to facet projection."
-        << " Num Dest: " << gp.dstObject.numFacets << std::endl;
+                  << " Num Dest: " << gp.dstObject.numFacets << std::endl;
 
         optiX.DoProjection(gp);
 
         // object->AccumulatePressure();
     }
 
-    if( projectFieldObjects)
+    if (projectFieldObjects)
     {
         for (auto object : fieldObjects)
         {
             std::cout << "Doing source point to field object projection." << std::endl;
             gp.dstObject = object->MakeOptixStructArray();
 
-            std::cout << "Doing facet to facet projection. Num Source: " << gp.srcObject.numFacets 
-            << ", Num Dest: " << gp.dstObject.numFacets << std::endl;        
+            std::cout << "Doing facet to facet projection. Num Source: " << gp.srcObject.numFacets
+                      << ", Num Dest: " << gp.dstObject.numFacets << std::endl;
             optiX.DoProjection(gp);
         }
     }
@@ -279,7 +279,7 @@ void ModelCuda::ProjectSrcPointsToObjects(bool projectFieldObjects)
 
 void ModelCuda::ProjectTargetToFieldObjects()
 {
-    std::cout << "-------------------------------------------------------------" << std::endl;    
+    std::cout << "-------------------------------------------------------------" << std::endl;
     std::cout << "Projecting target objects to field objects." << std::endl;
     globalParams gp = {};
     gp.calcType = CalcType::FACET_NO_RESP;
@@ -293,8 +293,8 @@ void ModelCuda::ProjectTargetToFieldObjects()
         for (auto fieldOb : fieldObjects)
         {
             gp.dstObject = fieldOb->MakeOptixStructArray();
-        std::cout << "Doing facet to facet projection. Num Source: " << gp.srcObject.numFacets 
-        << ", Num Dest: " << gp.dstObject.numFacets << std::endl;
+            std::cout << "Doing facet to facet projection. Num Source: " << gp.srcObject.numFacets
+                      << ", Num Dest: " << gp.dstObject.numFacets << std::endl;
             optiX.DoProjection(gp);
         }
     }
@@ -316,12 +316,11 @@ void ModelCuda::ProjectTargetToFieldPoints()
     {
         gp.srcObject = targetOb->MakeOptixStructArray();
 
-
         optiX.DoProjection(gp);
     }
 }
 
-void ModelCuda::ProjectTargetToTargetObjects()
+void ModelCuda::ProjectTargetToTargetObjects(int number_reflections)
 {
     std::cout << "-------------------------------------------------------------" << std::endl;
     std::cout << "Projecting target objects to target objects." << std::endl;
@@ -334,18 +333,26 @@ void ModelCuda::ProjectTargetToTargetObjects()
     {
         targetOb->PrimeReflections();
     }
-    
-    for (auto targetOb : targetObjects)
-    {
-        gp.srcObject = targetOb->MakeOptixStructArray();
-        gp.dstObject = gp.srcObject;
-        std::cout << "Doing facet to facet projection. Num Source: " << gp.srcObject.numFacets 
-        << ", Num Dest: " << gp.dstObject.numFacets << std::endl;
-        optiX.DoProjection(gp);
 
-        targetOb->AccumulatePressure();
-        targetOb->SwapOutputToInputPressure();
+    for (int i = 0; number_reflections > i; i++)
+    {
+        for (auto targetOb : targetObjects)
+        {
+            gp.srcObject = targetOb->MakeOptixStructArray();
+            targetOb->SwapOutputToInputPressure();
+            gp.dstObject = gp.srcObject;
+            std::cout << "__________________________________________________________________________" << std::endl;
+            std::cout << "Doing facet to facet projection. Num Source: " << gp.srcObject.numFacets
+                      << ", Num Dest: " << gp.dstObject.numFacets << std::endl;
+            optiX.DoProjection(gp);
+            targetOb->AccumulatePressure();
+        }
     }
+
+    // for (auto targetOb : targetObjects)
+    // {
+    //     targetOb->AccumulatePressure();
+    // }
 }
 
 void ModelCuda::SoundVisualisationInit(float maxDbValue, float minDbValue, bool renderPhaseTarget, bool renderPhaseField)

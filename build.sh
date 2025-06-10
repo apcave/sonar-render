@@ -10,6 +10,6 @@ cd ..
 #python ./run_scripts/sphere.py
 #python ./run_scripts/rect_bistatic.py
 #python ./run_scripts/rect_mono.py
-python ./run_scripts/cube.py
-#python ./run_scripts/reflector.py
+#python ./run_scripts/cube.py
+python ./run_scripts/reflector2.py
 #python ./run_scripts/BeTTSi_run1.py

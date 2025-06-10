@@ -123,13 +123,15 @@ dev_facet FacetCuda::MakeOptixStruct()
 
 void FacetCuda::PrimeReflections()
 {
-    cudaMemcpy(dev_P_in, dev_P, numXpnts * numYpnts * sizeof(dcomplex), cudaMemcpyDeviceToDevice);
+    // std::cout << "Set input pressure equal to surface pressure." << std::endl;
+    cudaMemcpy(dev_P_out, dev_P, numXpnts * numYpnts * sizeof(dcomplex), cudaMemcpyDeviceToDevice);
 }
 
 void FacetCuda::SwapOutputToInputPressure()
 {
     if (objectType == OBJECT_TYPE_TARGET)
     {
+        // std::cout << "Set input pressure equal to projection output." << std::endl;
         cudaMemcpy(dev_P_in, dev_P_out, numXpnts * numYpnts * sizeof(dcomplex), cudaMemcpyDeviceToDevice);
         cudaMemset(dev_P_out, 0, numXpnts * numYpnts * sizeof(dcomplex));
     }

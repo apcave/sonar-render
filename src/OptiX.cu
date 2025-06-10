@@ -152,8 +152,8 @@ __device__ void projectFacetToFieldPoints(int a_ind)
                 const float r_ji = length(v_ji);
                 const float3 uv_ji = v_ji / r_ji;
 
-                float cos_inc = dot(-uv_ji, A.normal);
-                if (cos_inc < 1e-6f)
+                float cos_scat = dot(-uv_ji, A.normal);
+                if (cos_scat < 1e-6f)
                 {
                     // printf("Normal doesn't align, not adding to field point.\n");
                     continue;
@@ -179,7 +179,7 @@ __device__ void projectFacetToFieldPoints(int a_ind)
                     continue;
                 }
 
-                thrust::complex<double> P_j = A_i * P_i * (-thrust::exp(i1 * k * r_ji) / ((4 * M_PI)) * ((i1 * k) / r_ji) + (1 / (r_ji * r_ji)));
+                thrust::complex<double> P_j = A_i * cos_scat * P_i * (-thrust::exp(i1 * k * r_ji) / ((4 * M_PI)) * ((i1 * k) / r_ji) + (1 / (r_ji * r_ji)));
 
                 dcomplex *p_out = &(params.dstPoints.pressure[j]);
                 atomicAddDouble(&(p_out->r), P_j.real());
@@ -226,13 +226,17 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
             // {
             //     continue;
             // }
-            dcomplex cP_i = A.P[ind_i];
-            thrust::complex<double> Pr_i = thrust::complex<double>(cP_i.r, cP_i.i);
-            if (params.dstObject.objectType == OBJECT_TYPE_TARGET)
+            dcomplex cP_i;
+
+            if (params.calcType != FACET_NO_RESP)
             {
                 cP_i = A.P_in[ind_i];
-                Pr_i = thrust::complex<double>(cP_i.r, cP_i.i);
             }
+            else
+            {
+                cP_i = A.P[ind_i];
+            }
+            thrust::complex<double> Pr_i = thrust::complex<double>(cP_i.r, cP_i.i);
 
             if (Pr_i.real() == 0 && Pr_i.imag() == 0)
             {
@@ -333,11 +337,24 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                             continue;
                         }
 
-                        thrust::complex<double> G = (-thrust::exp(i1 * k * r_ij) / ((4 * M_PI)) * ((i1 * k) / r_ij) + (1 / (r_ij * r_ij)));
-                        thrust::complex<double> P_j = A_i * cos_inc * Pr_i * G;
+                        const float r_min = delta_i; // or set to your pixel/fragment size
+                        thrust::complex<double> G;
+                        if (r_ij < r_min)
+                        {
+                            // Regularized Green's function for small r
+                            G = i1 * k / (4.0 * M_PI);
+                        }
+                        else
+                        {
+                            // Standard Green's function for Helmholtz equation
+                            G = (-thrust::exp(i1 * k * r_ij) / ((4 * M_PI)) * ((i1 * k) / r_ij) + (1 / (r_ij * r_ij)));
+                        }
+                        G = 0.9 * G; // Apply a damping factor to the Green's function
+
+                        thrust::complex<double> P_j = A_i * cos_scat * cos_inc * Pr_i * G;
 
                         // printf("Facet %d to %d: A_i = %f, B_j = %f, cos_inc = %f, cos_scat = %f, r_ij = %f\n", a_ind, b_ind, A_i, B_j, cos_inc, cos_scat, r_ij);
-                        // if (abs(A_i * G) < 1)
+                        // if (abs(G) < 1)
                         {
                             dcomplex *p_out = &(B.P_out[ind_j]);
                             atomicAddDouble(&(p_out->r), P_j.real());
@@ -352,19 +369,19 @@ __device__ void projectFacetToFacets(int a_ind, bool useReciprocity, bool isSelf
                             // Reciprocity: project the pressure from facet B to facet A
 
                             const float rA_i = B.frag_area[ind_j];
-                            dcomplex rcP_i = B.P[ind_j];
-                            thrust::complex<double> rP_i = thrust::complex<double>(rcP_i.r, rcP_i.i);
-                            float3 ruv_ij = -uv_ij; // Reverse the direction of the ray
-                            const float rcos_inc = dot(ruv_ij, B.normal);
-                            if (rcos_inc < 1e-6f)
+                            dcomplex rcP_i;
+                            if (params.calcType != FACET_NO_RESP)
                             {
-                                // printf("Normal doesn't align, not adding to field point.\n");
-                                continue;
+                                rcP_i = B.P_in[ind_j];
                             }
+                            else
+                            {
+                                rcP_i = B.P[ind_j];
+                            }
+                            thrust::complex<double> rP_i = thrust::complex<double>(rcP_i.r, rcP_i.i);
+                            thrust::complex<double> rP_j = rA_i * cos_scat * cos_inc * rP_i * G;
 
-                            thrust::complex<double> rP_j = rA_i * rcos_inc * rP_i * G;
-
-                            // if (abs(rA_i * G) < 1)
+                            // if (abs(G) < 1)
                             {
                                 dcomplex *rp_out = &(A.P_out[ind_i]);
                                 atomicAddDouble(&(rp_out->r), rP_j.real());

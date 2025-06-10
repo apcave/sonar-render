@@ -91,13 +91,13 @@ __global__ void AccumulatePressureKernel(dcomplex *P, dcomplex *dev_P_out, int m
 
     int index = yPnt * maxXpnt + xPnt;
 
-    // P[index].r = P[index].r + dev_P_out[index].r;
-    // P[index].i = P[index].i + dev_P_out[index].i;
+    P[index].r = P[index].r + dev_P_out[index].r;
+    P[index].i = P[index].i + dev_P_out[index].i;
 
     // printf("AccumulatePressureKernel: %d, %d, %f, %f\n", xPnt, yPnt, dev_P_out[index].r, dev_P_out[index].i);
 
-    P[index].r = dev_P_out[index].r;
-    P[index].i = dev_P_out[index].i;
+    // P[index].r = dev_P_out[index].r;
+    // P[index].i = dev_P_out[index].i;
 }
 
 void FacetCuda::AccumulatePressure()

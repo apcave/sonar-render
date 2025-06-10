@@ -97,9 +97,12 @@ def project_target_to_field_points():
     """Project target points to field points."""
     cpp_lib.ProjectTargetToFieldObjects()
 
-def project_target_to_target_objects():
+def project_target_to_target_objects(number_reflections):
     """Project target points to target objects."""
-    cpp_lib.ProjectTargetToTargetObjects()
+    cpp_lib.ProjectTargetToTargetObjects.argtypes = [ctypes.c_int]
+    cpp_lib.ProjectTargetToTargetObjects.restype = None
+        
+    cpp_lib.ProjectTargetToTargetObjects(number_reflections)
     
 def sound_visualisation_init(max_db, min_db, render_phase_target, render_phase_field):
     """Initialise the sound visualisation."""

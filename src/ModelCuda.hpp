@@ -32,7 +32,7 @@ protected:
     // Pixel length and width.
     float *dev_frag_delta = 0;
 
-    dev_scratch_pad* dev_scratch = 0; // Used for OptiX calculations.
+    dev_scratch_pad *dev_scratch = 0; // Used for OptiX calculations.
 
     int host_num_source_points;
     float3 *dev_source_points_position = 0;   // constant
@@ -45,7 +45,7 @@ protected:
     float max_dB = -20.0f; // Maximum dB value for rendering
     float min_dB = -90.0f; // Minimum dB value for rendering
     bool render_phase_target = true;
-    bool render_phase_field  = true;
+    bool render_phase_field = true;
 
 public:
     ModelCuda();
@@ -55,7 +55,7 @@ public:
     void ProjectSrcPointsToObjects(bool projectFieldObjects);
     void ProjectTargetToFieldObjects();
     void ProjectTargetToFieldPoints();
-    void ProjectTargetToTargetObjects();
+    void ProjectTargetToTargetObjects(int number_reflections);
 
 protected:
     int SetGlobalParameters(dcomplex k_wave, float pixel_delta);

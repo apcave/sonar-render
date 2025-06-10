@@ -56,9 +56,9 @@ def run_rendering(number_of_reflections = 0, project_target_to_feild_surface = T
     end_time = time.time()
     print("Time taken to project source points to objects: ", end_time - st_time)
     
-    for i in range(number_of_reflections):
+    if number_of_reflections > 0:
         st_time = time.time()
-        api.project_target_to_target_objects()
+        api.project_target_to_target_objects(number_of_reflections)
         end_time = time.time()
         print("Time taken to project target to target objects: ", end_time - st_time)
         
