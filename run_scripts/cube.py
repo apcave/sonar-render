@@ -85,6 +85,6 @@ def render_cube(frequency):
     api.TearDownCuda()
 
 
-for frequency in range(1342, 30005, 1):
+for frequency in range(1678, 30005, 1):
     print(f"Rendering cube at frequency: {frequency} Hz")
     render_cube(float(frequency))
