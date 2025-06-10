@@ -309,37 +309,78 @@ def create_plate(length, width, thickness=0.01):
 
     return plate
 
+
+def create_plate_triangle(length, width, thickness=0.01):
+    """
+    Creates a triangular plate (prism) mesh with the given base length, width, and thickness.
+    The triangle is in the x-y plane, extruded along the z-axis.
+
+    Parameters:
+        length: base length of the triangle (x-axis)
+        width: height of the triangle (y-axis)
+        thickness: extrusion along z-axis
+
+    Returns:
+        plate: mesh.Mesh object
+    """
+    import numpy as np
+    from stl import mesh
+
+    # Base triangle (z=0)
+    v0 = [-length / 2, -width / 2, 0]
+    v1 = [ length / 2, -width / 2, 0]
+    v2 = [0, 0, 0]
+    # Top triangle (z=thickness)
+    v3 = [-length / 2, -width / 2, thickness]
+    v4 = [ length / 2, -width / 2, thickness]
+    v5 = [0, 0, thickness]
+
+    vertices = np.array([v0, v1, v2, v3, v4, v5])
+
+    # 8 faces: 2 for each triangle, 3 sides (2 triangles each)
+    faces = np.array([
+        [2, 1, 0],  # Bottom triangle
+        [4, 5, 3],  # Top triangle (note winding for outward normals)
+        [0, 1, 4], [0, 4, 3],  # Side 1
+        [1, 2, 5], [1, 5, 4],  # Side 2
+        [2, 0, 3], [2, 3, 5],  # Side 3
+    ])
+
+    # Create the mesh
+    plate = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
+    for i, face in enumerate(faces):
+        for j in range(3):
+            plate.vectors[i][j] = vertices[face[j], :]
+
+    return plate
+
+
+
 def create_reflector(width, thickness):
     
     side_length = (2*((width/2)**2))**0.5
-    plate_1 = create_plate(side_length, width, thickness)
+    plate_1 = create_plate_triangle(side_length, width, thickness)
     plate_1 = rotate_stl_object(plate_1, 'x', 45)
-    
-    plate_2 = create_plate(side_length, width, thickness)
+
+    plate_2 = create_plate_triangle(side_length, width, thickness)
     plate_2 = rotate_stl_object(plate_2, 'x', -45)
 
-    plate_3 = create_plate(side_length, width, thickness)
-    plate_3 = rotate_stl_object(plate_3, 'x', 90)
-    plate_3 = rotate_stl_object(plate_3, 'z', 90)
-    plate_3 = rotate_stl_object(plate_3, 'y', -45)
-    
-    plate_4 = create_plate(side_length, width, thickness)
-    plate_4 = rotate_stl_object(plate_4, 'x', 90)
-    plate_4 = rotate_stl_object(plate_4, 'z', 90) 
-    plate_4 = rotate_stl_object(plate_4, 'y', 45)
 
+    
+    plate_3 = create_plate_triangle(side_length, width, thickness)
+    plate_3 = rotate_stl_object(plate_3, 'y', 90)
+    plate_3 = rotate_stl_object(plate_3, 'z', 45)
+
+    plate_4 = create_plate_triangle(side_length, width, thickness)
+    plate_4 = rotate_stl_object(plate_4, 'y', 90)
+    plate_4 = rotate_stl_object(plate_4, 'z', -45)
 
     reflector = join_meshes(plate_1, plate_2)
     reflector = join_meshes(reflector, plate_3)
     reflector = join_meshes(reflector, plate_4)  
 
-    #plate_xz = create_plate(side_length, thickness, 'xz')
-    #plate_yz = create_plate(side_length, thickness, 'yz')
-
-    #plate_xz.translate([0, -side_length / 2, 0])  # Move xz plate to align with xy
-    #plate_yz.translate([-side_length / 2, 0, 0])  # Move yz plate to align with xy    
-
-    
+    reflector = rotate_stl_object(reflector, 'x', -90)
+ 
     return reflector
 
 

@@ -4,3 +4,4 @@ scipy
 matplotlib
 trimesh
 boto3
+pycuda

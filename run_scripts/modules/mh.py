@@ -8,6 +8,7 @@ from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 import math
 import time
+import pycuda.driver as cuda
 
 def monostatic_iterated(pnts, object, cp, frequency):
     """The source points and field points are iterated over while the other data is fixed.
@@ -73,6 +74,7 @@ def render_to_file(viewSettings, window_width = 800*8, window_height = 600 * 8, 
     The scene can take a long time to render so the resolution is set very high.
     The file name is timestamped to avoid overwriting previous files.
     """
+    file_name = "./renders/" + file_name
     if test:
         file_name += "_test"
         window_width = 800
@@ -156,3 +158,37 @@ def seawater_attenuation_db_per_m(frequency_khz, temperature=10, salinity=35, de
     # Convert to dB/m
     attenuation_db_per_m = attenuation_db_per_km / 1000.0
     return attenuation_db_per_m
+
+
+def query_gpu_info():
+    """
+    Queries the GPU information using PyCUDA.
+    """
+    cuda.init()
+    dev = cuda.Device(0)
+    attrs = dev.get_attributes()
+    num_sms = attrs[cuda.device_attribute.MULTIPROCESSOR_COUNT]
+    major = dev.compute_capability()[0]
+    minor = dev.compute_capability()[1]
+
+    # Cores per SM depends on compute capability
+    def cores_per_sm(major, minor):
+        # See: https://stackoverflow.com/a/32522516
+        if (major, minor) == (8, 0): return 64  # Ampere A100
+        if (major, minor) == (8, 6): return 128 # Ampere GA10x
+        if (major, minor) == (7, 5): return 64  # Turing
+        if (major, minor) == (7, 0): return 64  # Volta
+        if (major, minor) == (6, 1): return 128 # Pascal GP100
+        if (major, minor) == (6, 0): return 64  # Pascal GP104/GP106/GP107
+        if (major, minor) == (5, 2): return 128 # Maxwell GM20x
+        if (major, minor) == (5, 0): return 128 # Maxwell GM10x
+        if (major, minor) == (3, 0): return 192 # Kepler GK10x
+        if (major, minor) == (3, 5): return 192 # Kepler GK11x
+        if (major, minor) == (3, 7): return 192 # Kepler GK21x
+        return 128  # Default fallback
+
+    total_cores = num_sms * cores_per_sm(major, minor)
+    print(f"Device: {dev.name()}")
+    print(f"Compute Capability: {major}.{minor}")
+    print(f"Multiprocessors: {num_sms}")
+    print(f"CUDA Cores: {total_cores}")

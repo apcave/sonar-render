@@ -138,7 +138,6 @@ void ObjectGl::FreeGl()
     {
         facet->FreeGl();
     }
-    facets.clear();
 }
 
 void ObjectGl::PrintVBO()

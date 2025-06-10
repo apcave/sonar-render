@@ -10,11 +10,8 @@ import math
 
 
 def render_cube(frequency):
-    """Render a cube with the given frequency."""
-    cp = 1480.0
-    #for frequency in range(1e3, 30e3, 500):
-    file_name = f"cube_{int(frequency)}_Hz"
 
+    cp = 1480.0
     test = False
 
     target = geo.make_cube()
@@ -53,38 +50,26 @@ def render_cube(frequency):
     delta_s = min(delta, 50e-3)  # Ensure a minimum distance for source points.
     print("delta = ", delta_s)
 
-    att = mh.seawater_attenuation_db_per_m(frequency/1000)
+    # att = mh.seawater_attenuation_db_per_m(frequency/1000)
+    att = 0.0
 
-    api.set_initial_conditions(cp, frequency, att)
+
     api.load_stl_mesh_to_cuda(target, 0, delta_s) # 0 is for target object.
     api.load_stl_mesh_to_cuda(field_surface, 2, delta_s) # 1 is for field surface.
 
+
+    """Render a cube with the given frequency."""
+    
+    #for frequency in range(1e3, 30e3, 500):
+    file_name = f"cube_{int(frequency)}_Hz"
+
+    api.set_initial_conditions(cp, frequency, att)
     mh.run_rendering(0, test=test)
-
-    # field_vals = api.GetFieldPoints(len(field_pnts))
-    # modeled_TES = mh.results_to_TES(field_vals, t)
-
-    # index = np.where(angles == 0)[0][0] 
-    # print("Modelled with Attenuation = ", db_values[index])
-    # print('Analytical TES = ', TES)
-    # print('Modelled TES = ', db_values[index] + 2* atten)
-
-
-    # db_values  + 40*np.log10(Radius)    
-    # plt.figure()
-    # plt.plot(angles, modeled_TES, label="Field Values (dB)")
-    # #plt.plot(angles, bistatic_TES, label="Analytic (dB)")
-    # plt.xlabel("Angle (degrees)")
-    # plt.ylabel("Field Value (dB)")
-    # plt.title("Field Values vs. Angle")
-    # plt.grid(True)
-    # plt.legend()
-    # plt.show()
 
     mh.render_to_file(viewSettings, file_name=file_name, test=test)
     api.TearDownCuda()
 
 
-for frequency in range(1678, 30005, 1):
+for frequency in range(1920, 100000, 1):
     print(f"Rendering cube at frequency: {frequency} Hz")
     render_cube(float(frequency))

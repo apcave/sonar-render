@@ -89,7 +89,7 @@ void Model::RenderCuda()
     MakeSourcePointsOnGPU(sourcePoints);
     MakeFieldPointsOnGPU(fieldPoints);
 
-    //DoCalculations();
+    // DoCalculations();
 }
 
 void Model::GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoints)
@@ -105,6 +105,7 @@ void Model::GetFieldPointPressures(dcomplex *field_points_pressure, int NumPoint
  */
 void Model::RenderOpenGL(int width, int height, char *filename, float viewSettings[9])
 {
+    std::cout << "1 Rendering OpenGL..." << std::endl;
     InitOpenGL(width, height, viewSettings);
     MakeObjectsOnGl();
     WriteCudaToGlTexture();
