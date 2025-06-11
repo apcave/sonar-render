@@ -25,7 +25,7 @@ def point_on_xz_plane(angle_deg, radius):
 
 
 
-def render_cube(frequency, angle_i):
+def render_cube(frequency, angle_i, r_rotation):
 
     test = False
     cp = 1480.0
@@ -36,7 +36,7 @@ def render_cube(frequency, angle_i):
     #target = geo.rotate_stl_object(target, 'y', 10)
     y_offset = 0
     target = geo.translate_stl_object(target, [0, y_offset, -5])
-    #target = geo.rotate_stl_object(target, 'y', 35)
+    target = geo.rotate_stl_object(target, 'z', r_rotation)
 
     for i in range(4):
         target = geo.halve_facets(target)
@@ -78,22 +78,22 @@ def render_cube(frequency, angle_i):
 
     mh.run_rendering(10, test=test)
     
-    file_name = f"reflector_angle_co_{int(frequency)}_{int(angle_i)}_deg"
-    api.sound_visualisation_init(-30,-100, True, True)
+    file_name = f"reflector_angle_v2_{int(frequency)}_{int(angle_i)}_deg"
+    api.sound_visualisation_init(-45,-110, True, True)
     mh.render_to_file(viewSettings, file_name=file_name, test=test)
     
-    file_name = f"reflector_angle_bw_{int(frequency)}_{int(angle_i)}_deg"
-    api.sound_visualisation_init(-30,-100, True, False)
-    mh.render_to_file(viewSettings, file_name=file_name, test=test)
+    # file_name = f"reflector_angle_bw_{int(frequency)}_{int(angle_i)}_deg"
+    # api.sound_visualisation_init(-30,-100, True, False)
+    # mh.render_to_file(viewSettings, file_name=file_name, test=test)
     
     
     api.TearDownCuda()
 
 mh.query_gpu_info()
 
-#render_cube(10.0e3, 5)
+#render_cube(10.0e3, 20, 0)
 
-for angle in range(0, 85, 5):
+for angle in range(0, 76, 1):
     print(f"Rendering cube at angle: {angle} degrees")
-    render_cube(20.0e3, angle)
+    render_cube(10.0e3, angle, 0)
 

@@ -28,7 +28,7 @@ cp = 1480.0
 target = geo.load_stl_file('../hull_20cmMesh.stl')
 target = geo.rotate_stl_object(target, 'x', -90)
 target = geo.rotate_stl_object(target, 'y', -90)
-target = geo.translate_stl_object(target, [0, 3, 0])
+target = geo.translate_stl_object(target, [0, 5, 0])
 
 
 
@@ -68,12 +68,12 @@ def run_at_frequency(frequency):
     delta_s = min(delta, 50e-3)  # Ensure a minimum distance for source points.
     print("delta = ", delta_s)
     delta_f = ref_length / approx_number_of_field_fragments_per_side
-    delta_f = (cp / frequency) / 4
+    delta_f = (cp / frequency) / 7.5
     att = mh.seawater_attenuation_db_per_m(frequency/1000)
 
     api.load_points_to_cuda(source_pnts, isSource=True)
     api.set_initial_conditions(cp, frequency, att)
-    api.sound_visualisation_init(-40,-100, True, False)
+    api.sound_visualisation_init(-40,-100, True, True)
 
     api.load_stl_mesh_to_cuda(target, 0, delta_s) # 0 is for target object.
     api.load_stl_mesh_to_cuda(field_surface, 2, delta_f) # 1 is for field surface.
@@ -85,7 +85,7 @@ def run_at_frequency(frequency):
     api.TearDownCuda()
 
 
-frequency = 2000.0
+frequency = 0.0
 while True:
     frequency += 1000.0
     run_at_frequency(frequency)
