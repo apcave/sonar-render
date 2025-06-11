@@ -25,7 +25,7 @@ def copy_file_to_s3(file_name):
     
 
 def list_as_url():
-    response = s3.list_objects_v2(Bucket=bucket_name, Prefix='sonar-render/cube_')
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix='sonar-render/c')
 
     if 'Contents' in response:
         for obj in response['Contents']:

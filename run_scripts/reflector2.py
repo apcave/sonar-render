@@ -72,20 +72,28 @@ def render_cube(frequency, angle_i):
     api.load_stl_mesh_to_cuda(field_surface, 2, delta_t) # 1 is for field surface.
 
     #for frequency in range(1e3, 30e3, 500):
-    file_name = f"reflector_angle_test_{int(angle_i)}_deg"
+    
     # file_name = "range_test"
     api.set_initial_conditions(cp, frequency, 0.0)
-    api.sound_visualisation_init(-30,-100, True, False)
-    mh.run_rendering(10, test=test)
 
+    mh.run_rendering(10, test=test)
+    
+    file_name = f"reflector_angle_co_{int(frequency)}_{int(angle_i)}_deg"
+    api.sound_visualisation_init(-30,-100, True, True)
     mh.render_to_file(viewSettings, file_name=file_name, test=test)
+    
+    file_name = f"reflector_angle_bw_{int(frequency)}_{int(angle_i)}_deg"
+    api.sound_visualisation_init(-30,-100, True, False)
+    mh.render_to_file(viewSettings, file_name=file_name, test=test)
+    
+    
     api.TearDownCuda()
 
 mh.query_gpu_info()
 
 #render_cube(10.0e3, 5)
 
-for angle in range(0, 100, 5):
+for angle in range(0, 85, 5):
     print(f"Rendering cube at angle: {angle} degrees")
-    render_cube(30.0e3, angle)
+    render_cube(20.0e3, angle)
 

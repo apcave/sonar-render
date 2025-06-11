@@ -28,10 +28,10 @@ COPY .git /acoustic-render/.git
 #RUN   rm  /usr/lib/x86_64-linux-gnu/libEGL_mesa.* && \
 #    ln -sf /usr/lib/x86_64-linux-gnu/libEGL_nvidia.so.0 /usr/lib/x86_64-linux-gnu/libEGL_mesa.so.0
 
-RUN mkdir -p build && \
-    cd build && \
-    cmake ../src/ && \
-    make -j4 all  
+# RUN mkdir -p build && \
+#     cd build && \
+#     cmake ../src/ && \
+#     make -j4 all  
 
 #ENTRYPOINT []
 #CMD ["bash","/acoustic-render/run_scripts/run_container.sh"]
