@@ -1,6 +1,6 @@
 import boto3
 
-ec2 = boto3.client('ec2')
+s3 = boto3.client('s3', region_name='ap-southeast-2')
 
 # Filter for GPU instance families (p, g, inf, trn, etc.)
 gpu_families = ['p', 'g']

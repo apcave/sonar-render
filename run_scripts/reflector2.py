@@ -81,10 +81,9 @@ def render_cube(frequency, angle_i):
 
 mh.query_gpu_info()
 
-for angle in range(0, 90, 5):
-    print(f"Rendering cube at angle: {angle} degrees")
-    render_cube(6.0e3, angle)
+render_cube(10.0e3, 30)
 
-# for frequency in range(1920, 100000, 1):
-#     print(f"Rendering cube at frequency: {frequency} Hz")
-#     render_cube(float(frequency))
+# for angle in range(0, 90, 5):
+#     print(f"Rendering cube at angle: {angle} degrees")
+#     render_cube(6.0e3, angle)
+

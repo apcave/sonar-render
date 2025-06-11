@@ -11,10 +11,10 @@ import sys
 
 # instance_type = sys.argv[1]
 
-with open('fleet-spec.json') as f:
+with open('../../fleet-spec.json') as f:
     launch_spec = json.load(f)
 
-ec2 = boto3.client('ec2')
+s3 = boto3.client('s3', region_name='ap-southeast-2')
 
 # Update the instance type
 #launch_spec["InstanceType"] = instance_type
