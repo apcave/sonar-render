@@ -42,7 +42,8 @@ def render_cube(frequency, angle_i):
         target = geo.halve_facets(target)
 
     #15
-    ref_length = 25
+    # ref_length = 25
+    ref_length = 10
     field_surface, viewSettings,  = mh.setup_iso_scene(ref_length)
     
     # Sometimes smaller facets are required as very large facets do not render.
@@ -74,16 +75,17 @@ def render_cube(frequency, angle_i):
     file_name = f"reflector_angle_test_{int(angle_i)}_deg"
     # file_name = "range_test"
     api.set_initial_conditions(cp, frequency, 0.0)
-    mh.run_rendering(5, test=test)
+    api.sound_visualisation_init(-30,-100, True, False)
+    mh.run_rendering(10, test=test)
 
     mh.render_to_file(viewSettings, file_name=file_name, test=test)
     api.TearDownCuda()
 
 mh.query_gpu_info()
 
-render_cube(10.0e3, 30)
+#render_cube(10.0e3, 5)
 
-# for angle in range(0, 90, 5):
-#     print(f"Rendering cube at angle: {angle} degrees")
-#     render_cube(6.0e3, angle)
+for angle in range(0, 100, 5):
+    print(f"Rendering cube at angle: {angle} degrees")
+    render_cube(30.0e3, angle)
 

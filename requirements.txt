@@ -5,3 +5,4 @@ matplotlib
 trimesh
 boto3
 pycuda
+pynvml

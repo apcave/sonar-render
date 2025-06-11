@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import math
 import time
 import pycuda.driver as cuda
+import pynvml
 
 def monostatic_iterated(pnts, object, cp, frequency):
     """The source points and field points are iterated over while the other data is fixed.
@@ -74,7 +75,7 @@ def render_to_file(viewSettings, window_width = 800*8, window_height = 600 * 8, 
     The scene can take a long time to render so the resolution is set very high.
     The file name is timestamped to avoid overwriting previous files.
     """
-    file_name = "./renders/" + file_name
+    
     if test:
         file_name += "_test"
         window_width = 800
@@ -192,3 +193,9 @@ def query_gpu_info():
     print(f"Compute Capability: {major}.{minor}")
     print(f"Multiprocessors: {num_sms}")
     print(f"CUDA Cores: {total_cores}")
+    
+    pynvml.nvmlInit()
+    handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+    clock = pynvml.nvmlDeviceGetClockInfo(handle, pynvml.NVML_CLOCK_SM)
+    print(f"SM Clock: {clock} MHz")
+    pynvml.nvmlShutdown()
