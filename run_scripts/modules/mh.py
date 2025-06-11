@@ -75,7 +75,7 @@ def render_to_file(viewSettings, window_width = 800*8, window_height = 600 * 8, 
     The scene can take a long time to render so the resolution is set very high.
     The file name is timestamped to avoid overwriting previous files.
     """
-    
+    file_name = "./renders/" + file_name
     if test:
         file_name += "_test"
         window_width = 800

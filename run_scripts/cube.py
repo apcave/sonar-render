@@ -1,6 +1,7 @@
 import modules.api as api
 import modules.mh as mh
 import modules.geo as geo
+import modules.aws as aws
 
 import numpy as np 
 from stl import mesh
@@ -69,7 +70,9 @@ def render_cube(frequency):
     mh.render_to_file(viewSettings, file_name=file_name, test=test)
     api.TearDownCuda()
 
+#render_cube(1969.0)
+#aws.list_as_url()
 
-for frequency in range(1920, 100000, 1):
+for frequency in range(1980, 100000, 1):
     print(f"Rendering cube at frequency: {frequency} Hz")
     render_cube(float(frequency))
