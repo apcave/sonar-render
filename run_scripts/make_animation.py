@@ -121,7 +121,8 @@ def copy_files_from_s3(files_sorted):
         print(f"Downloaded {file_name} to {local_file_path}")
 
 aws.list_as_url()
-files_sorted = list_of_files("_20250609_1346.png", "_20250609_1458.png")
-copy_files_from_s3(files_sorted)
 
-make_animation(files_sorted)
+if True:  # Set to True to run the download and animation creation
+    files_sorted = list_of_files("_20250609_1346.png", "_20250609_1600.png")
+    copy_files_from_s3(files_sorted)
+    make_animation(files_sorted)

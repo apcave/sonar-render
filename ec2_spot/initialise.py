@@ -3,7 +3,11 @@ import os
 import re
 import subprocess
 
+ec2 = boto3.client('ec2', region_name='ap-southeast-2')
+
+
 def add_or_replace_ssh_config_entry(host, hostname, user, identity_file=None):
+
     config_path = os.path.expanduser("~/.ssh/config")
     entry = f"\nHost {host}\n    HostName {hostname}\n    User {user}\n"
     if identity_file:
@@ -35,6 +39,7 @@ def add_or_replace_ssh_config_entry(host, hostname, user, identity_file=None):
     with open(config_path, "w") as f:
         f.write(config_new)
 
+
 def scp_to_ec2(local_file, remote_host, remote_path, identity_file):
     """
     Copy a file to a remote EC2 instance using scp.
@@ -52,6 +57,7 @@ def scp_to_ec2(local_file, remote_host, remote_path, identity_file):
     else:
         print("SCP succeeded.")
         
+
 def ssh_execute_command_with_alias(ssh_alias, command):
     ssh_cmd = [
         "ssh",
@@ -66,10 +72,6 @@ def ssh_execute_command_with_alias(ssh_alias, command):
         print("SSH command output:", result.stdout)
     return result
 
-
-
-
-s3 = boto3.client('s3', region_name='ap-southeast-2')
 
 response = ec2.describe_instances(
     Filters=[{'Name': 'instance-state-name', 'Values': ['running']}]
@@ -93,4 +95,9 @@ for reservation in response['Reservations']:
             scp_to_ec2('./ec2_spot.sh', hostname, '~/ec2_spot.sh', pem_file)
             scp_to_ec2(os.path.expanduser("~/.aws/config"), hostname, 'config', pem_file)
             scp_to_ec2(os.path.expanduser("~/.aws/credentials"), hostname, 'credentials', pem_file)
+            scp_to_ec2(os.path.expanduser("../../hull_10cmMesh.stl"), hostname, 'hull_10cmMesh.stl', pem_file)
+            scp_to_ec2(os.path.expanduser("../../hull_20cmMesh.stl"), hostname, 'hull_20cmMesh.stl', pem_file)
+            scp_to_ec2(os.path.expanduser("../../M2_10cmMesh.stl"), hostname, 'M2_10cmMesh.stl', pem_file)
+            scp_to_ec2(os.path.expanduser("../../M2_20cmMesh.stl"), hostname, 'M2_20cmMesh.stl', pem_file)
+
             ssh_execute_command_with_alias("awsSpots", "./ec2_spot.sh")

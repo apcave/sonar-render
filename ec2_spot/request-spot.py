@@ -3,6 +3,9 @@ import json
 from datetime import datetime, timedelta, timezone
 import sys
 
+
+ec2 = boto3.client('ec2', region_name='ap-southeast-2')
+
 # Load your launch specification from JSON
 
 # if len(sys.argv) < 2:
